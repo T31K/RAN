@@ -1,0 +1,36 @@
+name: Build
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Build solution (Release Win32)
+        run: msbuild RanOnline.sln -m -p:Configuration=Release -p:Platform=Win32
+
+      - name: Collect binaries
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path ..\game-client) {
+            Copy-Item -Recurse ..\game-client $env:GITHUB_WORKSPACE\build-output
+            Get-ChildItem -Recurse $env:GITHUB_WORKSPACE\build-output | Select-Object FullName, Length
+          } else {
+            Write-Host "No output folder produced"
+          }
+
+      - name: Upload binaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ran-binaries
+          path: build-output/
+          if-no-files-found: warn
