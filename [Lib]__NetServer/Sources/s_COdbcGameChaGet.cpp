@@ -128,7 +128,7 @@ SCHARDATA2* COdbcManager::GetCharacter(int nUserNumber, int nChaNum)
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
 			SAFE_DELETE(pChaData);
             Print(strTemp.str());		
@@ -457,7 +457,7 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {	
             Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));
@@ -795,7 +795,7 @@ int	COdbcManager::GetChaBInfo(int nUserNum,
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
             Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));
@@ -931,7 +931,7 @@ int COdbcManager::GetChaPhoneNumber(
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
             Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));

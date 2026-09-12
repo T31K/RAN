@@ -82,7 +82,7 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
             Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));
@@ -227,7 +227,7 @@ int COdbcManager::GetChaBAInfo(int nUsrNum,
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
 			ncbi->nChaSNum = 0;
             Print(szTemp);		
@@ -361,7 +361,7 @@ LONGLONG COdbcManager::GetChaExp(int nChaNum)
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
             Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));

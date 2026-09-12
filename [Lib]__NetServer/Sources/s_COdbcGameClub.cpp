@@ -277,7 +277,7 @@ int COdbcManager::GetClubMember(DWORD dwClub, std::vector<GLCLUBMEMBER> &vMember
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
 			Print(szTemp);
 		    Print(GetErrorString(pConn->hStmt));
@@ -383,7 +383,7 @@ int COdbcManager::GetClubInfo(std::vector<GLCLUBINFO> &vClub)
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
 			Print(szTemp);
 		    Print(GetErrorString(pConn->hStmt));
@@ -782,7 +782,7 @@ int	COdbcManager::WriteClubMarkImage(
 
 	// Execute SQL
 	sReturn = ::SQLExecute(pConn->hStmt);
-	if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+	if (sReturn == SQL_ERROR)
 	{
 		Print(szTemp);
 		Print(GetErrorString(pConn->hStmt));
@@ -844,7 +844,7 @@ int COdbcManager::GetChaGuildNum(DWORD dwChaNum)
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
 			Print(szTemp);
 		    Print(GetErrorString(pConn->hStmt));
@@ -943,7 +943,7 @@ LONGLONG COdbcManager::GetClubIncomeMoney(DWORD dwClub)
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
             Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));
@@ -1041,7 +1041,7 @@ LONGLONG COdbcManager::GetClubMoney(DWORD dwClub)
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
             Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));
@@ -1201,7 +1201,7 @@ int COdbcManager::WriteClubStorage(
 
 	// Execute SQL
 	sReturn = ::SQLExecute(pConn->hStmt);
-	if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+	if (sReturn == SQL_ERROR)
 	{
 		Print(szTemp);
 		Print(GetErrorString(pConn->hStmt));
@@ -1326,7 +1326,7 @@ int COdbcManager::GetClubRegion(std::vector<GLGUID_DB> &vGUID_DB)
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
 			Print(szTemp);
 		    Print(GetErrorString(pConn->hStmt));
@@ -1496,7 +1496,7 @@ int COdbcManager::GetClubAlliance ( std::vector< std::pair<DWORD,DWORD> > &vecAl
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
 			Print(szTemp);
 		    Print(GetErrorString(pConn->hStmt));
@@ -1672,7 +1672,7 @@ int COdbcManager::GetClubBattleInfo( DWORD dwClub, std::vector<GLCLUBBATTLE> &vB
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
 			Print(szTemp);
 		    Print(GetErrorString(pConn->hStmt));

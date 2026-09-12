@@ -140,7 +140,7 @@ int COdbcManager::ReadUserInven(SCHARDATA2* pChaData2)
 	while(true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
             Print(szTemp);
 		    Print(GetErrorString(pConn->hStmt));
@@ -415,7 +415,7 @@ int	COdbcManager::WriteUserInven(
 
 	// Execute SQL
 	sReturn = ::SQLExecute(pConn->hStmt);
-	if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+	if (sReturn == SQL_ERROR)
 	{
         Print(szTemp);		
 		Print(GetErrorString(pConn->hStmt));

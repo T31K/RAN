@@ -250,7 +250,7 @@ LONGLONG COdbcManager::GetItemMaxNum(
     while(true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
             Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));

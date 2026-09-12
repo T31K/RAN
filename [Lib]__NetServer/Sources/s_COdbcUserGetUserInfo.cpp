@@ -54,7 +54,7 @@ USER_INFO_BASIC COdbcManager::GetUserInfo(
 		while(true)
 		{
 			sReturn = ::SQLFetch(pConn->hStmt);
-			if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+			if (sReturn == SQL_ERROR)
 			{				
 				break;
 			}
@@ -129,7 +129,7 @@ int COdbcManager::ThaiGetUserInfo(
 		while(true)
 		{
             sReturn = ::SQLFetch(pConn->hStmt);
-			if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+			if (sReturn == SQL_ERROR)
 			{
                 Print(szTemp);
 		        Print(GetErrorString(pConn->hStmt));
@@ -232,7 +232,7 @@ int COdbcManager::ThaiGetUserInfo(
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
 			Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));
@@ -335,7 +335,7 @@ int COdbcManager::GetUserInfo(
 		while(true)
 		{
             sReturn = ::SQLFetch(pConn->hStmt);
-			if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+			if (sReturn == SQL_ERROR)
 			{
                 Print(szTemp);
 		        Print(GetErrorString(pConn->hStmt));
@@ -417,7 +417,7 @@ int COdbcManager::GetUserInfo(
 		while(true)
 		{
             sReturn = ::SQLFetch(pConn->hStmt);
-			if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+			if (sReturn == SQL_ERROR)
 			{
                 Print(szTemp);
 		        Print(GetErrorString(pConn->hStmt));
@@ -529,7 +529,7 @@ int COdbcManager::GetUserInfo(
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
 			Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));
@@ -608,7 +608,7 @@ int COdbcManager::DaumGetUserInfo(
 		while(true)
 		{
             sReturn = ::SQLFetch(pConn->hStmt);
-			if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+			if (sReturn == SQL_ERROR)
 			{
                 Print(szTemp);
 		        Print(GetErrorString(pConn->hStmt));
@@ -709,7 +709,7 @@ int COdbcManager::DaumGetUserInfo(
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
 			Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));
@@ -768,7 +768,7 @@ int COdbcManager::DaumGetUserInfo(
 	while( true )
 	{
 		sReturn = ::SQLFetch( pConn->hStmt );
-		if( sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO )
+		if( sReturn == SQL_ERROR )
 		{
 			Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));
@@ -974,7 +974,7 @@ int COdbcManager::TerraGetUserInfo(
 		while(true)
 		{
 			sReturn = ::SQLFetch(pConn->hStmt);
-			if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+			if (sReturn == SQL_ERROR)
 			{
 				Print(szTemp);
 				Print(GetErrorString(pConn->hStmt));
@@ -1049,7 +1049,7 @@ int COdbcManager::TerraGetUserInfo(
 		while(true)
 		{
             sReturn = ::SQLFetch(pConn->hStmt);
-			if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+			if (sReturn == SQL_ERROR)
 			{
                 Print(szTemp);
 		        Print(GetErrorString(pConn->hStmt));
@@ -1150,7 +1150,7 @@ int COdbcManager::TerraGetUserInfo(
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
 			Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));
@@ -1211,7 +1211,7 @@ int COdbcManager::TerraGetUserInfo(
 	while( true )
 	{
 		sReturn = ::SQLFetch( pConn->hStmt );
-		if( sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO )
+		if( sReturn == SQL_ERROR )
 		{
 			Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));
@@ -1294,7 +1294,7 @@ int COdbcManager::ExciteGetUserInfo(
 
 		{
             sReturn = ::SQLFetch(pConn->hStmt);
-			if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+			if (sReturn == SQL_ERROR)
 			{
                 Print(szTemp);
 		        Print(GetErrorString(pConn->hStmt));
@@ -1387,7 +1387,7 @@ int COdbcManager::ExciteGetUserInfo(
 	while( true )
 	{
 		sReturn = ::SQLFetch( pConn->hStmt );
-		if( sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO )
+		if( sReturn == SQL_ERROR )
 		{
 			Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));
@@ -1458,7 +1458,7 @@ int COdbcManager::JapanGetUserInfo( const TCHAR* szUserID, JAPAN_NET_LOGIN_FEEDB
 
 		{
             sReturn = ::SQLFetch(pConn->hStmt);
-			if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+			if (sReturn == SQL_ERROR)
 			{
                 Print(szTemp);
 		        Print(GetErrorString(pConn->hStmt));
@@ -1551,7 +1551,7 @@ int COdbcManager::JapanGetUserInfo( const TCHAR* szUserID, JAPAN_NET_LOGIN_FEEDB
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
 			Print(szTemp);
 			Print(GetErrorString(pConn->hStmt));
@@ -1628,7 +1628,7 @@ int COdbcManager::GsGetUserInfo(
 		while(true)
 		{
             sReturn = ::SQLFetch(pConn->hStmt);
-			if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+			if (sReturn == SQL_ERROR)
 			{
                 Print(szTemp);
 		        Print(GetErrorString(pConn->hStmt));
@@ -1728,7 +1728,7 @@ int COdbcManager::GsGetUserInfo(
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
 			Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));

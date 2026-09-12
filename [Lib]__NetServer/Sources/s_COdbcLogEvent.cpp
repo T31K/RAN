@@ -108,7 +108,7 @@ int COdbcManager::LogUserAttend( int nUserNum, std::vector<USER_ATTEND_INFO> &ve
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
             Print(szTemp);
 			Print(GetErrorString(pConn->hStmt));

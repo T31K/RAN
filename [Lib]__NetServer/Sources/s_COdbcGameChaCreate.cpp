@@ -197,7 +197,7 @@ int COdbcManager::CreateNewCharacter(SCHARDATA2* pCharData2)
 	while(true)
 	{
 		sReturn = ::SQLFetch(pConn2->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
 		{
 			Print(szTemp);		
 			Print(GetErrorString(pConn2->hStmt));

@@ -769,7 +769,7 @@ int COdbcSupervisor::WriteImage(
 
 	// Execute SQL
 	sReturn = ::SQLExecute(pConn->hStmt);
-	if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+	if (sReturn == SQL_ERROR)
 	{
 		Print(GetErrorString(pConn->hStmt));
 		FreeConnection(pConn);
@@ -836,7 +836,7 @@ int COdbcSupervisor::WriteImage(
 
 	// Execute SQL
 	sReturn = ::SQLExecute(pConn->hStmt);
-	if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+	if (sReturn == SQL_ERROR)
     {
 		Print(GetErrorString(pConn->hStmt));
         FreeConnection(pConn);

@@ -89,7 +89,7 @@ __time64_t COdbcManager::GetChatBlockTime(int nUserNum)
     while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
             Print(szTemp);
 			Print(GetErrorString(pConn->hStmt));
@@ -294,7 +294,7 @@ __time64_t COdbcManager::GetPremiumTime(int nUserNum)
     while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
             Print(szTemp);
 			Print(GetErrorString(pConn->hStmt));
@@ -1155,7 +1155,7 @@ int COdbcManager::GetUserNum( const TCHAR* szUsrId )
 		while(true)
 		{
 			sReturn = ::SQLFetch(pConn->hStmt);
-			if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+			if (sReturn == SQL_ERROR)
 			{
                 Print(szTemp);
 		        Print(GetErrorString(pConn->hStmt));

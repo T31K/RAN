@@ -93,7 +93,7 @@ int	COdbcManager::DelCharacter(int nUsrNum,
 			return DB_ERROR;
 		}
 
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
 		{
 			Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));

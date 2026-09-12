@@ -595,7 +595,7 @@ int COdbcManager::TerraUserCheck(
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {			
             Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));
@@ -682,7 +682,7 @@ int COdbcManager::TerraUserCheck(
     while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {			
             Print(strTemp2.str());		
 			Print(GetErrorString(pConn->hStmt));
@@ -926,7 +926,7 @@ int	COdbcManager::ThaiUserClassCheck(
 		while(true)
 		{
             sReturn = ::SQLFetch(pConn->hStmt);
-			if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+			if (sReturn == SQL_ERROR)
 			{
                 Print(szTemp);
 		        Print(GetErrorString(pConn->hStmt));
@@ -1019,7 +1019,7 @@ int	COdbcManager::MyUserClassCheck(
 		while(true)
 		{
             sReturn = ::SQLFetch(pConn->hStmt);
-			if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+			if (sReturn == SQL_ERROR)
 			{
                 Print(szTemp);
 		        Print(GetErrorString(pConn->hStmt));

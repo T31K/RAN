@@ -399,7 +399,7 @@ int COdbcManager::GetPet(
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
             Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));
@@ -598,7 +598,7 @@ int COdbcManager::GetPetSkill(
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
             Print(szTemp);		
 			Print(GetErrorString(pConn->hStmt));
@@ -712,7 +712,7 @@ int COdbcManager::GetRestorePetList(
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
-		if (sReturn == SQL_ERROR || sReturn == SQL_SUCCESS_WITH_INFO)
+		if (sReturn == SQL_ERROR)
         {
             Print(CString(szTemp));		
 			Print(GetErrorString(pConn->hStmt));
