@@ -48,6 +48,7 @@ BOOL GLAgentServer::ReActionMoveFieldSvr ( DWORD dwClientID, DWORD dwGaeaID )
 BOOL GLAgentServer::MsgReqFieldSvrCharChkFb ( NET_MSG_GENERIC* nmg, DWORD _dwClientID, DWORD _dwGaeaID )
 {
 	GLMSG::SNETPC_FIELDSVR_CHARCHK_FB *pNetMsg = (GLMSG::SNETPC_FIELDSVR_CHARCHK_FB *) nmg;
+	CDebugSet::ToLogFile ( "[JOINDBG] Agent got CHARCHK_FB gaeaID=%d fieldID=%d channel=%d bExist=%d", (int)pNetMsg->dwGaeaID, (int)pNetMsg->dwFIELDID, (int)pNetMsg->nChannel, (int)pNetMsg->bExist );
 	PGLCHARAG pChar = GetChar ( pNetMsg->dwGaeaID );
 	if ( !pChar )									return FALSE;
 
@@ -5147,7 +5148,7 @@ HRESULT GLAgentServer::MsgProcess ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWOR
 	case NET_MSG_GCTRL_CLUB_NEW_2AGT:			MsgClubNew2Agt ( nmg, dwClientID, dwGaeaID );		break;
 	case NET_MSG_GCTRL_CLUB_NEW_DB2AGT:			MsgClubNewDb2Agt ( nmg, dwClientID, dwGaeaID );		break;
 	case NET_MSG_GCTRL_CLUB_DISSOLUTION:		MsgClubDissolution ( nmg, dwClientID, dwGaeaID );	break;
-	case NET_MSG_CHARPOS_FROMDB2AGT:			GameJoinToFieldSvr ( nmg, dwClientID, dwGaeaID );	break;
+	case NET_MSG_CHARPOS_FROMDB2AGT:			CDebugSet::ToLogFile ( "[JOINDBG] Agent MsgProcess dispatch CHARPOS_FROMDB2AGT clientID=%d gaeaID=%d", (int)dwClientID, (int)dwGaeaID );	GameJoinToFieldSvr ( nmg, dwClientID, dwGaeaID );	break;
 
 
 	case NET_MSG_SERVER_CTRL_WEATHER:			

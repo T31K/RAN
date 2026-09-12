@@ -1468,6 +1468,7 @@ BOOL GLGaeaServer::RequestTradeCancel ( DWORD dwClientID, DWORD dwGaeaID, GLMSG:
 BOOL GLGaeaServer::RequestFieldSvrCharChk ( DWORD dwClientID, GLMSG::SNETPC_FIELDSVR_CHARCHK *pNetMsg  )
 {
 	bool bExist(false);
+	CDebugSet::ToLogFile ( "[JOINDBG] Field got CHARCHK clientID=%d gaeaID=%d userID=%d name=%s", (int)dwClientID, (int)pNetMsg->dwGaeaID, (int)pNetMsg->dwUserID, pNetMsg->szName );
 
 	//	Note : 같은 이름의 캐릭터가 이미 접속되어 있는지 검사합니다.
 	{
@@ -1587,6 +1588,7 @@ BOOL GLGaeaServer::RequestFieldSvrCharChk ( DWORD dwClientID, GLMSG::SNETPC_FIEL
 
 	//	Note : 에이젼트에 점검 FB.
 	//
+	CDebugSet::ToLogFile ( "[JOINDBG] Field CHARCHK result bExist=%d fieldID=%d channel=%d gaeaID=%d", (int)bExist, (int)m_dwFieldSvrID, (int)m_nServerChannel, (int)pNetMsg->dwGaeaID );
 	GLMSG::SNETPC_FIELDSVR_CHARCHK_FB NetMsgFb;
 	NetMsgFb.bExist = bExist;
 	NetMsgFb.nChannel = m_nServerChannel;
@@ -1599,6 +1601,7 @@ BOOL GLGaeaServer::RequestFieldSvrCharChk ( DWORD dwClientID, GLMSG::SNETPC_FIEL
 		if ( m_pDBMan )
 		{
 			//	Note : DB 저장후에 메시지 처리하기 위해서 db action에 등록하여 메시지 전송.
+			CDebugSet::ToLogFile ( "[JOINDBG] Field CHARCHK sending FB via DB-action (bExist=true) clientID=%d", (int)dwClientID );
 			CDbActToAgentMsg *pToAgent = new CDbActToAgentMsg;
 			pToAgent->SetMsg ( dwClientID, (NET_MSG_GENERIC*)&NetMsgFb );
 			m_pDBMan->AddJob ( pToAgent );
@@ -1607,6 +1610,7 @@ BOOL GLGaeaServer::RequestFieldSvrCharChk ( DWORD dwClientID, GLMSG::SNETPC_FIEL
 	else
 	{
 		//	Note : DB 작업이 없을 경우에는 즉시 전송.
+		CDebugSet::ToLogFile ( "[JOINDBG] Field CHARCHK sending FB direct SENDTOAGENT (not exist) clientID=%d", (int)dwClientID );
 		SENDTOAGENT ( dwClientID, &NetMsgFb );
 	}
 

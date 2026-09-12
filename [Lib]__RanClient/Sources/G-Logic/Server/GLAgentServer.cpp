@@ -82,8 +82,10 @@ GLAgentServer::~GLAgentServer(void)
 DWORD GLAgentServer::GetFieldServer ( SNATIVEID &sMapID )
 {
 	SMAPNODE* pMapNode = m_sMapList.FindMapNode ( sMapID );
+	if ( !pMapNode )	CDebugSet::ToLogFile ( "[JOINDBG] GetFieldServer map=%d/%d -> fieldID=%d (FIELDSERVER_MAX=%d means NOT FOUND)", (int)sMapID.wMainID, (int)sMapID.wSubID, (int)FIELDSERVER_MAX, (int)FIELDSERVER_MAX );
 	if ( !pMapNode )	return FIELDSERVER_MAX;
 
+	CDebugSet::ToLogFile ( "[JOINDBG] GetFieldServer map=%d/%d -> fieldID=%d (FIELDSERVER_MAX=%d means NOT FOUND)", (int)sMapID.wMainID, (int)sMapID.wSubID, (int)pMapNode->dwFieldSID, (int)FIELDSERVER_MAX );
 	return pMapNode->dwFieldSID;
 }
 
@@ -936,18 +938,25 @@ void GLAgentServer::GameJoinToFieldSvr ( NET_MSG_GENERIC* nmg, DWORD dwClientID,
 {
 	GLMSG::SNETPC_SAVECHARPOSRST_FROMDB* pNetMsg = (GLMSG::SNETPC_SAVECHARPOSRST_FROMDB*)nmg; // (DB->Agent)
 
+	CDebugSet::ToLogFile ( "[JOINDBG] GameJoinToFieldSvr ENTER charID=%d fieldServer=%d clientID=%d gaeaID=%d", (int)pNetMsg->dwCharID, (int)pNetMsg->dwFieldServer, (int)dwClientID, (int)dwGaeaID );
+
 	PGLCHARAG pChar = GetCharID ( pNetMsg->dwCharID );
+	if ( !pChar )	CDebugSet::ToLogFile ( "[JOINDBG] GameJoinToFieldSvr char NOT FOUND charID=%d", (int)pNetMsg->dwCharID );
 	if ( !pChar )	return;
 
+	CDebugSet::ToLogFile ( "[JOINDBG] GameJoinToFieldSvr ConnectFieldSvr PRE clientID=%d fieldServer=%d gaeaID=%d channel=%d", (int)pChar->m_dwClientID, (int)pNetMsg->dwFieldServer, (int)pChar->m_dwGaeaID, (int)pChar->m_nChannel );
 	if ( m_pMsgServer->ConnectFieldSvr ( pChar->m_dwClientID, pNetMsg->dwFieldServer, pChar->m_dwGaeaID, pChar->m_nChannel ) != NET_OK )
 	{
         //	캐릭터가 생성될 필드서버로 접속이 실패함
+		CDebugSet::ToLogFile ( "[JOINDBG] GameJoinToFieldSvr ConnectFieldSvr result FAILED clientID=%d fieldServer=%d gaeaID=%d channel=%d", (int)pChar->m_dwClientID, (int)pNetMsg->dwFieldServer, (int)pChar->m_dwGaeaID, (int)pChar->m_nChannel );
+		CDebugSet::ToLogFile ( "[JOINDBG] GameJoinToFieldSvr CANT-CONNECT-FIELD fieldID=%d name=%s", (int)pNetMsg->dwFieldServer, pChar->m_szName );
 		DEBUGMSG_WRITE ( "Can't connect field. FIELDID : %d, CID[%d] name %s",
 			pNetMsg->dwFieldServer, pChar->m_dwClientID, pChar->m_szName );
 		return;
 	}
 
 	//	캐릭터 조인 정보 전송
+	CDebugSet::ToLogFile ( "[JOINDBG] GameJoinToFieldSvr ConnectFieldSvr result OK clientID=%d fieldServer=%d gaeaID=%d channel=%d", (int)pChar->m_dwClientID, (int)pNetMsg->dwFieldServer, (int)pChar->m_dwGaeaID, (int)pChar->m_nChannel );
 	NET_GAME_JOIN_FIELDSVR NetJoinField;
 	NetJoinField.emType				= EMJOINTYPE_FIRST;
 	NetJoinField.dwSlotAgentClient	= pChar->m_dwClientID;
@@ -973,6 +982,7 @@ void GLAgentServer::GameJoinToFieldSvr ( NET_MSG_GENERIC* nmg, DWORD dwClientID,
 	NetJoinField.sVietnamGainSystem = pChar->m_sVietnamSystem;
 
 
+	CDebugSet::ToLogFile ( "[JOINDBG] GameJoinToFieldSvr sending JOIN_FIELDSVR to field, name=%s startMap=%d/%d gate=%d", pChar->m_szName, (int)pChar->m_sStartMapID.wMainID, (int)pChar->m_sStartMapID.wSubID, (int)pChar->m_dwStartGate );
 	SENDTOFIELD ( pChar->m_dwClientID, &NetJoinField );
 
 	//	Note : 케릭터의 현재 접속 필드서버 및 현재 맵 ID 지정.

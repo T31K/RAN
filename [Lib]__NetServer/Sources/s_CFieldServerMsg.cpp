@@ -128,11 +128,16 @@ void CFieldServer::MsgJoinInfoFromClient(MSG_LIST* pMsg)
 	
 	NET_GAME_JOIN_FIELD_IDENTITY* pMsgIdent = (NET_GAME_JOIN_FIELD_IDENTITY*) pMsg->Buffer;
 
+	CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg: MsgJoinInfoFromClient ENTER clientID=%d emType=%d slotFieldAgent=%d gaeaID=%d", (int)dwClient, (int)pMsgIdent->emType, (int)pMsgIdent->dwSlotFieldAgent, (int)pMsgIdent->dwGaeaID );
+	if ( !(pMsgIdent->emType==EMJOINTYPE_FIRST || pMsgIdent->emType==EMJOINTYPE_MOVEMAP || pMsgIdent->emType==EMJOINTYPE_REBIRTH) )	CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg: MsgJoinInfoFromClient BAIL bad-emType emType=%d clientID=%d", (int)pMsgIdent->emType, (int)dwClient );
+
 	if ( !(pMsgIdent->emType==EMJOINTYPE_FIRST||
 		pMsgIdent->emType==EMJOINTYPE_MOVEMAP||
 		pMsgIdent->emType==EMJOINTYPE_REBIRTH) )											return;
 
+	if ( pMsgIdent->dwSlotFieldAgent >= (DWORD) m_pClientManager->GetMaxClient() )	CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg: MsgJoinInfoFromClient BAIL slotFieldAgent-out-of-range slot=%d clientID=%d", (int)pMsgIdent->dwSlotFieldAgent, (int)dwClient );
 	if ( pMsgIdent->dwSlotFieldAgent >= (DWORD) m_pClientManager->GetMaxClient() )					return;
+	if ( m_pClientManager->GetGaeaID(pMsgIdent->dwSlotFieldAgent) != pMsgIdent->dwGaeaID )	CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg: MsgJoinInfoFromClient BAIL gaeaID-mismatch expected=%d got=%d clientID=%d", (int)m_pClientManager->GetGaeaID(pMsgIdent->dwSlotFieldAgent), (int)pMsgIdent->dwGaeaID, (int)dwClient );
 	if ( m_pClientManager->GetGaeaID(pMsgIdent->dwSlotFieldAgent) != pMsgIdent->dwGaeaID )	return;
 
 	m_pClientManager->SetSlotFieldClient ( pMsgIdent->dwSlotFieldAgent, dwClient );
@@ -143,6 +148,7 @@ void CFieldServer::MsgJoinInfoFromClient(MSG_LIST* pMsg)
 	PGLCHAR pGLChar = GLGaeaServer::GetInstance().GetChar(pMsgIdent->dwGaeaID);
 	if ( !pGLChar )
 	{
+		CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg: MsgJoinInfoFromClient BAIL char-not-on-field-DROPOUT gaeaID=%d clientID=%d", (int)pMsgIdent->dwGaeaID, (int)dwClient );
 		GLMSG::SNET_DROP_OUT_FORCED NetMsg_OUT;
 		SendAgent ( dwClient, (LPVOID) &NetMsg_OUT );
 		return;
@@ -150,11 +156,13 @@ void CFieldServer::MsgJoinInfoFromClient(MSG_LIST* pMsg)
 
 	//	Note : 클라이언트에 Field 서버와의 접속 인식후 접속 종류에 따른 응답.
 	//
+	CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg: MsgJoinInfoFromClient OK identity-verified, processing emType=%d clientID=%d gaeaID=%d", (int)pMsgIdent->emType, (int)dwClient, (int)pMsgIdent->dwGaeaID );
 	switch ( pMsgIdent->emType )
 	{
 	case EMJOINTYPE_FIRST:
 		{
 			//	캐릭터 생성 정보 정보 전송.
+			CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg: MsgJoinInfoFromClient EMJOINTYPE_FIRST -> MsgGameJoin clientID=%d", (int)dwClient );
 			pGLChar->MsgGameJoin();
 		}
 		break;
@@ -231,6 +239,7 @@ void CFieldServer::MsgLoginInfoAgent(MSG_LIST* pMsg)
 // Agent->Field : 캐릭터 접속.
 void CFieldServer::MsgGameJoinChar ( MSG_LIST* pMsg )
 {
+	if (pMsg == NULL) CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg: MsgGameJoinChar NULL-pMsg bail" );
 	if (pMsg == NULL) return;
 
 	int nRetCode	= 0;
@@ -241,6 +250,7 @@ void CFieldServer::MsgGameJoinChar ( MSG_LIST* pMsg )
 	DWORD dwClient = pMsg->dwClient; // Field's agent slot number	
 	DWORD dwGaeaID = pNgj->dwGaeaID; // Agent's GaeaID
 	DWORD dwChaNum = pNgj->nChaNum;  // Agent's Character Number
+	CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg: MsgGameJoinChar ENTER clientID=%d gaeaID=%d charNum=%d", (int)dwClient, (int)dwGaeaID, (int)dwChaNum );
     __time64_t tPREMIUM = pNgj->tPREMIUM;
 	__time64_t tCHATBLOCK = pNgj->tCHATBLOCK;
 	
@@ -302,6 +312,7 @@ void CFieldServer::MsgGameJoinChar ( MSG_LIST* pMsg )
 					sEventTime, 
 					sVietnamGainSystem );
 	pDBAction->InitEx ( pNgj->sStartMap, pNgj->dwStartGate, pNgj->vStartPos, pNgj->emType, pNgj->dwActState );*/
+	CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg: MsgGameJoinChar queueing DB-job CGetChaInfoAndJoinField clientID=%d charNum=%d startMap=%d/%d", (int)dwClient, (int)dwChaNum, (int)pNgj->sStartMap.wMainID, (int)pNgj->sStartMap.wSubID );
 	COdbcManager::GetInstance()->AddJob( pDBAction );
 }
 
