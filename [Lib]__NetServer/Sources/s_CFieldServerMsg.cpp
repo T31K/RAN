@@ -384,6 +384,7 @@ void CFieldServer::MsgFieldReqJoin ( MSG_LIST* pMsg )
 	//** Add EventTime
 	PGLCHAR pGLChar;
 
+	CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg(join2): about to CreatePC clientID=%d gaeaID=%d", (int)dwClientID, (int)dwGaeaID );
 	pGLChar = GLGaeaServer::GetInstance().CreatePC ( pCHAR_DATA.get(), dwClientID, dwGaeaID, FALSE,
 							&sINFO.m_sStartMap, sINFO.m_dwStartGate, sINFO.m_vStartPos, sINFO.m_emType, dwThaiCCafeClass, 
 							sINFO.m_sEventTime.loginTime, nMyCCafeClass );
@@ -391,9 +392,11 @@ void CFieldServer::MsgFieldReqJoin ( MSG_LIST* pMsg )
 	
 	if ( !pGLChar )
 	{
+		CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg(join2): CreatePC returned NULL (join fails here; EMCJOIN_FB_ERROR already sent by CreatePC), clientID=%d gaeaID=%d", (int)dwClientID, (int)dwGaeaID );
 		CConsoleMessage::GetInstance()->Write(_T("ERROR:Initialized character instance failed"));
 		return;
 	}
+	CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg(join2): CreatePC OK clientID=%d gaeaID=%d", (int)dwClientID, (int)dwGaeaID );
 
 	if( pGLChar->m_wLevel == 1 && pGLChar->m_vSavePos.x == 0.0f && pGLChar->m_vSavePos.z == 0.0f  )
 	{
@@ -464,13 +467,16 @@ void CFieldServer::MsgFieldReqJoin( DWORD dwClientID, SCHARDATA2 * pCHAR_DATA, G
 
 	//	캐릭터 생성
 	//
+	CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg(reqjoin): about to CreatePC clientID=%d gaeaID=%d", (int)dwClientID, (int)dwGaeaID );
 	PGLCHAR pGLChar = GLGaeaServer::GetInstance().CreatePC ( pCHAR_DATA, dwClientID, dwGaeaID, FALSE,
 		&sINFO.m_sStartMap, sINFO.m_dwStartGate, sINFO.m_vStartPos, sINFO.m_emType );
 	if ( !pGLChar )
 	{
+		CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg(reqjoin): CreatePC returned NULL (join fails here; EMCJOIN_FB_ERROR already sent by CreatePC), clientID=%d gaeaID=%d", (int)dwClientID, (int)dwGaeaID );
 		CConsoleMessage::GetInstance()->Write(_T("ERROR:Initialized character instance failed"));
 		return;
 	}
+	CDebugSet::ToLogFile ( "[JOINDBG] FieldMsg(reqjoin): CreatePC OK clientID=%d gaeaID=%d", (int)dwClientID, (int)dwGaeaID );
 
 	//	Note : action state 속성 변경.
 	//

@@ -747,9 +747,11 @@ void CAgentServer::MsgAgentReqJoin(MSG_LIST* pMsg)
 
 	//*/*/*/*
 	//	캐릭터 생성
+	CDebugSet::ToLogFile ( "[JOINDBG] AgentMsg: about to CreatePC clientID=%d channel=%d name=%s", (int)dwClientID, (int)nChannel, pCHAR_DATA->m_szName );
 	PGLCHARAG pChar = GLAgentServer::GetInstance().CreatePC( pCHAR_DATA.get(), dwClientID, nChannel, dwThaiCCafeClass, sChinaTime, nMyCCafeClass );
 	if ( !pChar )
 	{
+		CDebugSet::ToLogFile ( "[JOINDBG] AgentMsg: CreatePC returned NULL (join fails here; sending EMCJOIN_FB_ERROR to client) clientID=%d channel=%d", (int)dwClientID, (int)nChannel );
 		//	접속 시도자에게  메시지를 보냅니다.
 		GLMSG::SNETLOBBY_CHARJOIN_FB NetMsgFB;
 		NetMsgFB.emCharJoinFB = EMCJOIN_FB_ERROR;
@@ -777,6 +779,7 @@ void CAgentServer::MsgAgentReqJoin(MSG_LIST* pMsg)
 
 
 	//	가이아서버에 정보 세팅
+	CDebugSet::ToLogFile ( "[JOINDBG] AgentMsg: CreatePC OK (agent created char, CHARCHK forwarded to field) clientID=%d channel=%d gaeaID=%d", (int)dwClientID, (int)nChannel, (int)pChar->m_dwGaeaID );
 	m_pClientManager->SetGaeaID( dwClientID, pChar->m_dwGaeaID );
 	
 	// 캐릭터 상태 온라인

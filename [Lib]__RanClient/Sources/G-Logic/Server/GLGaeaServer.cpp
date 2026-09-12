@@ -541,6 +541,8 @@ PGLCHAR GLGaeaServer::CreatePC ( PCHARDATA2 pCharData, DWORD _dwClientID, DWORD 
 		return NULL;
 	}
 
+	CDebugSet::ToLogFile ( "[JOINDBG] Gaea::CreatePC ENTER name=%s school=%d class=%d startMap=%d/%d startGate=%d lvl=%d gaeaID=%d", pCharData->m_szName, (int)pCharData->m_wSchool, (int)pCharData->m_emClass, (int)pCharData->m_sStartMapID.wMainID, (int)pCharData->m_sStartMapID.wSubID, (int)pCharData->m_dwStartGate, (int)pCharData->m_wLevel, (int)_dwGaeaID );
+
 	if ( _dwGaeaID>=m_dwMaxClient )
 	{
 		CDebugSet::ToLogFile ( "ERR : _dwGaeaID>=m_dwMaxClient  %d>%d.", _dwGaeaID, m_dwMaxClient );
@@ -563,18 +565,21 @@ PGLCHAR GLGaeaServer::CreatePC ( PCHARDATA2 pCharData, DWORD _dwClientID, DWORD 
 	bDB = FindSaveDBUserID ( pCharData->GetUserID() );
 	if ( bDB )
 	{
+		CDebugSet::ToLogFile ( "[JOINDBG] Gaea::CreatePC bad-bDB-logout name=%s userID=%d clientID=%d", pCharData->m_szName, (int)pCharData->GetUserID(), (int)_dwClientID );
 		CDebugSet::ToLogFile ( "ERR : logout 했지만 아직 db에 저장이 안된 상태로 있음." );
 		goto _ERROR;
 	}
 
 	if ( _dwClientID >= GLGaeaServer::GetInstance().GetMaxClient()*2 )
 	{
+		CDebugSet::ToLogFile ( "[JOINDBG] Gaea::CreatePC bad-clientid-overflow clientID=%d max=%d", (int)_dwClientID, (int)GLGaeaServer::GetInstance().GetMaxClient() );
 		CDebugSet::ToLogFile ( "ERR : max client id overflow! id = %d", _dwClientID );
 		goto _ERROR;
 	}
 
 	if ( _dwGaeaID >= GLGaeaServer::GetInstance().GetMaxClient() )
 	{
+		CDebugSet::ToLogFile ( "[JOINDBG] Gaea::CreatePC bad-gaeaid-overflow gaeaID=%d max=%d", (int)_dwGaeaID, (int)GLGaeaServer::GetInstance().GetMaxClient() );
 		CDebugSet::ToLogFile ( "ERR : max gaea id overflow! id = %d", _dwGaeaID );
 		goto _ERROR;
 	}
@@ -583,6 +588,7 @@ PGLCHAR GLGaeaServer::CreatePC ( PCHARDATA2 pCharData, DWORD _dwClientID, DWORD 
 	//		잘못되어 가이아 ID가 반환되지 않은 상태에서 다시 사용될 가능성이 있음.
 	if ( m_PCArray[_dwGaeaID] )
 	{
+		CDebugSet::ToLogFile ( "[JOINDBG] Gaea::CreatePC bad-PCArray-slot-used gaeaID=%d name=%s", (int)_dwGaeaID, pCharData->m_szName );
 		CDebugSet::ToLogFile ( "ERR : m_PCArray[_dwGaeaID] 이미 점거된 gaeaid" );
 		goto _ERROR;
 	}
@@ -591,6 +597,7 @@ PGLCHAR GLGaeaServer::CreatePC ( PCHARDATA2 pCharData, DWORD _dwClientID, DWORD 
 	name_iter = m_PCNameMap.find(pCharData->m_szName);
 	if ( name_iter != m_PCNameMap.end() )
 	{
+		CDebugSet::ToLogFile ( "[JOINDBG] Gaea::CreatePC bad-name-already-in-map name=%s", pCharData->m_szName );
 		CDebugSet::ToLogFile ( "ERR : char name 이미 진입되어 있음" );
 		goto _ERROR;
 	}
@@ -598,6 +605,7 @@ PGLCHAR GLGaeaServer::CreatePC ( PCHARDATA2 pCharData, DWORD _dwClientID, DWORD 
 	client_iter = m_PCClientIDMAP.find(_dwClientID);
 	if ( client_iter != m_PCClientIDMAP.end() )
 	{
+		CDebugSet::ToLogFile ( "[JOINDBG] Gaea::CreatePC bad-clientid-already-in-map clientID=%d name=%s", (int)_dwClientID, pCharData->m_szName );
 		//	종전 접속자를 DropOut 시킵니다.
 		DWORD dwGaeaID = (*client_iter).second;
 		//	Note : 케릭터가 지워진다.
@@ -635,6 +643,7 @@ PGLCHAR GLGaeaServer::CreatePC ( PCHARDATA2 pCharData, DWORD _dwClientID, DWORD 
 					if( pGate == NULL )
 					{
 						GetConsoleMsg()->Write( "ERROR: pGate = NULL, UserID %s UserLv %d Money %d", pCharData->m_szName, pCharData->m_wLevel, pCharData->m_lnMoney );
+						CDebugSet::ToLogFile ( "[JOINDBG] Gaea::CreatePC bad-startgate-pGate-NULL name=%s startMap=%d/%d startGate=%d", pCharData->m_szName, (int)pCharData->m_sStartMapID.wMainID, (int)pCharData->m_sStartMapID.wSubID, (int)_dwStartGate );
 						goto _ERROR;
 
 					}
@@ -674,6 +683,7 @@ PGLCHAR GLGaeaServer::CreatePC ( PCHARDATA2 pCharData, DWORD _dwClientID, DWORD 
 		pLandMan = GetByMapID ( nidSTARTMAP );
 		if ( !pLandMan )
 		{
+			CDebugSet::ToLogFile ( "[JOINDBG] Gaea::CreatePC bad-GetByMapID-null-1 name=%s startMap=%d/%d", pCharData->m_szName, (int)nidSTARTMAP.wMainID, (int)nidSTARTMAP.wSubID );
 			DEBUGMSG_WRITE ( "[오류] #1 GetByMapID() 캐릭터가 생성될 LAND(혹은 GATE)가 잘못지정되었습니다." );
 			goto _ERROR;
 		}
@@ -681,6 +691,7 @@ PGLCHAR GLGaeaServer::CreatePC ( PCHARDATA2 pCharData, DWORD _dwClientID, DWORD 
 		pGateMan = &pLandMan->GetLandGateMan ();
 		if ( !pGateMan )
 		{
+			CDebugSet::ToLogFile ( "[JOINDBG] Gaea::CreatePC bad-GetLandGateMan-null-2 name=%s", pCharData->m_szName );
 			DEBUGMSG_WRITE ( "[오류] #2 GetLandGateMan() 캐릭터가 생성될 LAND(혹은 GATE)가 잘못지정되었습니다." );
 			goto _ERROR;
 
@@ -704,8 +715,10 @@ PGLCHAR GLGaeaServer::CreatePC ( PCHARDATA2 pCharData, DWORD _dwClientID, DWORD 
 	pCharData->m_sEventTime.Init();
 	pCharData->m_sEventTime.loginTime = loginTime;
 	hr = pPChar->CreateChar ( pLandMan, vStartPos, pCharData, m_pd3dDevice, bNEW );
+	CDebugSet::ToLogFile ( "[JOINDBG] Gaea::CreatePC CreateChar returned hr=0x%08x name=%s", (unsigned int)hr, pCharData->m_szName );
 	if ( FAILED(hr) )
 	{
+		CDebugSet::ToLogFile ( "[JOINDBG] Gaea::CreatePC bad-CreateChar-FAILED hr=0x%08x name=%s", (unsigned int)hr, pCharData->m_szName );
 		DEBUGMSG_WRITE ( "[오류] pPChar->CreateChar () 호출중 오류로 인하여 캐릭터 생성에 실패. [%s]", pCharData->m_szName );
 		goto _ERROR;
 	}
@@ -717,6 +730,7 @@ PGLCHAR GLGaeaServer::CreatePC ( PCHARDATA2 pCharData, DWORD _dwClientID, DWORD 
 	BOOL bOk = DropPC ( pLandMan->GetMapID(), vStartPos, pPChar );
 	if ( !bOk )
 	{
+		CDebugSet::ToLogFile ( "[JOINDBG] Gaea::CreatePC bad-DropPC-FAILED name=%s gaeaID=%d", pCharData->m_szName, (int)_dwGaeaID );
 		DEBUGMSG_WRITE ( "[오류] DropPC () 호출중 오류로 인하여 캐릭터 생성에 실패. [%s]", pCharData->m_szName );
 		goto _ERROR;
 	}
@@ -842,6 +856,7 @@ PGLCHAR GLGaeaServer::CreatePC ( PCHARDATA2 pCharData, DWORD _dwClientID, DWORD 
 	}
 #endif
 
+	CDebugSet::ToLogFile ( "[JOINDBG] Gaea::CreatePC SUCCESS name=%s", pCharData->m_szName );
 	return pPChar;	//	케릭터 생성 성공.
 
 _ERROR:

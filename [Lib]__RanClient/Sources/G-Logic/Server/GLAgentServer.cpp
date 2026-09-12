@@ -7,6 +7,7 @@
 
 #include "../[Lib]__RanClientUI/Sources/TextUI/GameTextControl.h"
 #include "GLClubDeathMatch.h"
+#include "../[Lib]__Engine/Sources/DxTools/DebugSet.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -332,6 +333,8 @@ PGLCHARAG GLAgentServer::CreatePC ( GLCHARAG_DATA *pchar_data, DWORD dwClientID,
 	HRESULT hr = S_OK;
 	if ( !pchar_data )	return NULL;
 
+	CDebugSet::ToLogFile ( "[JOINDBG] Agent::CreatePC ENTER name=%s userID=%d clientID=%d", pchar_data->m_szName, (int)pchar_data->m_dwUserID, (int)dwClientID );
+
 	PGLCHARAG pPChar = NULL;
 	CHAR_MAP_ITER name_iter;
 	CLIENTMAP_ITER client_iter;
@@ -387,6 +390,7 @@ PGLCHARAG GLAgentServer::CreatePC ( GLCHARAG_DATA *pchar_data, DWORD dwClientID,
 
 		m_pConsoleMsg->Write( _T("ERROR:m_PCNameMap failed") );
 
+		CDebugSet::ToLogFile ( "[JOINDBG] Agent::CreatePC dup-PCNameMap name=%s clientID=%d", pchar_data->m_szName, (int)dwClientID );
 		return NULL;
 	}
 
@@ -414,6 +418,7 @@ PGLCHARAG GLAgentServer::CreatePC ( GLCHARAG_DATA *pchar_data, DWORD dwClientID,
 
 		m_pConsoleMsg->Write( _T("ERROR:m_UAccountMap failed") );
 
+		CDebugSet::ToLogFile ( "[JOINDBG] Agent::CreatePC dup-UAccountMap account=%s clientID=%d", pchar_data->m_szUserName, (int)dwClientID );
 		return NULL;
 	}
 
@@ -440,6 +445,7 @@ PGLCHARAG GLAgentServer::CreatePC ( GLCHARAG_DATA *pchar_data, DWORD dwClientID,
 
 		m_pConsoleMsg->Write( _T("ERROR:m_UserNumberMap failed") );
 
+		CDebugSet::ToLogFile ( "[JOINDBG] Agent::CreatePC dup-UserNumberMap userID=%d clientID=%d", (int)pchar_data->m_dwUserID, (int)dwClientID );
 		return NULL;
 	}
 
@@ -458,11 +464,13 @@ PGLCHARAG GLAgentServer::CreatePC ( GLCHARAG_DATA *pchar_data, DWORD dwClientID,
 
 		m_pConsoleMsg->Write( _T("ERROR:m_PCClientIDMAP failed") );
 
+		CDebugSet::ToLogFile ( "[JOINDBG] Agent::CreatePC dup-PCClientIDMAP clientID=%d", (int)dwClientID );
 		return NULL;
 	}
 
 	//	Note 케릭터 가이아 ID 지정.
 	//
+	if ( m_FreePCGIDs.empty() )		CDebugSet::ToLogFile ( "[JOINDBG] Agent::CreatePC bad-FreePCGIDs-empty name=%s clientID=%d", pchar_data->m_szName, (int)dwClientID );
 	if ( m_FreePCGIDs.empty() )		goto _ERROR;
 	DWORD dwGaeaID = m_FreePCGIDs.front();
 	m_FreePCGIDs.pop_front ();
@@ -498,6 +506,7 @@ PGLCHARAG GLAgentServer::CreatePC ( GLCHARAG_DATA *pchar_data, DWORD dwClientID,
 	hr = pPChar->CreateChar ( pchar_data );
 	if ( FAILED(hr) )
 	{
+		CDebugSet::ToLogFile ( "[JOINDBG] Agent::CreatePC bad-CreateChar-FAILED hr=0x%08x name=%s", (unsigned int)hr, pchar_data->m_szName );
 		DEBUGMSG_WRITE ( "pPChar->CreateChar () 호출중 오류로 인하여 캐릭터 생성에 실패하였습니다. [%s]", pchar_data->m_szName );
 		goto _ERROR;
 	}
@@ -548,6 +557,7 @@ PGLCHARAG GLAgentServer::CreatePC ( GLCHARAG_DATA *pchar_data, DWORD dwClientID,
 	StringCchCopy ( NetMsg.szName, CHAR_SZNAME, pPChar->m_szName );
 	SENDTOALLCHANNEL ( (NET_MSG_GENERIC*) &NetMsg );
 
+	CDebugSet::ToLogFile ( "[JOINDBG] Agent::CreatePC SUCCESS -> sending CHARCHK to field, name=%s curMap=%d/%d", pPChar->m_szName, (int)pPChar->m_sCurMapID.wMainID, (int)pPChar->m_sCurMapID.wSubID );
 	return pPChar;	//	케릭터 생성 성공.
 
 _ERROR:
