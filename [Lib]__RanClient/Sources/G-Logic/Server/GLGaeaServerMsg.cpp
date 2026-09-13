@@ -102,6 +102,59 @@ BOOL GLGaeaServer::ChatMsgProc ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD d
 			if ( !pChar )			return FALSE;
 			if ( pChar->IsCHATBLOCK() )		return FALSE;
 
+			//	[GIVE] GM cheat: "/give <MID> <SID> [count]" spawns item into own inventory.
+			if ( 0 == strncmp ( pNetMsg->szChatMsg, "/give ", 6 ) )
+			{
+				int nGiveMID = -1, nGiveSID = -1, nGiveCnt = 1;
+				int nGiveRead = sscanf ( pNetMsg->szChatMsg + 6, "%d %d %d", &nGiveMID, &nGiveSID, &nGiveCnt );
+				if ( nGiveCnt < 1 )	nGiveCnt = 1;
+
+				SITEM *pGiveITEM = NULL;
+				BOOL bGiveOK = FALSE;
+				if ( nGiveRead >= 2 && nGiveMID >= 0 && nGiveSID >= 0 )
+				{
+					SNATIVEID nidGIVE ( (WORD)nGiveMID, (WORD)nGiveSID );
+					pGiveITEM = GLItemMan::GetInstance().GetItem ( nidGIVE );
+					if ( pGiveITEM )
+					{
+						WORD wGivePosX(0), wGivePosY(0);
+						BOOL bGiveSpace = pChar->m_cInventory.FindInsrtable ( pGiveITEM->sBasicOp.wInvenSizeX, pGiveITEM->sBasicOp.wInvenSizeY, wGivePosX, wGivePosY );
+						if ( bGiveSpace )
+						{
+							SITEMCUSTOM sGIVE_NEW;
+							CTime cGiveTIME = CTime::GetCurrentTime();
+							sGIVE_NEW.sNativeID = nidGIVE;
+							sGIVE_NEW.tBORNTIME = cGiveTIME.GetTime();
+							sGIVE_NEW.wTurnNum = ( nGiveCnt > 1 ) ? (WORD)nGiveCnt : pGiveITEM->GETAPPLYNUM();
+							sGIVE_NEW.cDAMAGE = (BYTE)pGiveITEM->sBasicOp.wGradeAttack;
+							sGIVE_NEW.cDEFENSE = (BYTE)pGiveITEM->sBasicOp.wGradeDefense;
+							sGIVE_NEW.cGenType = EMGEN_GMEDIT;
+							sGIVE_NEW.cChnID = (BYTE)GLGaeaServer::GetInstance().GetServerChannel();
+							sGIVE_NEW.cFieldID = (BYTE)GLGaeaServer::GetInstance().GetFieldSvrID();
+							sGIVE_NEW.lnGenNum = GLITEMLMT::GetInstance().RegItemGen ( sGIVE_NEW.sNativeID, EMGEN_GMEDIT );
+
+							pChar->m_cInventory.InsertItem ( sGIVE_NEW, wGivePosX, wGivePosY );
+
+							SINVENITEM *pGiveINVEN = pChar->m_cInventory.GetItem ( wGivePosX, wGivePosY );
+							if ( pGiveINVEN )
+							{
+								GLMSG::SNETPC_INVEN_INSERT NetMsgGiveInven;
+								NetMsgGiveInven.Data = *pGiveINVEN;
+								SENDTOCLIENT ( pChar->m_dwClientID, &NetMsgGiveInven );
+
+								GLITEMLMT::GetInstance().ReqItemRoute ( sGIVE_NEW, ID_CHAR, 0, ID_CHAR, pChar->m_dwCharID, EMITEM_ROUTE_CHAR, sGIVE_NEW.wTurnNum );
+								bGiveOK = TRUE;
+							}
+						}
+					}
+				}
+
+				CDebugSet::ToLogFile ( "[GIVE] /give MID=%d SID=%d count=%d read=%d item=%s insert=%s", nGiveMID, nGiveSID, nGiveCnt, nGiveRead, pGiveITEM ? "found" : "NULL", bGiveOK ? "OK" : "FAIL" );
+
+				//	Do not broadcast the cheat command as normal chat.
+				return TRUE;
+			}
+
 			NET_CHAT_FB NetChatFB;
 			NetChatFB.emType = pNetMsg->emType;
 			StringCchCopy ( NetChatFB.szName, CHR_ID_LENGTH+1, pChar->GetCharData2().m_szName );
