@@ -298,13 +298,14 @@ BOOL CALLBACK MainDlgProc(HWND hDlg,UINT iMessage,WPARAM wParam,LPARAM lParam)
 				break;
 			};
 
-			if (SERVER_CONTROLLER::bInit == false)
+			// FIX: only trip the one-shot bInit guard on OUR timer. Login also
+			// runs CHECK_MAINTENANCE (1s) + order_ctrl timers which fire before
+			// the 2s auto-start timer; the old code set bInit on the first timer
+			// of ANY id, so `<exe> start` never auto-started the Login server.
+			if (SERVER_CONTROLLER::bInit == false && wParam == SERVER_CONTROLLER_TIMER_ID)
 			{
-				if (wParam == SERVER_CONTROLLER_TIMER_ID)
-				{
-					::KillTimer(hDlg, SERVER_CONTROLLER_TIMER_ID);
-					executeCmdParameter(hDlg);
-				}
+				::KillTimer(hDlg, SERVER_CONTROLLER_TIMER_ID);
+				executeCmdParameter(hDlg);
 				SERVER_CONTROLLER::bInit = true;
 			}
 		}
