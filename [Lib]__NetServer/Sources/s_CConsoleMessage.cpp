@@ -223,6 +223,7 @@ void CConsoleMessage::Write( int nType, int nPosition, const TCHAR* msg, ... )
 	StringCchVPrintf(szBuf, C_BUFFER_SIZE+1, msg, ap);	
 	va_end(ap);	
 
+	CDebugSet::ToLogFile("[CONSOLE t%d p%d] %s", nType, nPosition, szBuf);
 	switch (nType)
 	{
 	case LOG_TEXT_NPROTECT:

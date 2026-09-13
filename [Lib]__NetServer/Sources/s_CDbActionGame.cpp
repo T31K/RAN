@@ -505,11 +505,14 @@ void CGetChaInfoAndJoinField::Init(
 int CGetChaInfoAndJoinField::Execute ( CServer* pServer )
 {
 	int nRetCode;
+	CDebugSet::ToLogFile("[JOINDBG] ChaJoinJob ENTER user=%d chaNum=%d", (int)m_cCharData.GetUserID(), (int)m_cCharData.m_dwCharID);
 	nRetCode = COdbcManager::GetInstance()->GetCharacterInfo(m_cCharData.GetUserID(),
 		                                                     (int) m_cCharData.m_dwCharID,
 															 &m_cCharData);
+	CDebugSet::ToLogFile("[JOINDBG] ChaJoinJob GetCharacterInfo ret=%d (DB_ERROR means bail)", nRetCode);
 	if (nRetCode == DB_ERROR)
 	{
+		CDebugSet::ToLogFile("[JOINDBG] ChaJoinJob BAIL at GetCharacterInfo ret=%d user=%d chaNum=%d", nRetCode, (int)m_cCharData.GetUserID(), (int)m_cCharData.m_dwCharID);
 		CConsoleMessage::GetInstance()->WriteDatabase( _T("ERROR:Character DB read failed") );
 		return NET_OK;
 	}
@@ -518,8 +521,10 @@ int CGetChaInfoAndJoinField::Execute ( CServer* pServer )
 	m_cCharData.m_tCHATBLOCK = m_tChatBlock; // Chat Block 만료시간
 
 	nRetCode = COdbcManager::GetInstance()->ReadUserInven( &m_cCharData );
+	CDebugSet::ToLogFile("[JOINDBG] ChaJoinJob ReadUserInven ret=%d (DB_ERROR means bail)", nRetCode);
 	if (nRetCode == DB_ERROR)
 	{
+		CDebugSet::ToLogFile("[JOINDBG] ChaJoinJob BAIL at ReadUserInven ret=%d user=%d chaNum=%d", nRetCode, (int)m_cCharData.GetUserID(), (int)m_cCharData.m_dwCharID);
 		CConsoleMessage::GetInstance()->WriteDatabase( _T("ERROR:UserInven DB read failed.") );
 		return NET_OK;
 	}
@@ -555,6 +560,7 @@ int CGetChaInfoAndJoinField::Execute ( CServer* pServer )
 
 	CFieldServer* pFieldServer = reinterpret_cast<CFieldServer*> (pServer);
 	//pFieldServer->MsgFieldReqJoin( m_dwClientID, &m_cCharData, sINFO );
+	CDebugSet::ToLogFile("[JOINDBG] ChaJoinJob SUCCESS -> InsertMsg join to field clientID=%d chaNum=%d", (int)m_dwClientID, (int)m_cCharData.m_dwCharID);
 	pFieldServer->InsertMsg ( m_dwClientID, (char*) &NetMsg );
 
 	return NET_OK;

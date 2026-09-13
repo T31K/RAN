@@ -19,8 +19,10 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 {
 	assert(pChaData&&"(GLCHARAG_DATA*)의 값이 유효하지 않습니다.");
 	SQLRETURN sReturn = 0;
+	CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo(AGDATA) ENTER user=%d chaNum=%d", nUserNumber, nChaNum);
 
 	ODBC_STMT* pConn = m_pGameDB->GetConnection();
+	if (!pConn) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo(AGDATA) BAIL no-conn chaNum=%d", nChaNum);
 	if (!pConn) return DB_ERROR;
 
 	// 캐릭터 정보를 가져온다.
@@ -45,6 +47,7 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 							(SQLCHAR*)szTemp, 
 							SQL_NTS);
 
+	if ((sReturn != SQL_SUCCESS) && (sReturn != SQL_SUCCESS_WITH_INFO)) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo(AGDATA) BAIL exec-main-select sReturn=%d chaNum=%d", (int)sReturn, nChaNum);
 	if ((sReturn != SQL_SUCCESS) && (sReturn != SQL_SUCCESS_WITH_INFO)) 
 	{
         Print(szTemp);		
@@ -82,6 +85,7 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
+		if (sReturn == SQL_ERROR) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo(AGDATA) BAIL fetch-main sReturn=%d chaNum=%d", (int)sReturn, nChaNum);
 		if (sReturn == SQL_ERROR)
         {
             Print(szTemp);		

@@ -325,6 +325,8 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 								   int nChaNum, 
 								   SCHARDATA2* pChaData2)
 {
+	CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo(SCHARDATA2) ENTER user=%d chaNum=%d", nUserNumber, nChaNum);
+	if (nUserNumber <= 0 || nChaNum <= 0) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo BAIL bad-params user=%d chaNum=%d", nUserNumber, nChaNum);
 	if (nUserNumber <= 0 || nChaNum <= 0)
 	{
 		return DB_ERROR;
@@ -333,6 +335,7 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 	int nRowCount = 0;
 	SQLRETURN sReturn = 0;
 	ODBC_STMT* pConn = m_pGameDB->GetConnection();
+	if (!pConn) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo BAIL no-conn chaNum=%d", nChaNum);
 	if (!pConn) return DB_ERROR;
 
 	// 캐릭터 정보를 가져온다.
@@ -370,6 +373,7 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 							(SQLCHAR*) szTemp,
 							SQL_NTS);
 
+	if ((sReturn != SQL_SUCCESS) && (sReturn != SQL_SUCCESS_WITH_INFO)) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo BAIL exec-main-select sReturn=%d chaNum=%d", (int)sReturn, nChaNum);
 	if ((sReturn != SQL_SUCCESS) && (sReturn != SQL_SUCCESS_WITH_INFO)) 
 	{
         Print(szTemp);		
@@ -457,6 +461,7 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 	while (true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
+		if (sReturn == SQL_ERROR) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo BAIL fetch-main sReturn=%d chaNum=%d", (int)sReturn, nChaNum);
 		if (sReturn == SQL_ERROR)
         {	
             Print(szTemp);		
@@ -623,6 +628,7 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 
 //	strTemp.freeze( false );	// Note : std::strstream의 freeze. 안 하면 Leak 발생.
 
+	if (nRowCount != 1) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo BAIL row-count nRowCount=%d chaNum=%d", nRowCount, nChaNum);
 	if (nRowCount != 1)
 	{
 		return DB_ERROR;
@@ -646,6 +652,8 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 	
 	// Skill	
 	sReturn = m_pGameDB->ReadImage("ChaInfo.ChaSkills", nChaNum, ByteStream);
+	CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo sub ChaSkills ret=%d", (int)sReturn);
+	if (sReturn == DB_ERROR) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo BAIL sub-ChaSkills sReturn=%d chaNum=%d", (int)sReturn, nChaNum);
 	if (sReturn == DB_ERROR) 
 		return DB_ERROR;
 	else 
@@ -653,6 +661,8 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 
 	// Skill Quick Slot		
 	sReturn = m_pGameDB->ReadImage("ChaInfo.ChaSkillSlot", nChaNum, ByteStream);
+	CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo sub ChaSkillSlot ret=%d", (int)sReturn);
+	if (sReturn == DB_ERROR) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo BAIL sub-ChaSkillSlot sReturn=%d chaNum=%d", (int)sReturn, nChaNum);
 	if (sReturn == DB_ERROR)
 		return DB_ERROR;
 	else
@@ -661,6 +671,8 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 	// 2003-11-27 : Add
 	// Action Quick Slot	
 	sReturn = m_pGameDB->ReadImage("ChaInfo.ChaActionSlot", nChaNum, ByteStream);
+	CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo sub ChaActionSlot ret=%d", (int)sReturn);
+	if (sReturn == DB_ERROR) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo BAIL sub-ChaActionSlot sReturn=%d chaNum=%d", (int)sReturn, nChaNum);
 	if (sReturn == DB_ERROR)
 		return DB_ERROR;
 	else
@@ -668,6 +680,8 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 
 	// Quest
 	sReturn = m_pGameDB->ReadImage("ChaInfo.ChaQuest", nChaNum, ByteStream);
+	CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo sub ChaQuest ret=%d", (int)sReturn);
+	if (sReturn == DB_ERROR) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo BAIL sub-ChaQuest sReturn=%d chaNum=%d", (int)sReturn, nChaNum);
 	if (sReturn == DB_ERROR)
 		return DB_ERROR;
 	else
@@ -679,6 +693,8 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 	//strPutOnItems << "SELECT ChaInfo.ChaPutOnItems FROM ChaInfo where (ChaNum=" <<  nChaNum << ")";
 	//strPutOnItems << std::ends;
 	sReturn = m_pGameDB->ReadImage("ChaInfo.ChaPutOnItems", nChaNum, ByteStream);
+	CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo sub ChaPutOnItems ret=%d", (int)sReturn);
+	if (sReturn == DB_ERROR) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo BAIL sub-ChaPutOnItems sReturn=%d chaNum=%d", (int)sReturn, nChaNum);
 	//strPutOnItems.freeze( false );	// Note : std::strstream의 freeze. 안 하면 Leak 발생.
 
 	if (sReturn == DB_ERROR)
@@ -693,6 +709,8 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 	//strChaInven << "SELECT ChaInfo.ChaInven FROM ChaInfo where (ChaNum=" <<  nChaNum << ")";
 	//strChaInven << std::ends;
 	sReturn = m_pGameDB->ReadImage("ChaInfo.ChaInven", nChaNum, ByteStream);
+	CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo sub ChaInven ret=%d", (int)sReturn);
+	if (sReturn == DB_ERROR) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo BAIL sub-ChaInven sReturn=%d chaNum=%d", (int)sReturn, nChaNum);
 	//strChaInven.freeze( false );	// Note : std::strstream의 freeze. 안 하면 Leak 발생.
 	if (sReturn == DB_ERROR)
 		return DB_ERROR;
@@ -702,6 +720,8 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 #if defined(VN_PARAM) //vietnamtest%%%
 	// 베트남의 필요한 추가 정보를 가져온다.
 	sReturn = m_pGameDB->ReadImage("ChaInfo.VTAddInven", nChaNum, ByteStream);
+	CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo sub VTAddInven ret=%d", (int)sReturn);
+	if (sReturn == DB_ERROR) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo BAIL sub-VTAddInven sReturn=%d chaNum=%d", (int)sReturn, nChaNum);
 
 	if (sReturn == DB_ERROR)
 		return DB_ERROR;
@@ -711,6 +731,8 @@ int COdbcManager::GetCharacterInfo(int nUserNumber,
 
 	
 	sReturn = m_pGameDB->ReadImage("ChaInfo.ChaCoolTime", nChaNum, ByteStream);
+	CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo sub ChaCoolTime ret=%d", (int)sReturn);
+	if (sReturn == DB_ERROR) CDebugSet::ToLogFile("[JOINDBG] GetCharacterInfo BAIL sub-ChaCoolTime sReturn=%d chaNum=%d", (int)sReturn, nChaNum);
 	//strChaInven.freeze( false );	// Note : std::strstream의 freeze. 안 하면 Leak 발생.
 	if (sReturn == DB_ERROR)
 		return DB_ERROR;

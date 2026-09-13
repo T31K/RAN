@@ -462,6 +462,7 @@ int	COdbcSupervisor::ReadImagePet(
 		int nPetNum, 
 		CByteStream &ByteStream )
 {
+	if (objName == NULL) CDebugSet::ToLogFile("[JOINDBG] ReadImagePet BAIL null-objName");
 	if (objName == NULL) return DB_ERROR;
 
 	SQLRETURN	sReturn = 0; // SQL return value (short)	
@@ -470,6 +471,7 @@ int	COdbcSupervisor::ReadImagePet(
 	SQLINTEGER  lSize=0, lTotalSize=0;	
 
 	pConn = GetConnection();
+	if (!pConn) CDebugSet::ToLogFile("[JOINDBG] ReadImagePet BAIL no-conn obj=%s", objName);
 	if (!pConn) return DB_ERROR;	
 
 	//std::strstream strTemp;
@@ -486,6 +488,7 @@ int	COdbcSupervisor::ReadImagePet(
 		SQL_NTS );
 	//strTemp.freeze( false );	// Note : std::strstream의 freeze. 안 하면 Leak 발생.
 
+	if ( sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO ) CDebugSet::ToLogFile("[JOINDBG] ReadImagePet BAIL exec-select sReturn=%d obj=%s", (int)sReturn, objName);
 	if ( sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO )
 	{
 		Print( GetErrorString( pConn->hStmt ) );
@@ -499,6 +502,7 @@ int	COdbcSupervisor::ReadImagePet(
 	// Retrieve and display each row of data.
 	while ( (sReturn = ::SQLFetch(pConn->hStmt) ) != SQL_NO_DATA )
 	{			
+		if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO) CDebugSet::ToLogFile("[JOINDBG] ReadImagePet fetch abnormal sReturn=%d obj=%s", (int)sReturn, objName);
 		while (1) 
 		{
 			::memset( pBinary, 0, DB_IMAGE_BUF_SIZE );
@@ -516,10 +520,12 @@ int	COdbcSupervisor::ReadImagePet(
 				lTotalSize += lSize;
 				ByteStream.WriteBuffer( (LPBYTE) pBinary, lSize );
 			}
+			if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO && sReturn != SQL_NO_DATA) CDebugSet::ToLogFile("[JOINDBG] ReadImagePet chunk-read abnormal sReturn=%d lSize=%d obj=%s", (int)sReturn, (int)lSize, objName);
 			if (sReturn == SQL_NO_DATA || lSize == 0)
 				break;
 		}
 
+		if ( lTotalSize < DB_IMAGE_MIN_SIZE ) CDebugSet::ToLogFile("[JOINDBG] ReadImagePet buffer-discard totalSize=%d obj=%s", (int)lTotalSize, objName);
 		if ( lTotalSize < DB_IMAGE_MIN_SIZE )		
 			ByteStream.ClearBuffer ();
 	}
@@ -534,6 +540,7 @@ int	COdbcSupervisor::ReadImageVehicle(
 								  int nCharNum,
 								  CByteStream &ByteStream )
 {
+	if (objName == NULL) CDebugSet::ToLogFile("[JOINDBG] ReadImageVehicle BAIL null-objName");
 	if (objName == NULL) return DB_ERROR;
 
 	SQLRETURN	sReturn = 0; // SQL return value (short)	
@@ -542,6 +549,7 @@ int	COdbcSupervisor::ReadImageVehicle(
 	SQLINTEGER  lSize=0, lTotalSize=0;	
 
 	pConn = GetConnection();
+	if (!pConn) CDebugSet::ToLogFile("[JOINDBG] ReadImageVehicle BAIL no-conn obj=%s", objName);
 	if (!pConn) return DB_ERROR;	
 
 	//std::strstream strTemp;
@@ -558,6 +566,7 @@ int	COdbcSupervisor::ReadImageVehicle(
 		SQL_NTS );
 	//strTemp.freeze( false );	// Note : std::strstream의 freeze. 안 하면 Leak 발생.
 
+	if ( sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO ) CDebugSet::ToLogFile("[JOINDBG] ReadImageVehicle BAIL exec-select sReturn=%d obj=%s", (int)sReturn, objName);
 	if ( sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO )
 	{
 		Print( GetErrorString( pConn->hStmt ) );
@@ -571,6 +580,7 @@ int	COdbcSupervisor::ReadImageVehicle(
 	// Retrieve and display each row of data.
 	while ( (sReturn = ::SQLFetch(pConn->hStmt) ) != SQL_NO_DATA )
 	{			
+		if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO) CDebugSet::ToLogFile("[JOINDBG] ReadImageVehicle fetch abnormal sReturn=%d obj=%s", (int)sReturn, objName);
 		while (1) 
 		{
 			::memset( pBinary, 0, DB_IMAGE_BUF_SIZE );
@@ -588,10 +598,12 @@ int	COdbcSupervisor::ReadImageVehicle(
 				lTotalSize += lSize;
 				ByteStream.WriteBuffer( (LPBYTE) pBinary, lSize );
 			}
+			if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO && sReturn != SQL_NO_DATA) CDebugSet::ToLogFile("[JOINDBG] ReadImageVehicle chunk-read abnormal sReturn=%d lSize=%d obj=%s", (int)sReturn, (int)lSize, objName);
 			if (sReturn == SQL_NO_DATA || lSize == 0)
 				break;
 		}
 
+		if ( lTotalSize < DB_IMAGE_MIN_SIZE ) CDebugSet::ToLogFile("[JOINDBG] ReadImageVehicle buffer-discard totalSize=%d obj=%s", (int)lTotalSize, objName);
 		if ( lTotalSize < DB_IMAGE_MIN_SIZE )		
 			ByteStream.ClearBuffer ();
 	}
@@ -605,6 +617,7 @@ int	COdbcSupervisor::ReadImage(
 		int nChaNum, 
 		CByteStream &ByteStream )
 {
+	if (objName == NULL) CDebugSet::ToLogFile("[JOINDBG] ReadImage BAIL null-objName");
 	if (objName == NULL) return DB_ERROR;
 
 	SQLRETURN	sReturn = 0; // SQL return value (short)	
@@ -613,6 +626,7 @@ int	COdbcSupervisor::ReadImage(
 	SQLINTEGER  lSize=0, lTotalSize=0;	
 	
 	pConn = GetConnection();
+	if (!pConn) CDebugSet::ToLogFile("[JOINDBG] ReadImage BAIL no-conn obj=%s", objName);
     if (!pConn) return DB_ERROR;	
 	
 	//std::strstream strTemp;
@@ -629,6 +643,7 @@ int	COdbcSupervisor::ReadImage(
 					SQL_NTS );
 	//strTemp.freeze( false );	// Note : std::strstream의 freeze. 안 하면 Leak 발생.
 
+	if ( sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO ) CDebugSet::ToLogFile("[JOINDBG] ReadImage BAIL exec-select sReturn=%d obj=%s", (int)sReturn, objName);
 	if ( sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO )
 	{
 		Print( GetErrorString( pConn->hStmt ) );
@@ -642,6 +657,7 @@ int	COdbcSupervisor::ReadImage(
 	// Retrieve and display each row of data.
 	while ( (sReturn = ::SQLFetch(pConn->hStmt) ) != SQL_NO_DATA )
 	{			
+		if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO) CDebugSet::ToLogFile("[JOINDBG] ReadImage fetch abnormal sReturn=%d obj=%s", (int)sReturn, objName);
 		while (1) 
 		{
 			::memset( pBinary, 0, DB_IMAGE_BUF_SIZE );
@@ -659,10 +675,12 @@ int	COdbcSupervisor::ReadImage(
 				lTotalSize += lSize;
 				ByteStream.WriteBuffer( (LPBYTE) pBinary, lSize );
 			}
+			if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO && sReturn != SQL_NO_DATA) CDebugSet::ToLogFile("[JOINDBG] ReadImage chunk-read abnormal sReturn=%d lSize=%d obj=%s", (int)sReturn, (int)lSize, objName);
 			if (sReturn == SQL_NO_DATA || lSize == 0)
 				break;
 		}
 
+		if ( lTotalSize < DB_IMAGE_MIN_SIZE ) CDebugSet::ToLogFile("[JOINDBG] ReadImage buffer-discard totalSize=%d obj=%s", (int)lTotalSize, objName);
 		if ( lTotalSize < DB_IMAGE_MIN_SIZE )		
 			ByteStream.ClearBuffer ();
 	}
@@ -683,6 +701,7 @@ int	COdbcSupervisor::ReadImage(
 	SQLINTEGER  lSize=0, lTotalSize=0;
 	
 	pConn = GetConnection();
+    if (!pConn) CDebugSet::ToLogFile("[JOINDBG] ReadImage(sql) BAIL no-conn");
     if (!pConn) return DB_ERROR;
 	
 	// Create a result
@@ -690,6 +709,7 @@ int	COdbcSupervisor::ReadImage(
 					pConn->hStmt,
 					(SQLCHAR*) strTemp.str(),
 					SQL_NTS);
+	if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO) CDebugSet::ToLogFile("[JOINDBG] ReadImage(sql) BAIL exec-select sReturn=%d", (int)sReturn);
 	if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO)
 	{
 		Print(GetErrorString(pConn->hStmt));
@@ -702,6 +722,7 @@ int	COdbcSupervisor::ReadImage(
 	// Retrieve and display each row of data.
 	while ((sReturn = ::SQLFetch(pConn->hStmt)) != SQL_NO_DATA) 
 	{			
+		if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO) CDebugSet::ToLogFile("[JOINDBG] ReadImage(sql) fetch abnormal sReturn=%d", (int)sReturn);
 		while (1) 
 		{
 			::memset(pBinary, 0, DB_IMAGE_BUF_SIZE);
@@ -713,10 +734,12 @@ int	COdbcSupervisor::ReadImage(
 				lTotalSize += lSize;
 				ByteStream.WriteBuffer((LPBYTE) pBinary, lSize);
 			}
+			if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO && sReturn != SQL_NO_DATA) CDebugSet::ToLogFile("[JOINDBG] ReadImage(sql) chunk-read abnormal sReturn=%d lSize=%d", (int)sReturn, (int)lSize);
 			if (sReturn == SQL_NO_DATA || lSize == 0)
 				break;
 		}
 
+		if ( lTotalSize < DB_IMAGE_MIN_SIZE ) CDebugSet::ToLogFile("[JOINDBG] ReadImage(sql) buffer-discard totalSize=%d", (int)lTotalSize);
 		if ( lTotalSize < DB_IMAGE_MIN_SIZE )		
 			ByteStream.ClearBuffer ();
 	}

@@ -96,6 +96,7 @@ int COdbcManager::SetChaInvenNum(int nChaNum, WORD wInvenLine)
 // 유저 인벤토리를 읽는다
 int COdbcManager::ReadUserInven(SCHARDATA2* pChaData2)
 {    
+	CDebugSet::ToLogFile("[JOINDBG] ReadUserInven ENTER user=%d chaNum=%d", (int)pChaData2->GetUserID(), (int)pChaData2->m_dwCharID);
 	bool bInven = CheckInven(CCfg::GetInstance()->GetServerGroup(), pChaData2->GetUserID());
 	if (!bInven)
 	{
@@ -104,6 +105,7 @@ int COdbcManager::ReadUserInven(SCHARDATA2* pChaData2)
 
 	// 유저인벤토리, money
 	ODBC_STMT* pConn = m_pGameDB->GetConnection();
+	if (!pConn) CDebugSet::ToLogFile("[JOINDBG] ReadUserInven BAIL no-conn user=%d", (int)pChaData2->GetUserID());
 	if (!pConn) return DB_ERROR;
 
 	SQLRETURN sReturn = 0;
@@ -121,6 +123,7 @@ int COdbcManager::ReadUserInven(SCHARDATA2* pChaData2)
 							(SQLCHAR*)szTemp, 
 							SQL_NTS);
 
+	if ((sReturn != SQL_SUCCESS) && (sReturn != SQL_SUCCESS_WITH_INFO)) CDebugSet::ToLogFile("[JOINDBG] ReadUserInven BAIL exec-userinven-select sReturn=%d user=%d", (int)sReturn, (int)pChaData2->GetUserID());
 	if ((sReturn != SQL_SUCCESS) && (sReturn != SQL_SUCCESS_WITH_INFO)) 
     {
         Print(szTemp);
@@ -140,6 +143,7 @@ int COdbcManager::ReadUserInven(SCHARDATA2* pChaData2)
 	while(true)
 	{
 		sReturn = ::SQLFetch(pConn->hStmt);
+		if (sReturn == SQL_ERROR) CDebugSet::ToLogFile("[JOINDBG] ReadUserInven BAIL fetch-userinven sReturn=%d user=%d", (int)sReturn, (int)pChaData2->GetUserID());
 		if (sReturn == SQL_ERROR)
         {
             Print(szTemp);
@@ -222,6 +226,8 @@ int COdbcManager::ReadUserInven(SCHARDATA2* pChaData2)
 	// image
 	CByteStream ByteStream;
 	sReturn = ReadUserInven(CCfg::GetInstance()->GetServerGroup(), pChaData2->GetUserID(), ByteStream);
+	CDebugSet::ToLogFile("[JOINDBG] ReadUserInven sub UserInven-image ret=%d", (int)sReturn);
+	if (sReturn == DB_ERROR) CDebugSet::ToLogFile("[JOINDBG] ReadUserInven BAIL sub-UserInven-image sReturn=%d user=%d", (int)sReturn, (int)pChaData2->GetUserID());
 	if (sReturn == DB_ERROR)
 		return DB_ERROR;
 
@@ -235,6 +241,7 @@ int	COdbcManager::ReadUserInven(int SGNum, DWORD dwUserNum, CByteStream &ByteStr
 {
 	SQLRETURN sReturn = 0;
 	ODBC_STMT* pConn = m_pGameDB->GetConnection();
+	if (!pConn) CDebugSet::ToLogFile("[JOINDBG] ReadUserInvenImage BAIL no-conn user=%d", (int)dwUserNum);
 	if (!pConn) return DB_ERROR;
 
 	ByteStream.ClearBuffer();
@@ -248,6 +255,7 @@ int	COdbcManager::ReadUserInven(int SGNum, DWORD dwUserNum, CByteStream &ByteStr
 
 	// Create a result
 	sReturn = ::SQLExecDirect(pConn->hStmt, (SQLCHAR*)szTemp, SQL_NTS);
+	if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO) CDebugSet::ToLogFile("[JOINDBG] ReadUserInvenImage BAIL exec-select sReturn=%d user=%d", (int)sReturn, (int)dwUserNum);
 	if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO)
 	{
         Print(szTemp);
@@ -264,6 +272,7 @@ int	COdbcManager::ReadUserInven(int SGNum, DWORD dwUserNum, CByteStream &ByteStr
 
 	while ((sReturn = ::SQLFetch(pConn->hStmt)) != SQL_NO_DATA) 
 	{			
+		if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO) CDebugSet::ToLogFile("[JOINDBG] ReadUserInvenImage fetch abnormal sReturn=%d user=%d", (int)sReturn, (int)dwUserNum);
 		while (1) 
 		{
 			::ZeroMemory(pBuffer, DB_IMAGE_BUF_SIZE);
@@ -275,10 +284,12 @@ int	COdbcManager::ReadUserInven(int SGNum, DWORD dwUserNum, CByteStream &ByteStr
 				lTotalSize += lSize;
 				ByteStream.WriteBuffer((LPBYTE) pBuffer, lSize);
 			}
+			if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO && sReturn != SQL_NO_DATA) CDebugSet::ToLogFile("[JOINDBG] ReadUserInvenImage chunk-read abnormal sReturn=%d lSize=%d user=%d", (int)sReturn, (int)lSize, (int)dwUserNum);
 			if (sReturn == SQL_NO_DATA || lSize == 0)
 				break;
 			Sleep( 0 );
 		}
+		if ( lTotalSize < DB_IMAGE_MIN_SIZE ) CDebugSet::ToLogFile("[JOINDBG] ReadUserInvenImage buffer-discard totalSize=%d user=%d", (int)lTotalSize, (int)dwUserNum);
 		if ( lTotalSize < DB_IMAGE_MIN_SIZE )		
 			ByteStream.ClearBuffer ();
 		Sleep( 0 );
