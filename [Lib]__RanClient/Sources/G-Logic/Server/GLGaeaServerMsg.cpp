@@ -104,10 +104,10 @@ BOOL GLGaeaServer::ChatMsgProc ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD d
 			if ( pChar->IsCHATBLOCK() )		return FALSE;
 
 			//	[GIVE] GM cheat: "/give <MID> <SID> [count]" spawns item into own inventory.
-			if ( 0 == strncmp ( pNetMsg->szChatMsg, "!give ", 6 ) )
+			if ( 0 == strncmp ( pNetMsg->szChatMsg, "getitem ", 8 ) )
 			{
 				int nGiveMID = -1, nGiveSID = -1, nGiveCnt = 1;
-				int nGiveRead = sscanf ( pNetMsg->szChatMsg + 6, "%d %d %d", &nGiveMID, &nGiveSID, &nGiveCnt );
+				int nGiveRead = sscanf ( pNetMsg->szChatMsg + 8, "%d %d %d", &nGiveMID, &nGiveSID, &nGiveCnt );
 				if ( nGiveCnt < 1 )	nGiveCnt = 1;
 
 				SITEM *pGiveITEM = NULL;
@@ -157,10 +157,10 @@ BOOL GLGaeaServer::ChatMsgProc ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD d
 			}
 
 			//	[ALLSKILLS] GM cheat: "/allskills [rank]" maxes every skill the player's class can learn.
-			if ( 0 == strncmp ( pNetMsg->szChatMsg, "!allskills", 10 ) )
+			if ( 0 == strncmp ( pNetMsg->szChatMsg, "maxskills", 9 ) )
 			{
 				int nAllReqRank = -1;	//	optional 1-based rank; < 0 => use each skill's own max.
-				sscanf ( pNetMsg->szChatMsg + 10, "%d", &nAllReqRank );
+				sscanf ( pNetMsg->szChatMsg + 9, "%d", &nAllReqRank );
 
 				int nAllCount = 0;
 				for ( WORD wAllClass = 0; wAllClass < EMSKILLCLASS_NSIZE; ++wAllClass )
