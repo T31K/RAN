@@ -538,11 +538,17 @@ void* CNetUser::getRcvMsg( bool bClient )
 		if( bClient )
 		{
 			void* msg = m_pRcvManager->getMsg(bClient);
-			if( msg != NULL ) CheckGarbageMsg(msg);
-			else if( strlen( m_pRcvManager->getGarbageMsg() ) == 0 )
+			// [JOINDBG] Anti-tamper garbage-value scheme disabled symmetrically (client
+			// GetGarbageMsg()==0, server getOneMsg passes through when no garbage present).
+			// Skip the legacy garbage validation/console spam; just log the field join.
+			if( msg != NULL )
 			{
-				CConsoleMessage::GetInstance()->Write("CNetUser::Client invalid Msg!! Channel %d, IP %s, UserNum %d, ID %s",
-					m_nChannel, m_szIp, m_uib.nUserNum, m_uib.szUserID );
+				NET_MSG_GENERIC* pDbgNmg = (NET_MSG_GENERIC*) msg;
+				if( pDbgNmg->nType == NET_MSG_JOIN_FIELD_IDENTITY )
+				{
+					DWORD dwEmType = *(DWORD*)( (char*)msg + sizeof(NET_MSG_GENERIC) );
+					CDebugSet::ToLogFile( "[JOINDBG] NetUser::getRcvMsg JOIN_FIELD_IDENTITY bClient=%d slotType=%d dwSize=%d bodyOffset=%d emType=%d", (int)bClient, (int)m_dwSlotType, (int)pDbgNmg->dwSize, (int)sizeof(NET_MSG_GENERIC), (int)dwEmType );
+				}
 			}
 			return msg;
 		}else{

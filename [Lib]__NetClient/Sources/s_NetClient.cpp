@@ -872,22 +872,11 @@ INT CNetClient::SendBuffer2()
 
 int CNetClient::GetGarbageMsg()
 {
-	char szTempChar[12];
-	int garbageNum = 0;
-	while(1)
-	{
-		ZeroMemory( szTempChar, 12 );
-		garbageNum = RandomNumber( 0, 4 );
-		strcpy_s( szTempChar, GARBAGE_DATA[garbageNum] );
-
-		if( strcmp( szTempChar, m_szSendGarbageMsg[0] ) != 0 &&
-			strcmp( szTempChar, m_szSendGarbageMsg[1] ) != 0 )
-		{
-			strcpy_s( m_szSendGarbageMsg[m_dwGarbageNum], szTempChar );
-			return (int)strlen(m_szSendGarbageMsg[m_dwGarbageNum]);
-		}
-	}
-	return -1;
+	// [JOINDBG] Anti-tamper garbage-value scheme disabled: always return 0 so that
+	// SendMsgAddGarbageValue() inserts no garbage bytes and does not bump dwSize.
+	// The server (CRcvMsgBuffer::getOneMsg) passes messages through unchanged when no
+	// garbage is present, keeping both ends symmetric on nGarbageLen == 0.
+	return 0;
 }
 
 char*  CNetClient::SendMsgAddGarbageValue( CHAR* buff, INT &nSize )
@@ -897,6 +886,9 @@ char*  CNetClient::SendMsgAddGarbageValue( CHAR* buff, INT &nSize )
 	DWORD dwBodySize   = nSize-dwHeaderSize;
 
 	int nGarbageLen = GetGarbageMsg();
+
+	if( ((NET_MSG_GENERIC*)buff)->nType == NET_MSG_JOIN_FIELD_IDENTITY )
+		CDebugSet::ToLogFile( "[JOINDBG] Client SendMsgAddGarbageValue JOIN_FIELD_IDENTITY nGarbageLen=%d nSize=%d netState=%d", nGarbageLen, (int)nSize, (int)m_nClientNetState );
 
 	char *sendBuffer;
 	sendBuffer	 = new char[nSize+nGarbageLen+1];

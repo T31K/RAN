@@ -219,6 +219,14 @@ void* CRcvMsgBuffer::getOneMsg(bool bClient)
 			memcpy( &m_pOneMsg[dwHeaderSize], &m_pRcvBuffer[dwHeaderSize+nGarbageLen], dwBodySize+1 );
 			SAFE_DELETE( pNmg2 );
 		}
+		else
+		{
+			// [JOINDBG] Anti-tamper garbage-value scheme disabled: no garbage present.
+			// Pass the message through unchanged instead of dropping it (return NULL),
+			// keeping the receive path symmetric with the client sending nGarbageLen == 0.
+			nGarbageLen = 0;
+			::CopyMemory(m_pOneMsg, m_pRcvBuffer, nOneMsgSize);
+		}
 	}else{
 		// 하나의 메시지를 돌려주기 위해서 버퍼로 복사하고...
 		::CopyMemory(m_pOneMsg, m_pRcvBuffer, nOneMsgSize);
