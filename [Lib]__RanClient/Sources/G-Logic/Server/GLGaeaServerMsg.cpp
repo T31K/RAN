@@ -91,6 +91,7 @@ void GLGaeaServer::SENDTOCLUBCLIENT_ONMAP ( DWORD dwMapID, DWORD dwClubID, LPVOI
 BOOL GLGaeaServer::ChatMsgProc ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD dwGaeaID )
 {
 	NET_CHAT* pNetMsg = (NET_CHAT*) nmg;
+	CDebugSet::ToLogFile ( "[CHATDBG] ChatMsgProc type=%d client=%d gaea=%d msg=[%s]", (int)pNetMsg->emType, (int)dwClientID, (int)dwGaeaID, pNetMsg->szChatMsg );
 
 	if( m_bEmptyMsg ) return TRUE;
 
