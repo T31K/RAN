@@ -155,6 +155,58 @@ BOOL GLGaeaServer::ChatMsgProc ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD d
 				return TRUE;
 			}
 
+			//	[ALLSKILLS] GM cheat: "/allskills [rank]" maxes every skill the player's class can learn.
+			if ( 0 == strncmp ( pNetMsg->szChatMsg, "/allskills", 10 ) )
+			{
+				int nAllReqRank = -1;	//	optional 1-based rank; < 0 => use each skill's own max.
+				sscanf ( pNetMsg->szChatMsg + 10, "%d", &nAllReqRank );
+
+				int nAllCount = 0;
+				for ( WORD wAllClass = 0; wAllClass < EMSKILLCLASS_NSIZE; ++wAllClass )
+				{
+					for ( WORD wAllIdx = 0; wAllIdx < GLSkillMan::MAX_CLASSSKILL; ++wAllIdx )
+					{
+						PGLSKILL pAllSkill = GLSkillMan::GetInstance().GetData ( wAllClass, wAllIdx );
+						if ( !pAllSkill )									continue;
+						if ( 0 == ( pChar->m_emClass & pAllSkill->m_sLEARN.dwCLASS ) )	continue;
+
+						DWORD dwAllMax = pAllSkill->m_sBASIC.dwMAXLEVEL;
+						if ( dwAllMax > (DWORD)SKILL::MAX_LEVEL )	dwAllMax = (DWORD)SKILL::MAX_LEVEL;
+						if ( dwAllMax == 0 )							continue;
+
+						//	Internal skill level is 0-based ( level 1 == wLevel 0 ), so max wLevel = dwMAXLEVEL - 1.
+						WORD wAllLvl = (WORD)( dwAllMax - 1 );
+						if ( nAllReqRank > 0 && (DWORD)nAllReqRank < dwAllMax )	wAllLvl = (WORD)( nAllReqRank - 1 );
+
+						SNATIVEID nidAllSkill ( wAllClass, wAllIdx );
+
+						//	Set the learned skill directly ( mirrors the client SKILLUP_FB handler: insert-or-replace ).
+						pChar->m_ExpSkills[nidAllSkill.dwID] = SCHARSKILL ( nidAllSkill, wAllLvl );
+
+						//	Notify client with the exact message the normal skill-up path sends.
+						GLMSG::SNETPC_REQ_SKILLUP_FB NetMsgAllFB;
+						NetMsgAllFB.sSkill.sNativeID = nidAllSkill;
+						NetMsgAllFB.sSkill.wLevel = wAllLvl;
+						NetMsgAllFB.emCHECK = EMSKILL_LEARN_OK;
+						SENDTOCLIENT ( pChar->m_dwClientID, &NetMsgAllFB );
+
+						++nAllCount;
+					}
+				}
+
+				//	Recompute passive-skill sums so newly-maxed passives apply, then sync to viewers.
+				pChar->INIT_DATA ( FALSE, FALSE );
+				GLMSG::SNETPC_UPDATE_PASSIVE_BRD NetMsgAllPassive;
+				NetMsgAllPassive.dwGaeaID = pChar->m_dwGaeaID;
+				NetMsgAllPassive.sSKILL_DATA = pChar->m_sSUM_PASSIVE;
+				pChar->SendMsgViewAround ( (NET_MSG_GENERIC*) &NetMsgAllPassive );
+
+				CDebugSet::ToLogFile ( "[ALLSKILLS] maxed %d skills for char=%d class=%d", nAllCount, (int)pChar->m_dwCharID, (int)pChar->m_emClass );
+
+				//	Do not broadcast the cheat command as normal chat.
+				return TRUE;
+			}
+
 			NET_CHAT_FB NetChatFB;
 			NetChatFB.emType = pNetMsg->emType;
 			StringCchCopy ( NetChatFB.szName, CHR_ID_LENGTH+1, pChar->GetCharData2().m_szName );
