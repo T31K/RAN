@@ -547,6 +547,11 @@ bool compare ( TYPE lvalue, EMCDT_SIGN emSign, TYPE rvalue )
 
 EMREQFAIL SLEVEL_REQUIRE::ISCOMPLETE ( GLCHARLOGIC * pCHARLOGIC ) const
 {
+	// DEV MOD: bypass all area-move requirements so any character can move
+	// anywhere (level range / item / skill / quest gates disabled). A level-100
+	// cheat char exceeds the max-level cap on these gates, blocking every move.
+	return EMREQUIRE_COMPLETE;
+
 	//m_bPartyMbr;
 
 	bool bcomplete(false);
