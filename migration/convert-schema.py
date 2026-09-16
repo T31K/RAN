@@ -49,10 +49,13 @@ for db in ('RanUser','RanGame1','RanLog','RanShop'):
         t,c,ty,ml,pr,sc,nul,ident = [x.strip() for x in p[:8]]
         base = conv(ty,ml,pr,sc)
         ddl = base + ('' if nul=='1' else ' NOT NULL')
-        # DEFAULT (skip on AUTO_INCREMENT and on TEXT/BLOB columns which can't take literal defaults)
+        # DEFAULT (skip on AUTO_INCREMENT). TEXT/BLOB need the value parenthesized (MariaDB 10.2+).
         dv = defs.get(t, {}).get(c)
-        if ident != '1' and dv is not None and 'LONGTEXT' not in base and 'LONGBLOB' not in base:
-            ddl += f' DEFAULT {dv}'
+        if ident != '1' and dv is not None:
+            if 'LONGTEXT' in base or 'LONGBLOB' in base:
+                ddl += f' DEFAULT ({dv})'
+            else:
+                ddl += f' DEFAULT {dv}'
         ddl += (' AUTO_INCREMENT' if ident=='1' else '')
         cols.setdefault(t,[]).append((c,ddl))
     pks = collections.OrderedDict()

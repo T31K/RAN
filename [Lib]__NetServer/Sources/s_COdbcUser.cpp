@@ -25,46 +25,46 @@ __time64_t COdbcManager::GetChatBlockTime(int nUserNum)
 	switch (m_nServiceProvider)
 	{
 	case SP_KOREA :
-		//strTemp << "SELECT ChatBlockDate FROM DaumUserInfo WITH (NOLOCK) WHERE UserNum=";
+		//strTemp << "SELECT ChatBlockDate FROM DaumUserInfo WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM DaumUserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM DaumUserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	case SP_JAPAN:
-		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM JapanUserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM JapanUserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	case SP_TERRA :
-		//strTemp << "SELECT ChatBlockDate FROM TerraUserInfo WITH (NOLOCK) WHERE UserNum=";
+		//strTemp << "SELECT ChatBlockDate FROM TerraUserInfo WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM TerraUserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM TerraUserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	case SP_MALAYSIA :
-		//strTemp << "SELECT ChatBlockDate FROM TerraUserInfo WITH (NOLOCK) WHERE UserNum=";
+		//strTemp << "SELECT ChatBlockDate FROM TerraUserInfo WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM TerraUserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM TerraUserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	case SP_THAILAND :
-		//strTemp << "SELECT ChatBlockDate FROM UserInfo WITH (NOLOCK) WHERE UserNum=";
+		//strTemp << "SELECT ChatBlockDate FROM UserInfo WHERE UserNum=";
 		//strTemp << nUserNum ;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM UserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM UserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	case SP_GLOBAL:
-		//strTemp << "SELECT ChatBlockDate FROM GspUserInfo WITH (NOLOCK) WHERE UserNum=";
+		//strTemp << "SELECT ChatBlockDate FROM GspUserInfo WHERE UserNum=";
 		//strTemp << nUserNum ;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM GspUserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM GspUserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	case SP_GS :
-		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM GSUserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM GSUserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	default :
-		//strTemp << "SELECT ChatBlockDate FROM UserInfo WITH (NOLOCK) WHERE UserNum=";
+		//strTemp << "SELECT ChatBlockDate FROM UserInfo WHERE UserNum=";
 		//strTemp << nUserNum ;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM UserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT ChatBlockDate FROM UserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	}
 
@@ -225,51 +225,51 @@ __time64_t COdbcManager::GetPremiumTime(int nUserNum)
 	switch (m_nServiceProvider)
 	{
 	case SP_KOREA :
-		//strTemp << "SELECT PremiumDate FROM DaumUserInfo WITH (NOLOCK) WHERE UserNum=";
+		//strTemp << "SELECT PremiumDate FROM DaumUserInfo WHERE UserNum=";
 		//strTemp << nUserNum ;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM DaumUserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM DaumUserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	case SP_TERRA :
-		//strTemp << "SELECT PremiumDate FROM TerraUserInfo WITH (NOLOCK) WHERE UserNum=";
+		//strTemp << "SELECT PremiumDate FROM TerraUserInfo WHERE UserNum=";
 		//strTemp << nUserNum ;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM TerraUserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM TerraUserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	case SP_MALAYSIA :
-		//strTemp << "SELECT PremiumDate FROM TerraUserInfo WITH (NOLOCK) WHERE UserNum=";
+		//strTemp << "SELECT PremiumDate FROM TerraUserInfo WHERE UserNum=";
 		//strTemp << nUserNum ;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM TerraUserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM TerraUserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	case SP_JAPAN :
-		//_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM ExciteUserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		//_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM ExciteUserInfo WHERE UserNum=%d", nUserNum );
 		// 일본 Excite에서 Gonzo로 서비스사 변경에 따른 변경
-		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM JapanUserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM JapanUserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	case SP_THAILAND :
-		//strTemp << "SELECT PremiumDate FROM UserInfo WITH (NOLOCK) WHERE UserNum=";
+		//strTemp << "SELECT PremiumDate FROM UserInfo WHERE UserNum=";
 		//strTemp << nUserNum ;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM UserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM UserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	case SP_GLOBAL:
-		//strTemp << "SELECT PremiumDate FROM GspUserInfo WITH (NOLOCK) WHERE UserNum=";
+		//strTemp << "SELECT PremiumDate FROM GspUserInfo WHERE UserNum=";
 		//strTemp << nUserNum ;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM GspUserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM GspUserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	case SP_GS :
-		//strTemp << "SELECT PremiumDate FROM UserInfo WITH (NOLOCK) WHERE UserNum=";
+		//strTemp << "SELECT PremiumDate FROM UserInfo WHERE UserNum=";
 		//strTemp << nUserNum ;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM GSUserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM GSUserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	default :
-		//strTemp << "SELECT PremiumDate FROM UserInfo WITH (NOLOCK) WHERE UserNum=";
+		//strTemp << "SELECT PremiumDate FROM UserInfo WHERE UserNum=";
 		//strTemp << nUserNum ;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM UserInfo WITH (NOLOCK) WHERE UserNum=%d", nUserNum );
+		_snprintf_s( szTemp, 128, "SELECT PremiumDate FROM UserInfo WHERE UserNum=%d", nUserNum );
 		break;
 	}
 
@@ -1094,46 +1094,46 @@ int COdbcManager::GetUserNum( const TCHAR* szUsrId )
 	switch (m_nServiceProvider)
 	{
 	case SP_KOREA :
-		//strTemp << "SELECT UserNum FROM DaumUserInfo WITH (NOLOCK)  WHERE UserUID='" << szUsrId << "'";
+		//strTemp << "SELECT UserNum FROM DaumUserInfo  WHERE UserUID='" << szUsrId << "'";
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "SELECT UserNum FROM DaumUserInfo WITH (NOLOCK)  WHERE UserUID='%s'", szUsrId );
+		_snprintf_s( szTemp, 256, "SELECT UserNum FROM DaumUserInfo  WHERE UserUID='%s'", szUsrId );
 		break;
 	case SP_JAPAN :
-		//strTemp << "SELECT UserNum FROM ExciteUserInfo WITH (NOLOCK) WHERE UserID='" << szUsrId << "'";
+		//strTemp << "SELECT UserNum FROM ExciteUserInfo WHERE UserID='" << szUsrId << "'";
 		//strTemp << std::ends;
-//		_snprintf_s( szTemp, 256, "SELECT UserNum FROM ExciteUserInfo WITH (NOLOCK)  WHERE UserUID='%s'", szUsrId );		
+//		_snprintf_s( szTemp, 256, "SELECT UserNum FROM ExciteUserInfo  WHERE UserUID='%s'", szUsrId );		
 		// 일본 Excite에서 Gonzo로 서비스사 변경에 따른 변경
-		_snprintf_s( szTemp, 256, "SELECT UserNum FROM JapanUserInfo WITH (NOLOCK)  WHERE UserUID='%s'", szUsrId );
+		_snprintf_s( szTemp, 256, "SELECT UserNum FROM JapanUserInfo  WHERE UserUID='%s'", szUsrId );
 		break;
 	case SP_TERRA :
-		//strTemp << "SELECT UserNum FROM TerraUserInfo WITH (NOLOCK) WHERE TLoginName='" << szUsrId << "'";
+		//strTemp << "SELECT UserNum FROM TerraUserInfo WHERE TLoginName='" << szUsrId << "'";
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "SELECT UserNum FROM TerraUserInfo WITH (NOLOCK)  WHERE UserUID='%s'", szUsrId );
+		_snprintf_s( szTemp, 256, "SELECT UserNum FROM TerraUserInfo  WHERE UserUID='%s'", szUsrId );
 		break;
 	case SP_MALAYSIA :
-		//strTemp << "SELECT UserNum FROM TerraUserInfo WITH (NOLOCK) WHERE TLoginName='" << szUsrId << "'";
+		//strTemp << "SELECT UserNum FROM TerraUserInfo WHERE TLoginName='" << szUsrId << "'";
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "SELECT UserNum FROM TerraUserInfo WITH (NOLOCK)  WHERE UserUID='%s'", szUsrId );
+		_snprintf_s( szTemp, 256, "SELECT UserNum FROM TerraUserInfo  WHERE UserUID='%s'", szUsrId );
 		break;
 	case SP_THAILAND :
-		//strTemp << "SELECT UserNum FROM UserInfo WITH (NOLOCK) WHERE UserID='" << szUsrId << "'";
+		//strTemp << "SELECT UserNum FROM UserInfo WHERE UserID='" << szUsrId << "'";
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "SELECT UserNum FROM UserInfo WITH (NOLOCK)  WHERE UserUID='%s'", szUsrId );
+		_snprintf_s( szTemp, 256, "SELECT UserNum FROM UserInfo  WHERE UserUID='%s'", szUsrId );
 		break;
 	case SP_GLOBAL:
-		//strTemp << "SELECT UserNum FROM GspUserInfo WITH (NOLOCK) WHERE UserID='" << szUsrId << "'";
+		//strTemp << "SELECT UserNum FROM GspUserInfo WHERE UserID='" << szUsrId << "'";
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "SELECT UserNum FROM GspUserInfo WITH (NOLOCK)  WHERE UserUID='%s'", szUsrId );
+		_snprintf_s( szTemp, 256, "SELECT UserNum FROM GspUserInfo  WHERE UserUID='%s'", szUsrId );
 		break;
 	case SP_GS :
-		//strTemp << "SELECT UserNum FROM UserInfo WITH (NOLOCK) WHERE UserID='" << szUsrId << "'";
+		//strTemp << "SELECT UserNum FROM UserInfo WHERE UserID='" << szUsrId << "'";
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "SELECT UserNum FROM GSUserInfo WITH (NOLOCK)  WHERE UserUID='%s'", szUsrId );
+		_snprintf_s( szTemp, 256, "SELECT UserNum FROM GSUserInfo  WHERE UserUID='%s'", szUsrId );
 		break;
 	default:		
-		//strTemp << "SELECT UserNum FROM UserInfo WITH (NOLOCK) WHERE UserID='" << szUsrId << "'";
+		//strTemp << "SELECT UserNum FROM UserInfo WHERE UserID='" << szUsrId << "'";
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "SELECT UserNum FROM UserInfo WITH (NOLOCK)  WHERE UserUID='%s'", szUsrId );
+		_snprintf_s( szTemp, 256, "SELECT UserNum FROM UserInfo  WHERE UserUID='%s'", szUsrId );
 		break;
 	}
 

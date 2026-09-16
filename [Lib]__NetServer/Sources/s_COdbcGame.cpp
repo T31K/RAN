@@ -202,14 +202,14 @@ int COdbcManager::GetChaBAInfo(int nUsrNum,
 	SQLINTEGER nChaNum = 0, cbChaNum = SQL_NTS; 
 	
 	//std::strstream strTemp;
-	//strTemp << "SELECT TOP 16 ChaNum FROM ChaInfo WITH (NOLOCK) WHERE UserNum=";
+	//strTemp << "SELECT TOP 16 ChaNum FROM ChaInfo WHERE UserNum=";
 	//strTemp << nUsrNum << " AND SGNum=" << nSvrGrp << " AND ChaDeleted=0 ORDER BY ChaNum";
 	//strTemp << std::ends;
 
 	TCHAR szTemp[256] = {0};
-	_snprintf_s( szTemp, 256, "SELECT TOP 16 ChaNum FROM ChaInfo WITH (NOLOCK) WHERE UserNum=%d"
+	_snprintf_s( szTemp, 256, "SELECT ChaNum FROM ChaInfo WHERE UserNum=%d"
 							" AND SGNum=%d"
-							" AND ChaDeleted=0 ORDER BY ChaNum", nUsrNum, nSvrGrp );
+							" AND ChaDeleted=0 ORDER BY ChaNum LIMIT 16", nUsrNum, nSvrGrp );
 
 	sReturn = ::SQLExecDirect(pConn->hStmt,
 							(SQLCHAR*)szTemp, 

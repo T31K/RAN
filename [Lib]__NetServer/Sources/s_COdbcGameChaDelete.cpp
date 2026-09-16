@@ -55,7 +55,7 @@ int	COdbcManager::DelCharacter(int nUsrNum,
 
 	// 2차 비밀번호 체크
 	//std::strstream strTemp;
-	//strTemp << "SELECT UserNum FROM UserInfo WITH (NOLOCK) WHERE UserNum=";
+	//strTemp << "SELECT UserNum FROM UserInfo WHERE UserNum=";
 	//strTemp << nUsrNum;
 	//strTemp << " AND UserPass2='";
 	//strTemp << szPass2;
@@ -63,7 +63,7 @@ int	COdbcManager::DelCharacter(int nUsrNum,
 	//strTemp << std::ends;
 
 	TCHAR szTemp[512] = {0};
-	_snprintf_s( szTemp, 512, "SELECT UserNum FROM UserInfo WITH (NOLOCK) WHERE UserNum=%d AND UserPass2='%s'", nUsrNum, szPass2 );
+	_snprintf_s( szTemp, 512, "SELECT UserNum FROM UserInfo WHERE UserNum=%d AND UserPass2='%s'", nUsrNum, szPass2 );
 
 	sReturn = ::SQLExecDirect(pConn->hStmt,
 		(SQLCHAR*) szTemp, 

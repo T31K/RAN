@@ -1301,11 +1301,11 @@ int COdbcManager::GetClubRegion(std::vector<GLGUID_DB> &vGUID_DB)
 	if (!pConn) return DB_ERROR;
 	
 	//std::string strTemp;
-	//strTemp = "SELECT RegionID, GuNum, RegionTax FROM GuildRegion WITH (NOLOCK) ";	
+	//strTemp = "SELECT RegionID, GuNum, RegionTax FROM GuildRegion ";	
  //   strTemp += " ORDER BY RegionID";
 
 	TCHAR szTemp[128] = {0};
-	_snprintf_s( szTemp, 128, "SELECT RegionID, GuNum, RegionTax FROM GuildRegion WITH (NOLOCK) ORDER BY RegionID" ); 
+	_snprintf_s( szTemp, 128, "SELECT RegionID, GuNum, RegionTax FROM GuildRegion ORDER BY RegionID" ); 
 	
 	sReturn = ::SQLExecDirect(pConn->hStmt,
 							(SQLCHAR*)szTemp, 
@@ -1473,10 +1473,10 @@ int COdbcManager::GetClubAlliance ( std::vector< std::pair<DWORD,DWORD> > &vecAl
 	if (!pConn) return DB_ERROR;
 	
 	//std::string strTemp;
-	//strTemp = "SELECT GuNumP, GuNumS FROM GuildAlliance WITH (NOLOCK) ORDER BY GuNumP";
+	//strTemp = "SELECT GuNumP, GuNumS FROM GuildAlliance ORDER BY GuNumP";
 
 	TCHAR szTemp[128] = {0};
-	_snprintf_s( szTemp, 128, "SELECT GuNumP, GuNumS FROM GuildAlliance WITH (NOLOCK) ORDER BY GuNumP" );
+	_snprintf_s( szTemp, 128, "SELECT GuNumP, GuNumS FROM GuildAlliance ORDER BY GuNumP" );
 	
 	sReturn = ::SQLExecDirect(pConn->hStmt,
 							(SQLCHAR*)szTemp, 

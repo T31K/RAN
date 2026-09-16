@@ -24,11 +24,11 @@ int COdbcManager::GetChaFriend(
 #if defined(RZ_PARAM) || defined( KR_PARAM ) || defined(KRT_PARAM )
 	TCHAR szTemp[128] = {0};
 	_snprintf_s( szTemp, 128, "SELECT ChaP, ChaS, ChaName, ChaFlag From viewChaFriend "
-							"WHERE ChaP=%d", nChaNum );
+							"WHERE ChaP=%d LIMIT 100", nChaNum );
 #else
 	TCHAR szTemp[128] = {0};
-	_snprintf_s( szTemp, 128, "SELECT TOP 100 ChaP, ChaS, ChaName, ChaFlag From viewChaFriend "
-							"WHERE ChaP=%d", nChaNum );
+	_snprintf_s( szTemp, 128, "SELECT ChaP, ChaS, ChaName, ChaFlag From viewChaFriend "
+							"WHERE ChaP=%d LIMIT 100", nChaNum );
 #endif
 	
 	sReturn = ::SQLExecDirect(pConn->hStmt,

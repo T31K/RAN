@@ -222,14 +222,14 @@ LONGLONG COdbcManager::GetItemMaxNum(
 
 /*
 	std::strstream strTemp;
-    strTemp << "SELECT MaxNum, NIDMain, NIDSub, MakeType FROM LogItemMax WITH (NOLOCK) WHERE ";
+    strTemp << "SELECT MaxNum, NIDMain, NIDSub, MakeType FROM LogItemMax WHERE ";
     strTemp << "SGNum="  << nSGNum  << " AND ";
 	strTemp << "SvrNum=" << nSvrNum << " AND ";
 	strTemp << "FldNum=" << nFldNum ;
     strTemp << std::ends;
 */
 	TCHAR szTemp[128] = {0};
-	_snprintf_s( szTemp, 128, "SELECT MaxNum, NIDMain, NIDSub, MakeType FROM LogItemMax WITH (NOLOCK) WHERE "
+	_snprintf_s( szTemp, 128, "SELECT MaxNum, NIDMain, NIDSub, MakeType FROM LogItemMax WHERE "
 			"SGNum=%d AND SvrNum=%d AND FldNum=%d", nSGNum, nSvrNum, nFldNum );
 
     sReturn = ::SQLExecDirect(pConn->hStmt,

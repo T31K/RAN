@@ -21,7 +21,7 @@ USER_INFO_BASIC COdbcManager::GetUserInfo(
 
 	//std::strstream strTemp;
 	//strTemp << "SELECT UserNum, UserID, LastLoginDate ";
-	//strTemp << "FROM UserInfo WITH (NOLOCK) WHERE UserID = '";
+	//strTemp << "FROM UserInfo WHERE UserID = '";
 	//strTemp << szUsrId;
 	//strTemp << "' AND UserPass ='";
 	//strTemp << szPasswd << "'";
@@ -29,7 +29,7 @@ USER_INFO_BASIC COdbcManager::GetUserInfo(
 
 	TCHAR szTemp[256] = {0};
 	_snprintf_s( szTemp, 256, "SELECT UserNum, UserID, LastLoginDate "
-							"FROM UserInfo WITH (NOLOCK) WHERE UserID = '%s' AND UserPass ='%s'",
+							"FROM UserInfo WHERE UserID = '%s' AND UserPass ='%s'",
 							szUsrId, szPasswd );
 
 	SQLRETURN	sReturn = 0;
