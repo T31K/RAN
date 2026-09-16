@@ -263,8 +263,6 @@ BOOL GLGaeaServer::EntryLand( DWORD dwGaeaID, DWORD dwGateID, BOOL bInstantMap, 
 	PGLCHAR pPC = GetChar ( dwGaeaID );
 	if ( !pPC )								return FALSE;
 
-	CDebugSet::ToLogFile ( "[MOVEDBG] EntryLand ENTER gaea=%d gate=%d instant=%d curmap=%d/%d landman=%d", (int)dwGaeaID, (int)dwGateID, (int)bInstantMap, (int)pPC->m_sMapID.wMainID, (int)pPC->m_sMapID.wSubID, pPC->m_pLandMan?1:0 );
-
 	GLMSG::SNETREQ_GATEOUT_FB			 NetMsgGateOutFB1;
 	GLMSG::SNETREQ_CREATE_INSTANT_MAP_FB NetMsgGateOutFB2;
 
@@ -315,11 +313,7 @@ BOOL GLGaeaServer::EntryLand( DWORD dwGaeaID, DWORD dwGateID, BOOL bInstantMap, 
 
 	pOutGateMan = &pPC->m_pLandMan->GetLandGateMan();
 	pOutGate = pOutGateMan->FindLandGate ( dwGateID );
-	if ( !pOutGate )
-	{
-		CDebugSet::ToLogFile ( "[MOVEDBG] EntryLand FAIL: out-gate NULL gate=%d curmap=%d/%d", (int)dwGateID, (int)pPC->m_sMapID.wMainID, (int)pPC->m_sMapID.wSubID );
-		goto ENTRY_FAIL;
-	}
+	if ( !pOutGate )		goto ENTRY_FAIL;
 
 	//	Memo :	현재 맵의 ID
 	sCurMapID = pPC->m_pLandMan->GetMapID();
@@ -329,11 +323,7 @@ BOOL GLGaeaServer::EntryLand( DWORD dwGaeaID, DWORD dwGateID, BOOL bInstantMap, 
 	//
 	if( bInstantMap )
 	{
-		if( sToMapID == NATIVEID_NULL() )
-		{
-			CDebugSet::ToLogFile ( "[MOVEDBG] EntryLand FAIL: instant map id NULL" );
-			goto ENTRY_FAIL;
-		}
+		if( sToMapID == NATIVEID_NULL() ) goto ENTRY_FAIL;
 		sToMapID = sMapID;
 	}else{
 		sToMapID = pOutGate->GetToMapID();		
@@ -341,28 +331,16 @@ BOOL GLGaeaServer::EntryLand( DWORD dwGaeaID, DWORD dwGateID, BOOL bInstantMap, 
 
 	//	Note : Gate에 연결된 맵 찾기.
 	pInLandMan = GetByMapID ( sToMapID );
-	if ( !pInLandMan )
-	{
-		CDebugSet::ToLogFile ( "[MOVEDBG] EntryLand FAIL: TARGET MAP NOT LOADED on this field server tomap=%d/%d", (int)sToMapID.wMainID, (int)sToMapID.wSubID );
-		goto ENTRY_FAIL;
-	}
+	if ( !pInLandMan )		goto ENTRY_FAIL;
 
 
 	//	Note : 목표 게이트 가져오기.
 	//
 	pInGateMan = &pInLandMan->GetLandGateMan ();
-	if ( !pInGateMan )
-	{
-		CDebugSet::ToLogFile ( "[MOVEDBG] EntryLand FAIL: target LandGateMan NULL tomap=%d/%d", (int)sToMapID.wMainID, (int)sToMapID.wSubID );
-		goto ENTRY_FAIL;
-	}
+	if ( !pInGateMan )		goto ENTRY_FAIL;
 
 	pInGate = pInGateMan->FindLandGate ( pOutGate->GetToGateID() );
-	if ( !pInGate )
-	{
-		CDebugSet::ToLogFile ( "[MOVEDBG] EntryLand FAIL: in-gate NULL togate=%d tomap=%d/%d", (int)pOutGate->GetToGateID(), (int)sToMapID.wMainID, (int)sToMapID.wSubID );
-		goto ENTRY_FAIL;
-	}
+	if ( !pInGate )			goto ENTRY_FAIL;
 
 	vStartPos = pInGate->GetGenPos ( DxLandGate::GEN_RENDUM );
 
@@ -437,7 +415,6 @@ BOOL GLGaeaServer::EntryLand( DWORD dwGaeaID, DWORD dwGateID, BOOL bInstantMap, 
 
 		//	Note : 자신에게 맵이동이 성공함을 알림.
 	//
-	CDebugSet::ToLogFile ( "[MOVEDBG] EntryLand OK: gaea=%d -> map=%d/%d pos=(%.0f,%.0f,%.0f)", (int)dwGaeaID, (int)sToMapID.wMainID, (int)sToMapID.wSubID, vStartPos.x, vStartPos.y, vStartPos.z );
 	if( !bInstantMap )
 	{
 		NetMsgGateOutFB1.emFB = EMCHAR_GATEOUT_OK;
@@ -462,7 +439,6 @@ BOOL GLGaeaServer::EntryLand( DWORD dwGaeaID, DWORD dwGateID, BOOL bInstantMap, 
 ENTRY_FAIL:
 	//	Note : 자신에게 맵이동이 실패함을 알림.
 	//
-	CDebugSet::ToLogFile ( "[MOVEDBG] EntryLand -> ENTRY_FAIL, sending FAIL(1) gaea=%d gate=%d", (int)dwGaeaID, (int)dwGateID );
 	if( !bInstantMap )
 	{
 		NetMsgGateOutFB1.emFB = EMCHAR_GATEOUT_FAIL;
@@ -482,13 +458,8 @@ ENTRY_FAIL:
 // *****************************************************
 BOOL GLGaeaServer::RequestMoveMapPC ( DWORD dwClientID, DWORD dwGaeaID, GLMSG::SNETREQ_GATEOUT *pNetMsg )
 {	
-	CDebugSet::ToLogFile ( "[MOVEDBG] STAGE2 MoveMapPC ENTER client=%d msg_gaea=%d gate=%d", (int)dwClientID, (int)pNetMsg->dwGaeaID, (int)pNetMsg->dwGateID );
 
-	if ( dwGaeaID!=GAEAID_NULL )
-	{
-		CDebugSet::ToLogFile ( "[MOVEDBG] STAGE2 DROP: param_gaea=%d != GAEAID_NULL (no FB sent!)", (int)dwGaeaID );
-		return FALSE;
-	}
+	if ( dwGaeaID!=GAEAID_NULL )			return FALSE;
     EntryLand( pNetMsg->dwGaeaID, pNetMsg->dwGateID, FALSE );	
 
 
@@ -925,49 +896,23 @@ BOOL GLGaeaServer::RequestGateOutReq ( DWORD dwClientID, DWORD dwGaeaID, GLMSG::
 	PGLCHAR pPC = GetChar ( dwGaeaID );	
 
 	if ( !pPC )								return FALSE;
-
-	CDebugSet::ToLogFile ( "[MOVEDBG] STAGE1 GateOutReq ENTER client=%d gaea=%d gate=%d userlvl=%d curmap=%d/%d", (int)dwClientID, (int)dwGaeaID, (int)pNetMsg->dwGateID, (int)pPC->m_dwUserLvl, (int)pPC->m_sMapID.wMainID, (int)pPC->m_sMapID.wSubID );
-	if ( pPC->m_dwClientID!=dwClientID )
-	{
-		CDebugSet::ToLogFile ( "[MOVEDBG] STAGE1 FAIL: clientID mismatch char=%d req=%d", (int)pPC->m_dwClientID, (int)dwClientID );
-		goto _GateOutError;
-	}
+	if ( pPC->m_dwClientID!=dwClientID )	goto _GateOutError;
 
 	DWORD dwGateID = pNetMsg->dwGateID;
-	if ( dwGateID==UINT_MAX )
-	{
-		CDebugSet::ToLogFile ( "[MOVEDBG] STAGE1 FAIL: client sent gateID=UINT_MAX" );
-		goto _GateOutError;
-	}
+	if ( dwGateID==UINT_MAX )				goto _GateOutError;
 
-	if ( !pPC->m_pLandMan )
-	{
-		CDebugSet::ToLogFile ( "[MOVEDBG] STAGE1 FAIL: char has NO LandMan" );
-		goto _GateOutError;
-	}
+	if ( !pPC->m_pLandMan )					goto _GateOutError;
 
 	DxLandGateMan *pLandGateMan = &pPC->m_pLandMan->GetLandGateMan();
-	if ( !pLandGateMan )
-	{
-		CDebugSet::ToLogFile ( "[MOVEDBG] STAGE1 FAIL: LandGateMan NULL" );
-		goto _GateOutError;
-	}
+	if ( !pLandGateMan )					goto _GateOutError;
 
 	PDXLANDGATE pLandGate = pLandGateMan->FindLandGate ( dwGateID );
-	if ( !pLandGate )
-	{
-		CDebugSet::ToLogFile ( "[MOVEDBG] STAGE1 FAIL: FindLandGate NULL gate=%d curmap=%d/%d", (int)dwGateID, (int)pPC->m_sMapID.wMainID, (int)pPC->m_sMapID.wSubID );
-		goto _GateOutError;
-	}
+	if ( !pLandGate )						goto _GateOutError;
 
 	sMapID = pLandGate->GetToMapID();
 
 	const SMAPNODE *pMapNode = FindMapNode ( sMapID );
-	if ( !pMapNode )
-	{
-		CDebugSet::ToLogFile ( "[MOVEDBG] STAGE1 FAIL: FindMapNode NULL tomap=%d/%d", (int)sMapID.wMainID, (int)sMapID.wSubID );
-		goto _GateOutError;
-	}
+	if ( !pMapNode )						goto _GateOutError;
 
 	// 서버에서 검색된 게이트
 	PDXLANDGATE pLandGateInServer = pLandGateMan->DetectGate ( pPC->GetPosition() );
@@ -980,7 +925,6 @@ BOOL GLGaeaServer::RequestGateOutReq ( DWORD dwClientID, DWORD dwGaeaID, GLMSG::
 		emReqFail = sRequire.ISCOMPLETE ( pPC ); 
 		if ( emReqFail != EMREQUIRE_COMPLETE )
 		{
-			CDebugSet::ToLogFile ( "[MOVEDBG] STAGE1 FAIL: ISCOMPLETE reqfail=%d -> CONDITION(8)", (int)emReqFail );
 			//	통과 권한이 없음.
 			NetMsgFB.emFB = EMCHAR_GATEOUT_CONDITION;
 			SENDTOCLIENT ( pPC->m_dwClientID, &NetMsgFB );
@@ -989,10 +933,7 @@ BOOL GLGaeaServer::RequestGateOutReq ( DWORD dwClientID, DWORD dwGaeaID, GLMSG::
 
 		// 서버에서 검색한 게이트가 없을 경우 ( 대만 GS 툴에 대처 )
 		if ( !pLandGateInServer || !(pLandGateInServer->GetFlags()&DxLandGate::GATE_OUT ) ) 
-		{
-			CDebugSet::ToLogFile ( "[MOVEDBG] STAGE1 FAIL: not standing in out-gate (detected=%d flags=0x%x) pos=(%.0f,%.0f,%.0f)", pLandGateInServer?1:0, pLandGateInServer?(int)pLandGateInServer->GetFlags():0, pPC->GetPosition().x, pPC->GetPosition().y, pPC->GetPosition().z );
 			goto _GateOutError;
-		}
 	}
 
 	// 선도전장이면
@@ -1084,7 +1025,6 @@ BOOL GLGaeaServer::RequestGateOutReq ( DWORD dwClientID, DWORD dwGaeaID, GLMSG::
 		}
 	}
 	
-	CDebugSet::ToLogFile ( "[MOVEDBG] STAGE1 OK -> agent: gate=%d tomap=%d/%d", (int)dwGateID, (int)sMapID.wMainID, (int)sMapID.wSubID );
 	NetMsg.dwGateID = dwGateID;
 	NetMsg.dwGaeaID = dwGaeaID;
 	SENDTOAGENT ( (LPVOID) &NetMsg );
@@ -1092,7 +1032,6 @@ BOOL GLGaeaServer::RequestGateOutReq ( DWORD dwClientID, DWORD dwGaeaID, GLMSG::
 	return TRUE;
 
 _GateOutError:
-	CDebugSet::ToLogFile ( "[MOVEDBG] STAGE1 -> _GateOutError, sending FAIL(1) gaea=%d", (int)dwGaeaID );
 	NetMsgFB.emFB = EMCHAR_GATEOUT_FAIL;
 	SENDTOCLIENT ( pPC->m_dwClientID, &NetMsgFB );
 	return FALSE;
