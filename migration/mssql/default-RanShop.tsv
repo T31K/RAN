@@ -1,0 +1,4 @@
+LogShopPurchase	PurDate	(getdate())
+ShopPurchase	PurDate	(getdate())
+ShopPurchase	PurFlag	((0))
+ShopPurchase	PurPrice	((0))
