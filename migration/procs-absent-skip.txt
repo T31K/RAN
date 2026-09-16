@@ -1,0 +1,16 @@
+Thai_GetGameTime
+UpdateChaFaceStyle
+UpdateChaFriendSms
+sp_EndGuAllianceBattle
+sp_InsertItem
+sp_LogPungPung
+sp_LogSms_Insert
+sp_PungPungCheck
+sp_RequestGuBattle
+sp_ResetAllianceBattle
+sp_SaveGuBattle
+sp_UpdatePetSkin
+sp_UpdateUserMoneyAdd
+sp_UserCheckPass
+sp_lottery_check
+thai_user_verify

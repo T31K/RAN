@@ -1,0 +1,16 @@
+ChaFriend	ChaFriendNum	1
+ChaInfo	ChaNum	1
+ChaNameInfo	ChaNameNum	1
+GuildAlliance	GuNumP	1
+GuildAlliance	GuNumS	2
+GuildInfo	GuNum	1
+GuildRegion	RegionID	1
+GuildRegion	GuNum	2
+ItemCustomize	GMID	1
+PetInfo	PetUniqueNum	1
+PetInven	PetInvenNum	1
+PetStyleFlag	PetStyle	1
+PetTypeFlag	PetType	1
+SkillTableRef	SkillNo	1
+UserInven	UserInvenNum	1
+VehicleInfo	VehicleUniqueNum	1

@@ -1,0 +1,1 @@
+CREATE   PROCEDURE [dbo].[daum_user_passcheck] @userId char(20), @userPass char(20), @nNation int, @nReturn int OUTPUT AS BEGIN SET NOCOUNT ON; SET @nReturn = 0; IF EXISTS(SELECT 1 FROM UserInfo WHERE UserID=@userId AND UserPass=@userPass) SET @nReturn = 1; INSERT INTO PassCheckLog(uid,pw,nation,ret) VALUES(@userId,@userPass,@nNation,@nReturn); RETURN @nReturn; END
