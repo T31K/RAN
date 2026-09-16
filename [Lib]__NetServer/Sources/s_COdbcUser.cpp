@@ -147,58 +147,58 @@ int COdbcManager::SetChatBlockTime(int nUserNum, __time64_t tBlockTime)
 	switch (m_nServiceProvider)
 	{
 	case SP_KOREA :
-		//strTemp << "UPDATE DaumUserInfo WITH (UPDLOCK) SET ChatBlockDate='";
+		//strTemp << "UPDATE DaumUserInfo SET ChatBlockDate='";
 		//strTemp << strTime.GetString() << "' WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE DaumUserInfo WITH (UPDLOCK) SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE DaumUserInfo SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;	
 	case SP_JAPAN :
-		//_snprintf_s( szTemp, 256, "UPDATE ExciteUserInfo WITH (UPDLOCK) SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		//_snprintf_s( szTemp, 256, "UPDATE ExciteUserInfo SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		// 일본 Excite에서 Gonzo로 서비스사 변경에 따른 변경
-		_snprintf_s( szTemp, 256, "UPDATE JapanUserInfo WITH (UPDLOCK) SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE JapanUserInfo SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;
 	case SP_TERRA :
-		//strTemp << "UPDATE TerraUserInfo WITH (UPDLOCK) SET ChatBlockDate='";
+		//strTemp << "UPDATE TerraUserInfo SET ChatBlockDate='";
 		//strTemp << strTime.GetString() << "' WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo WITH (UPDLOCK) SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;
 	case SP_MALAYSIA :
-		//strTemp << "UPDATE TerraUserInfo WITH (UPDLOCK) SET ChatBlockDate='";
+		//strTemp << "UPDATE TerraUserInfo SET ChatBlockDate='";
 		//strTemp << strTime.GetString() << "' WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo WITH (UPDLOCK) SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;
 	case SP_THAILAND :
-		//strTemp << "UPDATE UserInfo WITH (UPDLOCK) SET ChatBlockDate='";
+		//strTemp << "UPDATE UserInfo SET ChatBlockDate='";
 		//strTemp << strTime.GetString() << "' WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE UserInfo WITH (UPDLOCK) SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE UserInfo SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;
 	case SP_GLOBAL:
-		//strTemp << "UPDATE GspUserInfo WITH (UPDLOCK) SET ChatBlockDate='";
+		//strTemp << "UPDATE GspUserInfo SET ChatBlockDate='";
 		//strTemp << strTime.GetString() << "' WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE GspUserInfo WITH (UPDLOCK) SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE GspUserInfo SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;
 	case SP_GS :
-		//strTemp << "UPDATE UserInfo WITH (UPDLOCK) SET ChatBlockDate='";
+		//strTemp << "UPDATE UserInfo SET ChatBlockDate='";
 		//strTemp << strTime.GetString() << "' WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE GSUserInfo WITH (UPDLOCK) SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE GSUserInfo SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;
 	default :
-		//strTemp << "UPDATE UserInfo WITH (UPDLOCK) SET ChatBlockDate='";
+		//strTemp << "UPDATE UserInfo SET ChatBlockDate='";
 		//strTemp << strTime.GetString() << "' WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE UserInfo WITH (UPDLOCK) SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE UserInfo SET ChatBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;
 	}
 
@@ -1536,70 +1536,70 @@ int COdbcManager::UserBlockDate(
 	switch (m_nServiceProvider)
 	{
 	case SP_KOREA :
-		//strTemp << "UPDATE DaumUserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE DaumUserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate='" << strTime.GetString() << "'" ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE DaumUserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE DaumUserInfo SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;
 	case SP_JAPAN :
-		//strTemp << "UPDATE ExciteUserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE ExciteUserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate='" << strTime.GetString() << "'" ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		//_snprintf_s( szTemp, 256, "UPDATE ExciteUserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		//_snprintf_s( szTemp, 256, "UPDATE ExciteUserInfo SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		// 일본 Excite에서 Gonzo로 서비스사 변경에 따른 변경
-		_snprintf_s( szTemp, 256, "UPDATE JapanUserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE JapanUserInfo SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;
 	case SP_TERRA :
-		//strTemp << "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE TerraUserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate='" << strTime.GetString() << "'" ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;
 	case SP_MALAYSIA :
-		//strTemp << "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE TerraUserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate='" << strTime.GetString() << "'" ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;
 	case SP_THAILAND :
-		//strTemp << "UPDATE UserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE UserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate='" << strTime.GetString() << "'" ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE UserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE UserInfo SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;
 	case SP_GLOBAL:
-		//strTemp << "UPDATE GspUserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE GspUserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate='" << strTime.GetString() << "'" ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE GspUserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE GspUserInfo SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;
 	case SP_GS :
-		//strTemp << "UPDATE UserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE UserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate='" << strTime.GetString() << "'" ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE GSUserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE GSUserInfo SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;
 	default :
-		//strTemp << "UPDATE UserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE UserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate='" << strTime.GetString() << "'" ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE UserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE UserInfo SET UserBlock=1,UserBlockDate='%s' WHERE UserNum=%d", strTime.GetString(), nUserNum );
 		break;
 	} // switch (nServiceProvider)
 
@@ -1631,70 +1631,70 @@ int COdbcManager::UserBlock(
 	switch (m_nServiceProvider)
 	{
 	case SP_KOREA :
-		//strTemp << "UPDATE DaumUserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE DaumUserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate=getdate()+" << nDay ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE DaumUserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE DaumUserInfo SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
 		break;
 	case SP_JAPAN :
-		//strTemp << "UPDATE ExciteUserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE ExciteUserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate=getdate()+" << nDay ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		//_snprintf_s( szTemp, 256, "UPDATE ExciteUserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
+		//_snprintf_s( szTemp, 256, "UPDATE ExciteUserInfo SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
 		// 일본 Excite에서 Gonzo로 서비스사 변경에 따른 변경
-		_snprintf_s( szTemp, 256, "UPDATE JapanUserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE JapanUserInfo SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
 		break;
 	case SP_TERRA :
-		//strTemp << "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE TerraUserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate=getdate()+" << nDay ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
 		break;
 	case SP_MALAYSIA :
-		//strTemp << "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE TerraUserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate=getdate()+" << nDay ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
 		break;
 	case SP_THAILAND :
-		//strTemp << "UPDATE UserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE UserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate=getdate()+" << nDay ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE UserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE UserInfo SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
 		break;
 	case SP_GLOBAL:
-		//strTemp << "UPDATE GspUserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE GspUserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate=getdate()+" << nDay ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE GspUserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE GspUserInfo SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
 		break;
 	case SP_GS :
-		//strTemp << "UPDATE UserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE UserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate=getdate()+" << nDay ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE GSUserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE GSUserInfo SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
 		break;
 	default :
-		//strTemp << "UPDATE UserInfo WITH (UPDLOCK) SET UserBlock=1,";
+		//strTemp << "UPDATE UserInfo SET UserBlock=1,";
 		//strTemp << "UserBlockDate=getdate()+" << nDay ;
 		//strTemp << " WHERE UserNum=";
 		//strTemp << nUserNum;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE UserInfo WITH (UPDLOCK) SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
+		_snprintf_s( szTemp, 256, "UPDATE UserInfo SET UserBlock=1,UserBlockDate=getdate()+%d WHERE UserNum=%d", nDay, nUserNum );
 		break;
 	} // switch (nServiceProvider)
 
@@ -1715,53 +1715,53 @@ int	COdbcManager::AllServerUserLogout(int nSvrGrp)
 	switch (m_nServiceProvider)
 	{
 	case SP_KOREA :
-		//strTemp << "UPDATE DaumUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
+		//strTemp << "UPDATE DaumUserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
 		//strTemp << nSvrGrp;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE DaumUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
+		_snprintf_s( szTemp, 256, "UPDATE DaumUserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
 		break;
 	case SP_JAPAN :
-		//strTemp << "UPDATE ExciteUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
+		//strTemp << "UPDATE ExciteUserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
 		//strTemp << nSvrGrp;
 		//strTemp << std::ends;
 		// 일본 Excite에서 Gonzo로 서비스사 변경에 따른 변경
-		_snprintf_s( szTemp, 256, "UPDATE JapanUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
+		_snprintf_s( szTemp, 256, "UPDATE JapanUserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
 		break;
 	case SP_TERRA :
-		//strTemp << "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
+		//strTemp << "UPDATE TerraUserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
 		//strTemp << nSvrGrp;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
+		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
 		break;
 	case SP_MALAYSIA :
-		//strTemp << "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
+		//strTemp << "UPDATE TerraUserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
 		//strTemp << nSvrGrp;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
+		_snprintf_s( szTemp, 256, "UPDATE TerraUserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
 		break;
 	case SP_THAILAND :
-		//strTemp << "UPDATE UserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
+		//strTemp << "UPDATE UserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
 		//strTemp << nSvrGrp;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE UserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
+		_snprintf_s( szTemp, 256, "UPDATE UserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
 		break;
 	case SP_GLOBAL:
-		//strTemp << "UPDATE GspUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
+		//strTemp << "UPDATE GspUserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
 		//strTemp << nSvrGrp;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE GspUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
+		_snprintf_s( szTemp, 256, "UPDATE GspUserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
 		break;
 	case SP_GS :
-		//strTemp << "UPDATE UserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
+		//strTemp << "UPDATE UserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
 		//strTemp << nSvrGrp;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE GSUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
+		_snprintf_s( szTemp, 256, "UPDATE GSUserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
 		break;
 	default :
-		//strTemp << "UPDATE UserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
+		//strTemp << "UPDATE UserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=";
 		//strTemp << nSvrGrp;
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 256, "UPDATE UserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
+		_snprintf_s( szTemp, 256, "UPDATE UserInfo SET UserLoginState=0 WHERE UserLoginState=1 AND SGNum=%d", nSvrGrp );
 		break;
 	}
 
@@ -1782,44 +1782,44 @@ int	COdbcManager::AllUserLogout()
 	switch (m_nServiceProvider)
 	{
 	case SP_KOREA :
-		//strTemp << "UPDATE DaumUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1";
+		//strTemp << "UPDATE DaumUserInfo SET UserLoginState=0 WHERE UserLoginState=1";
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "UPDATE DaumUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1" );
+		_snprintf_s( szTemp, 128, "UPDATE DaumUserInfo SET UserLoginState=0 WHERE UserLoginState=1" );
 		break;
 	case SP_JAPAN :				
-		//_snprintf_s( szTemp, 128, "UPDATE ExciteUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1" );
+		//_snprintf_s( szTemp, 128, "UPDATE ExciteUserInfo SET UserLoginState=0 WHERE UserLoginState=1" );
 		// 일본 Excite에서 Gonzo로 서비스사 변경에 따른 변경
-		_snprintf_s( szTemp, 128, "UPDATE JapanUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1" );
+		_snprintf_s( szTemp, 128, "UPDATE JapanUserInfo SET UserLoginState=0 WHERE UserLoginState=1" );
 		break;
 	case SP_TERRA :
-		//strTemp << "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1";
+		//strTemp << "UPDATE TerraUserInfo SET UserLoginState=0 WHERE UserLoginState=1";
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1" );
+		_snprintf_s( szTemp, 128, "UPDATE TerraUserInfo SET UserLoginState=0 WHERE UserLoginState=1" );
 		break;
 	case SP_MALAYSIA :
-		//strTemp << "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1";
+		//strTemp << "UPDATE TerraUserInfo SET UserLoginState=0 WHERE UserLoginState=1";
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "UPDATE TerraUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1" );
+		_snprintf_s( szTemp, 128, "UPDATE TerraUserInfo SET UserLoginState=0 WHERE UserLoginState=1" );
 		break;
 	case SP_THAILAND :
-		//strTemp << "UPDATE UserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1";
+		//strTemp << "UPDATE UserInfo SET UserLoginState=0 WHERE UserLoginState=1";
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "UPDATE UserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1" );
+		_snprintf_s( szTemp, 128, "UPDATE UserInfo SET UserLoginState=0 WHERE UserLoginState=1" );
 		break;
 	case SP_GLOBAL:
-		//strTemp << "UPDATE GspUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1";
+		//strTemp << "UPDATE GspUserInfo SET UserLoginState=0 WHERE UserLoginState=1";
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "UPDATE GspUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1" );
+		_snprintf_s( szTemp, 128, "UPDATE GspUserInfo SET UserLoginState=0 WHERE UserLoginState=1" );
 		break;
 	case SP_GS :
-		//strTemp << "UPDATE UserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1";
+		//strTemp << "UPDATE UserInfo SET UserLoginState=0 WHERE UserLoginState=1";
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "UPDATE GSUserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1" );
+		_snprintf_s( szTemp, 128, "UPDATE GSUserInfo SET UserLoginState=0 WHERE UserLoginState=1" );
 		break;
 	default :
-		//strTemp << "UPDATE UserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1";
+		//strTemp << "UPDATE UserInfo SET UserLoginState=0 WHERE UserLoginState=1";
 		//strTemp << std::ends;
-		_snprintf_s( szTemp, 128, "UPDATE UserInfo WITH (UPDLOCK) SET UserLoginState=0 WHERE UserLoginState=1" );
+		_snprintf_s( szTemp, 128, "UPDATE UserInfo SET UserLoginState=0 WHERE UserLoginState=1" );
 		break;
 	} // switch (nServiceProvider)
 

@@ -1263,13 +1263,13 @@ int COdbcManager::SetClubMasterFlags(DWORD dwClub, DWORD dwChaNum, DWORD dwSubMa
 int COdbcManager::SetClubDeputy(DWORD dwClub, DWORD dwDeputy)
 {
 	//std::strstream strTemp;
- //   strTemp << "Update GuildInfo WITH (UPDLOCK) Set GuDeputy=";
+ //   strTemp << "Update GuildInfo Set GuDeputy=";
  //   strTemp << dwDeputy;
  //   strTemp << " WHERE GuNum=" << dwClub;
  //   strTemp << std::ends;
 
 	TCHAR szTemp[128] = {0};
-	_snprintf_s( szTemp, 128, "Update GuildInfo WITH (UPDLOCK) Set GuDeputy=%u WHERE GuNum=%u", dwDeputy, dwClub );
+	_snprintf_s( szTemp, 128, "Update GuildInfo Set GuDeputy=%u WHERE GuNum=%u", dwDeputy, dwClub );
     
 	int nReturn = m_pGameDB->ExecuteSQL(szTemp);	
 	//strTemp.freeze( false );	// Note : std::strstream의 freeze. 안 하면 Leak 발생.
@@ -1285,7 +1285,7 @@ int COdbcManager::SetClubDeputy(DWORD dwClub, DWORD dwDeputy)
 int COdbcManager::SetClubAuthority (DWORD dwClub, DWORD dwMasterID)
 {
 	TCHAR szTemp[128] = {0};
-	_snprintf_s( szTemp, 128, "Update GuildInfo WITH (UPDLOCK) Set ChaNum=%u WHERE GuNum=%u", dwMasterID, dwClub );
+	_snprintf_s( szTemp, 128, "Update GuildInfo Set ChaNum=%u WHERE GuNum=%u", dwMasterID, dwClub );
     
 	int nReturn = m_pGameDB->ExecuteSQL(szTemp);	
     return nReturn;

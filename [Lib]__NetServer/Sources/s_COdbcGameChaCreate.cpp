@@ -180,7 +180,7 @@ int COdbcManager::CreateNewCharacter(SCHARDATA2* pCharData2)
 		SQL_NTS);
 	*/
 		sReturn = ::SQLExecDirect(pConn2->hStmt,
-		(SQLCHAR*) "SELECT cast(SCOPE_IDENTITY() as int)", 
+		(SQLCHAR*) "SELECT LAST_INSERT_ID()", 
 		SQL_NTS);
 
 	if ((sReturn != SQL_SUCCESS) && (sReturn != SQL_SUCCESS_WITH_INFO)) 
