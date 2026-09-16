@@ -69,7 +69,11 @@ int CFieldServer::MsgProcess(
 		if ( nmg->nType > NET_MSG_GCTRL )
 		{
 			DWORD dwClient = pMsg->dwClient;
-			if ( !m_pClientManager->IsAgentSlot(dwClient) )
+			// DEV FIX (1-PC): translate every client socket to its field-agent slot.
+			// Skip only the true agent link (m_dwAgentSlot); the old IsAgentSlot()
+			// is IP-based and mislabels localhost clients as AGENT (see
+			// s_CClientField.cpp SetAcceptedClient), which broke GATEOUT/move.
+			if ( dwClient != m_dwAgentSlot )
 				dwClient = m_pClientManager->GetSlotFieldAgent(dwClient);
 
 			PROFILE_BEGIN("GLGaeaServer::MsgProcess");
