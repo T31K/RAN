@@ -7,12 +7,27 @@
 # Why network_mode: host — the MFC servers bind inet_addr(server_ip) = the host's real
 #   public IP 167.233.23.97 (s_CServer.cpp) and expose raw game ports; no Traefik/proxy.
 # DB path — Wine builtin odbc32 (WINEDLLOVERRIDES=odbc32=b) -> unixODBC -> odbc-mariadb,
-#   DSNs in /etc/odbc.ini (baked from deploy/odbc.ini) pointing at 127.0.0.1:3306, which
-#   is the Coolify MARIADB published loopback-only (ports_mappings 127.0.0.1:3306:3306).
+#   DSNs in /etc/odbc.ini (baked from deploy/odbc.ini) pointing at 127.0.0.1:3306. Because
+#   the game runs host-network it can't use the coolify DNS, and Coolify won't publish a DB
+#   on loopback — so the `dbproxy` sidecar (on the coolify net, resolving the MARIADB
+#   container by name) republishes it on 127.0.0.1:3306 loopback-only. The MARIADB resource
+#   itself stays fully private (never exposed to the internet; this VPS has no host firewall).
 # Payload — the 1.9 GB game-client (exes + data) is NOT in git; it lives on the host at
 #   /opt/ran/game-client and is bind-mounted in. deploy/redeploy.sh refreshes the exes.
 services:
+  # loopback bridge: host-network game servers -> (127.0.0.1:3306) -> Coolify MARIADB
+  dbproxy:
+    image: alpine/socat:latest
+    restart: unless-stopped
+    command: -d TCP-LISTEN:3306,fork,reuseaddr TCP:ii6fpcuua039t4xpoas26fad:3306
+    ports:
+      - "127.0.0.1:3306:3306"   # loopback ONLY — never 0.0.0.0 (no host firewall here)
+    networks:
+      - coolify
+
   server:
+    depends_on:
+      - dbproxy
     build:
       context: .             # = deploy/ (compose file's dir); Dockerfile COPYs by bare name
       dockerfile: Dockerfile
@@ -23,6 +38,11 @@ services:
     volumes:
       - /opt/ran/game-client:/opt/ran/game-client   # host payload (exes + data)
       - ran-wineprefix:/opt/wineprefix               # reuse the initialized wine prefix
+
+networks:
+  coolify:
+    external: true
+    name: coolify
 
 volumes:
   ran-wineprefix:
