@@ -1,0 +1,30 @@
+# Coolify resource "SERVER" — the 4 Wine game servers (SessionServer / LoginServer /
+# FieldServer / AgentServer) for RAN Online EP7, managed by Coolify.
+#
+# Companion to the Coolify "MARIADB" resource (both under project RanOdyssey / production).
+# This replaces the hand-run `ran-servers` container (docker run --network host ...).
+#
+# Why network_mode: host — the MFC servers bind inet_addr(server_ip) = the host's real
+#   public IP 167.233.23.97 (s_CServer.cpp) and expose raw game ports; no Traefik/proxy.
+# DB path — Wine builtin odbc32 (WINEDLLOVERRIDES=odbc32=b) -> unixODBC -> odbc-mariadb,
+#   DSNs in /etc/odbc.ini (baked from deploy/odbc.ini) pointing at 127.0.0.1:3306, which
+#   is the Coolify MARIADB published loopback-only (ports_mappings 127.0.0.1:3306:3306).
+# Payload — the 1.9 GB game-client (exes + data) is NOT in git; it lives on the host at
+#   /opt/ran/game-client and is bind-mounted in. deploy/redeploy.sh refreshes the exes.
+services:
+  server:
+    build:
+      context: .             # = deploy/ (compose file's dir); Dockerfile COPYs by bare name
+      dockerfile: Dockerfile
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - RAN_SERVER_IP=167.233.23.97
+    volumes:
+      - /opt/ran/game-client:/opt/ran/game-client   # host payload (exes + data)
+      - ran-wineprefix:/opt/wineprefix               # reuse the initialized wine prefix
+
+volumes:
+  ran-wineprefix:
+    external: true
+    name: ran-wineprefix
