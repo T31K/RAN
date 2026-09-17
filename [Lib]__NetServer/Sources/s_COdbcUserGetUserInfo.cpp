@@ -213,7 +213,7 @@ int COdbcManager::ThaiGetUserInfo(
 	//strTemp1 << nUserNum;
 	//strTemp1 << std::ends;
 
-	_snprintf_s( szTemp, 256, "Exec sp_Extreme %d", nUserNum );
+	_snprintf_s( szTemp, 256, "SELECT 0 AS ExtremeM, 0 AS ExtremeW" );
 
 	sReturn = ::SQLExecDirect(pConn->hStmt,
 							(SQLCHAR*)szTemp,
@@ -510,7 +510,7 @@ int COdbcManager::GetUserInfo(
 	//strTemp1 << nUserNum;
 	//strTemp1 << std::ends;
 
-	_snprintf_s( szTemp, 256, "Exec sp_Extreme %d", nUserNum );
+	_snprintf_s( szTemp, 256, "SELECT 0 AS ExtremeM, 0 AS ExtremeW" );
 
 	sReturn = ::SQLExecDirect(pConn->hStmt,
 							(SQLCHAR*)szTemp, 
@@ -690,7 +690,7 @@ int COdbcManager::DaumGetUserInfo(
 	//strTemp1 << nUserNum;
 	//strTemp1 << std::ends;
 
-	_snprintf_s( szTemp, 256, "Exec sp_Extreme %d", nUserNum );
+	_snprintf_s( szTemp, 256, "SELECT 0 AS ExtremeM, 0 AS ExtremeW" );
 
 	sReturn = ::SQLExecDirect(pConn->hStmt,
 							(SQLCHAR*)szTemp, 
@@ -1131,7 +1131,7 @@ int COdbcManager::TerraGetUserInfo(
 	//strTemp1 << nUserNum;
 	//strTemp1 << std::ends;
 
-	_snprintf_s( szTemp, 256, "Exec sp_Extreme %d", nUserNum );
+	_snprintf_s( szTemp, 256, "SELECT 0 AS ExtremeM, 0 AS ExtremeW" );
 
 	sReturn = ::SQLExecDirect(pConn->hStmt,
 							(SQLCHAR*)szTemp, 
@@ -1533,7 +1533,7 @@ int COdbcManager::JapanGetUserInfo( const TCHAR* szUserID, JAPAN_NET_LOGIN_FEEDB
 	SQLINTEGER nExtremeW = 0, cbExtremeW = SQL_NTS;
 
 	// 必碍何 积己啊瓷 咯何 眉农 
-	_snprintf_s( szTemp, 256, "Exec sp_Extreme %d", nUserNum );
+	_snprintf_s( szTemp, 256, "SELECT 0 AS ExtremeM, 0 AS ExtremeW" );
 
 	sReturn = ::SQLExecDirect(pConn->hStmt,
 							(SQLCHAR*)szTemp, 
@@ -1709,7 +1709,7 @@ int COdbcManager::GsGetUserInfo(
 	//strTemp1 << nUserNum;
 	//strTemp1 << std::ends;
 
-	_snprintf_s( szTemp, 256, "Exec sp_Extreme %d", nUserNum );
+	_snprintf_s( szTemp, 256, "SELECT 0 AS ExtremeM, 0 AS ExtremeW" );
 
 	sReturn = ::SQLExecDirect(pConn->hStmt,
 							(SQLCHAR*)szTemp, 

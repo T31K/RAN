@@ -116,7 +116,7 @@ int COdbcManager::GetVehicle(
 
 	// 탈것의 기본정보를 가져온다.
 	TCHAR szTemp[256] = {0};
-	_snprintf_s( szTemp, 256, "Exec sp_SelectVehicle %d,%d", nVehicleNum, nCharNum );
+	_snprintf_s( szTemp, 256, "SELECT VehicleChaNum, VehicleCardMID, VehicleCardSID, VehicleType, VehicleBattery FROM VehicleInfo WHERE VehicleNum=%d AND VehicleChaNum=%d", nVehicleNum, nCharNum );
 
 	SQLRETURN sReturn = 0;
 	int		  nRowCount = 0;

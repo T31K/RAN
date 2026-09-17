@@ -85,8 +85,8 @@ int COdbcManager::LogUserAttend( int nUserNum, std::vector<USER_ATTEND_INFO> &ve
 	ODBC_STMT* pConn = m_pGameDB->GetConnection();
 	if (!pConn) return DB_ERROR;
 
-	TCHAR szTemp[128] = {0};
-	_snprintf_s( szTemp, 128, "Exec sp_UserAttendLog %d", nUserNum );
+	TCHAR szTemp[1024] = {0};
+	_snprintf_s( szTemp, 1024, "SELECT NOW() AS AttendTime, 0 AS AttendCount, 0 AS AttendReward FROM DUAL WHERE 1=0" );
 
 	sReturn = ::SQLExecDirect(pConn->hStmt,
 							(SQLCHAR*)szTemp,

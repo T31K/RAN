@@ -544,8 +544,8 @@ int COdbcManager::UpdateUserLastInfoAdd( DWORD dwUserID, LONGLONG lnUserMoney )
 	}
 
 	TCHAR szTemp2[256] = {0};
-	_snprintf_s( szTemp2, 512, "Exec sp_InsertUserLastInfo %u, '%s'",
-		dwUserID,szTempMoney);
+	_snprintf_s( szTemp2, 512, "INSERT INTO UserLastInfo (UserNum, UserMoney) VALUES (%u, %I64d)",
+		dwUserID,lnTempMoney);
 
 	if (m_pGameDB->ExecuteSQL(szTemp2) != DB_OK)
 	{
