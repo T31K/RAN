@@ -7,6 +7,8 @@
 #include "dxparamset.h"
 #include "../[Lib]__EngineUI/Sources/Cursor.h"
 #include "DxCursor.h"
+#include "DxInputDevice.h"
+#include "DebugSet.h"
 
 #include "Basic.h"
 #include "BasicWnd.h"
@@ -295,6 +297,10 @@ void CBasicWnd::PostNcDestroy()
 #endif
 {
 	CWnd::OnActivateApp(bActive, hTask);
+	//	Cmd+Tab back under winemac.drv arrives as app activation only
+	//	(no WM_NCACTIVATE for a borderless WS_POPUP window) - reacquire here.
+	CDebugSet::ToLogFile ( "[INPUTDBG] WM_ACTIVATEAPP bActive=%d", bActive );
+	DxInputDevice::GetInstance().OnActivate ( bActive );
 	//m_pApp->SetActive(bActive);
 }
 

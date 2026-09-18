@@ -706,6 +706,7 @@ HRESULT DxInputDevice::OnActivate ( BOOL bActive )
 	HRESULT hr;
 	if ( !m_pDInputKeyboardDev )	return S_FALSE;
 
+	CDebugSet::ToLogFile ( "[INPUTDBG] DxInputDevice::OnActivate(%d)", bActive );
 	m_bActive = bActive;
 
 	if ( bActive )
@@ -738,9 +739,30 @@ HRESULT DxInputDevice::OnActivate ( BOOL bActive )
 BOOL DxInputDevice::ProcessKeyState()
 {
 	HRESULT hr = S_OK;
-	if ( !m_bActive )	return FALSE;
+
+	//	winemac.drv never delivers WM_NCACTIVATE(TRUE) to this borderless
+	//	window after Cmd+Tab, so nobody calls OnActivate(TRUE); reacquire
+	//	ourselves as soon as the OS reports the window foreground again.
+	BOOL bForeground = ( ::GetForegroundWindow()==m_hWnd );
+	static BOOL s_bLastForeground = TRUE;
+	if ( bForeground != s_bLastForeground )
+	{
+		CDebugSet::ToLogFile ( "[INPUTDBG] foreground=%d active=%d", bForeground, m_bActive );
+		s_bLastForeground = bForeground;
+	}
+	if ( !m_bActive )
+	{
+		if ( bForeground )	OnActivate ( TRUE );
+		if ( !m_bActive )	return FALSE;
+	}
 
 	hr =  m_pDInputKeyboardDev->Acquire();
+	static HRESULT s_hrLastKbAcquire = (HRESULT)0xDEADBEEF;
+	if ( hr != s_hrLastKbAcquire )
+	{
+		CDebugSet::ToLogFile ( "[INPUTDBG] kb Acquire hr=0x%08x", hr );
+		s_hrLastKbAcquire = hr;
+	}
 	if ( SUCCEEDED(hr) )
 	{
 		m_dwKeyElements = KEY_BUFFER_SIZE;
@@ -755,6 +777,12 @@ BOOL DxInputDevice::ProcessKeyState()
 	}
 
 	hr =  m_pDInputMouseDev->Acquire();
+	static HRESULT s_hrLastMsAcquire = (HRESULT)0xDEADBEEF;
+	if ( hr != s_hrLastMsAcquire )
+	{
+		CDebugSet::ToLogFile ( "[INPUTDBG] mouse Acquire hr=0x%08x", hr );
+		s_hrLastMsAcquire = hr;
+	}
 	if ( SUCCEEDED(hr) )
 	{
 		m_dwMouseElements = MOUSE_BUFFER_SIZE;

@@ -693,6 +693,7 @@ void CBasicWnd::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 BOOL CBasicWnd::OnNcActivate(BOOL bActive)
 {
 	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	CDebugSet::ToLogFile ( "[INPUTDBG] WM_NCACTIVATE bActive=%d", bActive );
 	DxInputDevice::GetInstance().OnActivate ( bActive );
 	// 볼륨 복원을 위해
 	DxBgmSound::GetInstance().SetActivate ( bActive );
@@ -770,5 +771,6 @@ void CBasicWnd::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 
 	// TODO: 여기에 메시지 처리기 코드를 추가합니다.
 	// 렌더링 제어
+	CDebugSet::ToLogFile ( "[INPUTDBG] WM_ACTIVATE nState=%u bMin=%d", nState, (int)bMinimized );
 	m_pApp->SetActive ( !bMinimized );
 }
