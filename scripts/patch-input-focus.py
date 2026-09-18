@@ -7,7 +7,8 @@ import io, sys
 def edit(path, pairs):
     src = io.open(path, encoding='latin-1', newline='').read()
     for old, new in pairs:
-        if new in src and old not in src:
+        if new in src:
+            # already applied (works even when `old` is a substring of `new`)
             print(f'SKIP (already applied): {path}')
             continue
         assert src.count(old) == 1, f'anchor not unique/found in {path}:\n{old!r}'
@@ -122,5 +123,14 @@ new_wmact = """	CDebugSet::ToLogFile ( "[INPUTDBG] WM_ACTIVATE nState=%u bMin=%d
 """
 
 edit(BWD, [(old_ncact, new_ncact), (old_wmact, new_wmact)])
+
+# --- 4. DxResponseMan.cpp: don't spawn Notepad with the log on client exit --
+#	DebugSet.cpp: `if (m_bLogWrite && m_bLogFileFinalOpen) system("notepad ...")`
+#	on shutdown. Our [INPUTDBG] logging sets m_bLogWrite, so Notepad popped up
+#	every close. bLogFileFinalOpen=true is a dev convenience; a shipped game
+#	must never auto-open Notepad, so pass false.
+DRM = '[Lib]__Engine/Sources/DxResponseMan.cpp'
+edit(DRM, [("""	CDebugSet::OneTimeSceneInit ( szPROFILE, true );""",
+            """	CDebugSet::OneTimeSceneInit ( szPROFILE, false );""")])
 
 print('All patches applied.')

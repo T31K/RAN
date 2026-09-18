@@ -208,7 +208,7 @@ HRESULT DxResponseMan::OneTimeSceneInit ( const char* szAppPath, CWnd *pWndApp, 
 
 	//	Note : 디버그샛의 초기화.
 	//
-	CDebugSet::OneTimeSceneInit ( szPROFILE, true );
+	CDebugSet::OneTimeSceneInit ( szPROFILE, false );
 
 	//	Note : 키보드 마우스.
 	//
