@@ -367,3 +367,16 @@ git commit -m "docs: splash screen swap outcome"
 - Bar strip (texture rows 768–1023) byte-preserved on all 12 → loading bar unaffected.
 - **Known cosmetic:** the preserved bottom strip still carries the stock `Copyright 2003~2004 DaumGame / Min Communication` line (it shares the strip with the progress-bar sprites). Left intact to avoid disturbing the bar. Removing/replacing it would be a separate, careful strip-only edit.
 - Rollback: `cp backups/splash-originals/loading_0*.tga game-client/textures/gui/`
+
+## Correction (2026-09-18, later) — WRONG FOLDER, now fixed
+
+The **played client is `~/Projects/RAN/client/`**, not `game-client/` (which runs only the servers). `play.command` line ~118 `cd "$RAN/client"; Game.exe /app_run`. The first swap above went into `game-client/textures/gui/` → invisible in-game.
+
+Also: the E-Games PH client ships the `loading_0NN.tga` slots as **publisher promo art** — `client/textures/gui/loading_001.tga` was literally the Nokia OVi / E-Games ad. So the "Ran Client" OVi promo window is just a loading slot, same render path; replacing all 12 slots replaces it.
+
+**Applied fix:**
+- Backed up `client/textures/gui/loading_0*.tga` → `backups/splash-originals-client/` (12 files).
+- Regenerated all 12 from the **client's own** originals (its bar strip differs) with the same art/`--bias -110`, installed to `client/textures/gui/`.
+- **Removed two stale backup folders that were INSIDE the textures tree** (`client/textures/gui/my-odyssey-art.bak/`, `orig-loading.bak/`, each holding `loading_001/002.tga`) → moved to `backups/client-gui-stale-baks/`. These duplicate basenames collided in `CFileFindTree` and are the likely reason an earlier attempt "didn't work". Live `loading_0*.tga` count under `client/textures` now = 12 (was 16).
+- Verified all 12: size 3,145,772, rows 768–1023 byte-identical to client original, art region changed.
+- `game-client/textures/gui/` swap left in place (inert — servers don't render; acts as a mirror).
