@@ -262,17 +262,22 @@ git commit -m "docs: record Cmd+Tab fix verification outcome
 Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ```
 
-**VERIFICATION OUTCOME (2026-09-18, executed by Opus 4.8):** Fix CONFIRMED WORKING by
-direct user test — input (mouse + keyboard) survives Cmd+Tab away/back on the repo
-client (build `b1e3555`, CI run 35309426319 green). Outcome is A-or-B but
-**indeterminate** from logs: `[INPUTDBG]` was never written because CDebugSet's log
-path (`m_strLogFile`) is not initialized in the `/app_run` release path — so ToLogFile
-is a silent no-op for ALL log calls in this build, not just the new ones. Immaterial:
-the fix is validated behaviorally. The instrumentation is kept (harmless, consistent
-with every other ToLogFile call; will emit under a debug build). Task 3 passes by
-construction: cooperative-level flags (`DISCL_FOREGROUND`) were NOT changed, so
-background input suppression is unchanged; the user's test covered focus→away→back.
-Task 4 SKIPPED (fix worked, no fallback needed).
+**VERIFICATION OUTCOME (2026-09-18, executed by Opus 4.8): Outcome A, CONFIRMED.**
+Fix works — input (mouse + keyboard) survives Cmd+Tab away/back on the repo client
+(build `b1e3555`, CI run 35309426319 green). The `[INPUTDBG]` log IS written (to
+CDebugSet's szPROFILE dir; an earlier note claiming it was a no-op was wrong). The log
+shows, on Cmd+Tab-back: `WM_ACTIVATEAPP bActive=1` → `OnActivate(1)` FIRST, then the
+self-heal (`foreground=1 active=1`), then `WM_NCACTIVATE bActive=1` — so WM_ACTIVATEAPP
+is the primary revival path, with the self-heal and NCACTIVATE as redundant safety
+nets. Task 3 passes by construction: cooperative-level flags (`DISCL_FOREGROUND`)
+unchanged, so backgrounded input suppression is intact; user's test covered
+focus→away→back. Task 4 SKIPPED (fix worked).
+
+**FOLLOW-UP (commit `c39c114`):** the log auto-opened in Notepad on client exit
+(`DebugSet.cpp`: `if (m_bLogWrite && m_bLogFileFinalOpen) system("notepad ...")` on
+shutdown; INPUTDBG logging set m_bLogWrite every session). Fixed by passing `false`
+for `bLogFileFinalOpen` at `DxResponseMan.cpp:211` (was `true`). Rebuild + reship
+folded into the same OTA release as the input fix.
 
 ---
 
