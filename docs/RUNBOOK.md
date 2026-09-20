@@ -154,8 +154,29 @@ The binaries carry `[JOINDBG]` instrumentation for the character-join path — g
 
 ---
 
+## 10. External monitor blacks out for a few seconds when the game closes (clamshell mode)
+- **Symptom:** quit/kill the client while the MacBook lid is closed (external monitor only) → monitor goes
+  black for several seconds (looks like the Mac died; audio keeps playing). Happens ~2/3 of exits.
+- **Root cause:** NOT the game, NOT Wine — a macOS 26 (Tahoe, verified on 26.6.2) bug. ~3s after the game
+  process dies, macOS fires a **phantom "lid opened" event** (`loginwindow: clamshellStateChanged closed=0`
+  with the lid untouched), hotplugs the built-in display back in, marks it main, then flips back ~1s later.
+  Two display-topology reconfigs back-to-back force the external monitor to re-sync → black. Verified
+  2026-09-20 with `log stream` (WindowServer/powerd/loginwindow): 5 of 8 game exits fired the event, zero
+  baseline events otherwise; wine notepad exit never triggers it (needs the GPU-heavy game).
+- **Ruled out (all tested):** `Mac Driver\CaptureDisplaysForFullscreen=n` (key isn't even in this
+  wswine.bundle's winemac binary), window focus at exit, graceful vs SIGKILL exit, keeping the wine
+  session alive past game exit (sentinel process — passed 2 lucky runs, failed the retest; reverted).
+- **Do:** nothing — it recovers by itself in seconds. To avoid it entirely: open the lid before quitting.
+  Re-test after each macOS update (Tahoe clamshell handling is broadly reported broken).
+- **Diagnose next time:** `/usr/bin/log show --last 5m --predicate 'process == "loginwindow"' | grep clamshellStateChanged`
+  right after an exit — phantom `closed=0` with the lid closed confirms it's still this bug. (Note: `log`
+  must be invoked as `/usr/bin/log` in zsh — `log` alone hits the zsh builtin.)
+
+---
+
 ## Quick decision tree
 - Input dead after Cmd+Tab → **#9** (fixed in build b1e3555; update the app if on an older build).
+- Monitor blacks out right after quitting the game (lid closed) → **#10** (macOS Tahoe bug; wait it out).
 - Can't click / connection error → **#2** (decrypt param.ini, check LoginAddress).
 - "System error caused log in fail" → errlog `NativeError` → **#5/#6** (T-SQL/proc syntax) or
   (historical) user_verify.
