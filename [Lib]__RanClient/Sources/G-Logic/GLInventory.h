@@ -12,7 +12,7 @@ enum
 {
 	EM_INVENSIZE_X			= 6,
 	EM_INVENSIZE_Y			= 10,
-	EM_INVEN_DEF_SIZE_Y		= 4,
+	EM_INVEN_DEF_SIZE_Y		= 10,
 	EM_INVEN_PREMIUM_SIZE	= 1,
 };
 
@@ -78,7 +78,7 @@ public:
 
 public:
 	BOOL InsertItem ( const SITEMCUSTOM &ItemCustom );
-	BOOL InsertItem ( const SITEMCUSTOM &ItemCustom, const WORD wPosX, const WORD wPosY, bool bLOAD=false );	//	·Îµå(Assign) ½Ã¿¡´Â °¡¿ë ¶óÀÎ°ú º°°³·Î ³Ö¾îÁü.
+	BOOL InsertItem ( const SITEMCUSTOM &ItemCustom, const WORD wPosX, const WORD wPosY, bool bLOAD=false );	//	ï¿½Îµï¿½(Assign) ï¿½Ã¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö¾ï¿½ï¿½ï¿½.
 	BOOL InsertItem ( const SITEMCUSTOM &ItemCustom, const WORD wPosX, const WORD wPosY, const WORD wBackX, const WORD wBackY );
 
 	SINVENITEM* GetItem ( WORD wPosX, WORD wPosY );
@@ -92,7 +92,7 @@ public:
 	DWORD GetNumItems ()					{ return static_cast<DWORD>(m_ItemMap.size()); }
 	DWORD GetAmountDrugItem ( EMITEM_DRUG emDrug );
 	bool GetCharResetItem ( WORD &wPosX, WORD &wPosY );
-	bool GetPileItem ( const SNATIVEID _sNID, WORD &wPosX, WORD &wPosY );	//	°ãÄ§ °¡´É °¹¼ö ¸¹Å­ °ãÃÄ ÀÖ´Â °ÍÀ» ¹ÝÈ¯.
+	bool GetPileItem ( const SNATIVEID _sNID, WORD &wPosX, WORD &wPosY );	//	ï¿½ï¿½Ä§ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å­ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯.
 	WORD GetValidCellY () const;
 	WORD GETAddLine () const;
 	bool IsLimit () const					{ return m_bLimit; }
@@ -110,8 +110,8 @@ public:
 	~GLInventory(void);
 
 private:
-	GLInventory(const GLInventory &Inven )			{ GASSERT(0&&"¹¬½ÃÀû º¹»ç ºÒÇã!"); }
-	GLInventory& operator= ( GLInventory &Inven )	{ GASSERT(0&&"¹¬½ÃÀû º¹»ç ºÒÇã!"); return *this; }
+	GLInventory(const GLInventory &Inven )			{ GASSERT(0&&"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½!"); }
+	GLInventory& operator= ( GLInventory &Inven )	{ GASSERT(0&&"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½!"); return *this; }
 
 public:
 	void Assign ( const GLInventory &Inven );
