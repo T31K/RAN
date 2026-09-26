@@ -281,6 +281,12 @@ HRESULT CInnerInterface::FrameMove ( LPDIRECT3DDEVICEQ pd3dDevice, float fElapse
 	if ( IsExclusiveControl() ) SetCharMoveBlock ();
 
 	int LB = (int)DxInputDevice::GetInstance().GetMouseState(DXMOUSE_LEFT);
+	if ( LB & (DXKEY_DOWN|DXKEY_UP|DXKEY_DUP) )
+	{
+		int nX(0), nY(0), nZ(0);
+		DxInputDevice::GetInstance().GetMouseLocate ( nX, nY, nZ );
+		CDebugSet::ToLogFile ( "[UIDBG] frame LB=0x%x pos=%d,%d mouseInCtrl=%d moveBlock=%d exclusive=%d", LB, nX, nY, IsMouseInControl(), IsCharMoveBlock(), IsExclusiveControl() );
+	}
 	if ( (LB & DXKEY_UP) || (LB & DXKEY_DUP) )
 	{
 		ResetExclusiveControl();

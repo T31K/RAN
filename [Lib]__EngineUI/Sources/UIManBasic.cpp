@@ -257,6 +257,8 @@ BOOL CUIMan::UpdateList ( CUIFocusContainer* pList, BOOL bFocusList, float fElap
 		if ( bFirstControl )
 		{
 			DWORD dwMsg = pControl->GetMessageEx ();
+			if ( (LB & (DXKEY_DOWN|DXKEY_UP|DXKEY_DUP)) && CHECK_MOUSE_IN ( dwMsg ) )
+				CDebugSet::ToLogFile ( "[UIDBG] claim focusList=%d id=%u pos=%d,%d LB=0x%x msg=0x%08x", bFocusList, (unsigned)cID, PosX, PosY, LB, dwMsg );
 			// MEMO : 상속받는 객체에서 호출된다.
 			TranslateUIMessage ( cID, dwMsg );
 
