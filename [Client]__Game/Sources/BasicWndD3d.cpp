@@ -773,4 +773,8 @@ void CBasicWnd::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 	// ·»´õ¸µ Á¦¾î
 	CDebugSet::ToLogFile ( "[INPUTDBG] WM_ACTIVATE nState=%u bMin=%d", nState, (int)bMinimized );
 	m_pApp->SetActive ( !bMinimized );
+	//	winemac.drv delivers activation messages out of order on Cmd+Tab back
+	//	(ACTIVATEAPP(1), then a stray NCACTIVATE(0) that drops input), but
+	//	WM_ACTIVATE always arrives last with the true state - let it decide.
+	DxInputDevice::GetInstance().OnActivate ( nState!=WA_INACTIVE && !bMinimized );
 }

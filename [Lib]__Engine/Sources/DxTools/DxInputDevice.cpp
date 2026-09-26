@@ -752,7 +752,17 @@ BOOL DxInputDevice::ProcessKeyState()
 	}
 	if ( !m_bActive )
 	{
-		if ( bForeground )	OnActivate ( TRUE );
+		//	GetForegroundWindow() can lag for seconds under Wine; a click on our
+		//	window is proof the player is back, so reacquire on that too.
+		BOOL bClickedUs = FALSE;
+		if ( (::GetAsyncKeyState(VK_LBUTTON) | ::GetAsyncKeyState(VK_RBUTTON)) & 0x8000 )
+		{
+			POINT ptCursor;
+			::GetCursorPos ( &ptCursor );
+			bClickedUs = ( ::WindowFromPoint(ptCursor)==m_hWnd );
+			if ( bClickedUs )	CDebugSet::ToLogFile ( "[INPUTDBG] click-heal: reacquire (foreground=%d)", bForeground );
+		}
+		if ( bForeground || bClickedUs )	OnActivate ( TRUE );
 		if ( !m_bActive )	return FALSE;
 	}
 
