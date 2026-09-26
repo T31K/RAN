@@ -725,7 +725,8 @@ public:
 					const SITEM *pHold, 
 					bool &bRESET, 
 					bool &bTERMINATE, 
-					EMANTIDISAPPEAR &emANTIDISAPPEAR );
+					EMANTIDISAPPEAR &emANTIDISAPPEAR,
+					bool bFORCE_SUCCEED = false );
 
 public:
 	BOOL ISSTATEBLOW ()							{ return m_bSTATEBLOW; }

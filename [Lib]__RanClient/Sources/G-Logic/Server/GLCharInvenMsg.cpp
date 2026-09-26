@@ -6,6 +6,10 @@
 #include "../[Lib]__Engine/Sources/Common/StringUtils.h"
 #include "RanFilter.h"
 #include "./GLItemMixMan.h"
+#include <set>
+
+//	[MAXUPGRADE] chars with 100% grinding success, toggled by the "maxupgrade" chat command.
+extern std::set<DWORD> g_setMaxUpgradeChar;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -4777,7 +4781,8 @@ HRESULT GLChar::MsgReqInvenGrinding ( NET_MSG_GENERIC* nmg )
 		if ( !IsCoolTime( pITEM->sBasicOp.sNativeID ) )	emANTIDISAPPEAR = EMANTIDISAPPEAR_ON;
 	}
 
-	BOOL bSucceeded = DOGRINDING ( pInvenItem->sItemCustom, pHold, bRESET, bTERMINATE, emANTIDISAPPEAR );
+	bool bMaxUpgrade = g_setMaxUpgradeChar.count ( m_dwCharID ) > 0;
+	BOOL bSucceeded = DOGRINDING ( pInvenItem->sItemCustom, pHold, bRESET, bTERMINATE, emANTIDISAPPEAR, bMaxUpgrade );
 
 	//	Note : 家葛等 楷付力 贸府.
 	//

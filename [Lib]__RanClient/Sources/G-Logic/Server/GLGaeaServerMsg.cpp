@@ -4,6 +4,10 @@
 #include "./GLGaeaServer.h"
 #include "./GLItemMan.h"
 #include "./GLBusStation.h"
+#include <set>
+
+//	[MAXUPGRADE] chars with 100% grinding success ( used by GLChar::MsgReqInvenGrinding ).
+std::set<DWORD> g_setMaxUpgradeChar;
 #include "./GLBusData.h"
 #include "./GLTaxiStation.h"
 #include "./GLGuidance.h"
@@ -203,6 +207,32 @@ BOOL GLGaeaServer::ChatMsgProc ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD d
 				pChar->SendMsgViewAround ( (NET_MSG_GENERIC*) &NetMsgAllPassive );
 
 				CDebugSet::ToLogFile ( "[ALLSKILLS] maxed %d skills for char=%d class=%d", nAllCount, (int)pChar->m_dwCharID, (int)pChar->m_emClass );
+
+				//	Do not broadcast the cheat command as normal chat.
+				return TRUE;
+			}
+
+			//	[MAXUPGRADE] GM cheat: "maxupgrade [on|off]" toggles 100% grinding success for this char.
+			if ( 0 == strncmp ( pNetMsg->szChatMsg, "maxupgrade", 10 ) )
+			{
+				const char* szArg = pNetMsg->szChatMsg + 10;
+				while ( *szArg == ' ' )	++szArg;
+
+				bool bOn;
+				if ( 0 == strncmp ( szArg, "on", 2 ) )			bOn = true;
+				else if ( 0 == strncmp ( szArg, "off", 3 ) )	bOn = false;
+				else											bOn = g_setMaxUpgradeChar.count ( pChar->m_dwCharID ) == 0;
+
+				if ( bOn )	g_setMaxUpgradeChar.insert ( pChar->m_dwCharID );
+				else		g_setMaxUpgradeChar.erase ( pChar->m_dwCharID );
+
+				NET_CHAT_FB NetMaxUpFB;
+				NetMaxUpFB.emType = CHAT_TYPE_NORMAL;
+				StringCchCopy ( NetMaxUpFB.szName, CHR_ID_LENGTH+1, "System" );
+				StringCchCopy ( NetMaxUpFB.szChatMsg, CHAT_MSG_SIZE+1, bOn ? "maxupgrade ON - grinding always succeeds" : "maxupgrade OFF - normal grinding rates" );
+				SENDTOCLIENT ( pChar->m_dwClientID, &NetMaxUpFB );
+
+				CDebugSet::ToLogFile ( "[MAXUPGRADE] char=%d %s", (int)pChar->m_dwCharID, bOn ? "ON" : "OFF" );
 
 				//	Do not broadcast the cheat command as normal chat.
 				return TRUE;

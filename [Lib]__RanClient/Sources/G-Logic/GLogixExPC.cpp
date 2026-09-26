@@ -2947,7 +2947,8 @@ BOOL GLCHARLOGIC::DOGRINDING(	SITEMCUSTOM &sCusItem,
 								const SITEM *pHold, 
 								bool &_bRESET, 
 								bool &_bTERMINATE, 
-								EMANTIDISAPPEAR &emANTIDISAPPEAR )
+								EMANTIDISAPPEAR &emANTIDISAPPEAR,
+								bool bFORCE_SUCCEED )
 {
 	bool bSUCCEED(false);
 	_bRESET = false;
@@ -2969,7 +2970,7 @@ BOOL GLCHARLOGIC::DOGRINDING(	SITEMCUSTOM &sCusItem,
 	
 
 	//	4단계 이상부터 실패 확율 존제.
-	if ( cGRADE >= GRADE_NORMAL )
+	if ( cGRADE >= GRADE_NORMAL && !bFORCE_SUCCEED )
 	{
 		//	성공 확율.
 		float fRATE = GLCONST_CHAR::fGRADE_RATE[cGRADE];
