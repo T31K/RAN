@@ -154,6 +154,13 @@ The binaries carry `[JOINDBG]` instrumentation for the character-join path — g
 
 ---
 
+- **Follow-up (2026-09-26, build 5 / `63ed157`):** mouse still sometimes dead after Cmd+Tab back (hover works,
+  clicks don't). Client log (`~/Documents/RanOnline/errlog/log.*.txt`, Wine maps Documents to the Mac's) showed
+  winemac.drv sending ACTIVATEAPP(1) → stray NCACTIVATE(0) (drops input) → ACTIVATE(WA_ACTIVE), and the
+  GetForegroundWindow self-heal lagging ~20s. Fix: WM_ACTIVATE (always last, always right) now drives
+  `DxInputDevice::OnActivate`, and a click on the game window reacquires immediately (`[INPUTDBG] click-heal`).
+  Workaround on older builds: Cmd+Tab out and back once more.
+
 ## 10. External monitor blacks out for a few seconds when the game closes (clamshell mode)
 - **Symptom:** quit/kill the client while the MacBook lid is closed (external monitor only) → monitor goes
   black for several seconds (looks like the Mac died; audio keeps playing). Happens ~2/3 of exits.
