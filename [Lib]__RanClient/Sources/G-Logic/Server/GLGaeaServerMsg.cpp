@@ -116,11 +116,16 @@ BOOL GLGaeaServer::ChatMsgProc ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD d
 
 				SITEM *pGiveITEM = NULL;
 				BOOL bGiveOK = FALSE;
+				int nGiveDone = 0;
 				if ( nGiveRead >= 2 && nGiveMID >= 0 && nGiveSID >= 0 )
 				{
 					SNATIVEID nidGIVE ( (WORD)nGiveMID, (WORD)nGiveSID );
 					pGiveITEM = GLItemMan::GetInstance().GetItem ( nidGIVE );
-					if ( pGiveITEM )
+					//	Stackable items: count is the stack size. Others: count is the number of copies.
+					int nGiveCopies = 1;
+					if ( pGiveITEM && !pGiveITEM->ISPILE() )	nGiveCopies = ( nGiveCnt > 60 ) ? 60 : nGiveCnt;
+
+					for ( int nGiveCopy = 0; pGiveITEM && nGiveCopy < nGiveCopies; ++nGiveCopy )
 					{
 						WORD wGivePosX(0), wGivePosY(0);
 						BOOL bGiveSpace = pChar->m_cInventory.FindInsrtable ( pGiveITEM->sBasicOp.wInvenSizeX, pGiveITEM->sBasicOp.wInvenSizeY, wGivePosX, wGivePosY );
@@ -130,7 +135,7 @@ BOOL GLGaeaServer::ChatMsgProc ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD d
 							CTime cGiveTIME = CTime::GetCurrentTime();
 							sGIVE_NEW.sNativeID = nidGIVE;
 							sGIVE_NEW.tBORNTIME = cGiveTIME.GetTime();
-							sGIVE_NEW.wTurnNum = ( nGiveCnt > 1 ) ? (WORD)nGiveCnt : pGiveITEM->GETAPPLYNUM();
+							sGIVE_NEW.wTurnNum = ( pGiveITEM->ISPILE() && nGiveCnt > 1 ) ? (WORD)nGiveCnt : pGiveITEM->GETAPPLYNUM();
 							sGIVE_NEW.cDAMAGE = (BYTE)pGiveITEM->sBasicOp.wGradeAttack;
 							sGIVE_NEW.cDEFENSE = (BYTE)pGiveITEM->sBasicOp.wGradeDefense;
 							sGIVE_NEW.cGenType = EMGEN_GMEDIT;
@@ -149,12 +154,17 @@ BOOL GLGaeaServer::ChatMsgProc ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD d
 
 								GLITEMLMT::GetInstance().ReqItemRoute ( sGIVE_NEW, ID_CHAR, 0, ID_CHAR, pChar->m_dwCharID, EMITEM_ROUTE_CHAR, sGIVE_NEW.wTurnNum );
 								bGiveOK = TRUE;
+								++nGiveDone;
 							}
+						}
+						else
+						{
+							break;	//	inventory full
 						}
 					}
 				}
 
-				CDebugSet::ToLogFile ( "[GIVE] /give MID=%d SID=%d count=%d read=%d item=%s insert=%s", nGiveMID, nGiveSID, nGiveCnt, nGiveRead, pGiveITEM ? "found" : "NULL", bGiveOK ? "OK" : "FAIL" );
+				CDebugSet::ToLogFile ( "[GIVE] /give MID=%d SID=%d count=%d read=%d item=%s insert=%s copies=%d", nGiveMID, nGiveSID, nGiveCnt, nGiveRead, pGiveITEM ? "found" : "NULL", bGiveOK ? "OK" : "FAIL", nGiveDone );
 
 				//	Do not broadcast the cheat command as normal chat.
 				return TRUE;
