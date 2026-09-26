@@ -521,7 +521,7 @@ int	COdbcSupervisor::ReadImagePet(
 				ByteStream.WriteBuffer( (LPBYTE) pBinary, lSize );
 			}
 			if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO && sReturn != SQL_NO_DATA) CDebugSet::ToLogFile("[JOINDBG] ReadImagePet chunk-read abnormal sReturn=%d lSize=%d obj=%s", (int)sReturn, (int)lSize, objName);
-			if (sReturn == SQL_NO_DATA || lSize == 0)
+			if (sReturn == SQL_NO_DATA || lSize == 0 || lSize == SQL_NULL_DATA || (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO))
 				break;
 		}
 
@@ -599,7 +599,7 @@ int	COdbcSupervisor::ReadImageVehicle(
 				ByteStream.WriteBuffer( (LPBYTE) pBinary, lSize );
 			}
 			if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO && sReturn != SQL_NO_DATA) CDebugSet::ToLogFile("[JOINDBG] ReadImageVehicle chunk-read abnormal sReturn=%d lSize=%d obj=%s", (int)sReturn, (int)lSize, objName);
-			if (sReturn == SQL_NO_DATA || lSize == 0)
+			if (sReturn == SQL_NO_DATA || lSize == 0 || lSize == SQL_NULL_DATA || (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO))
 				break;
 		}
 
@@ -676,7 +676,7 @@ int	COdbcSupervisor::ReadImage(
 				ByteStream.WriteBuffer( (LPBYTE) pBinary, lSize );
 			}
 			if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO && sReturn != SQL_NO_DATA) CDebugSet::ToLogFile("[JOINDBG] ReadImage chunk-read abnormal sReturn=%d lSize=%d obj=%s", (int)sReturn, (int)lSize, objName);
-			if (sReturn == SQL_NO_DATA || lSize == 0)
+			if (sReturn == SQL_NO_DATA || lSize == 0 || lSize == SQL_NULL_DATA || (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO))
 				break;
 		}
 
@@ -735,7 +735,7 @@ int	COdbcSupervisor::ReadImage(
 				ByteStream.WriteBuffer((LPBYTE) pBinary, lSize);
 			}
 			if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO && sReturn != SQL_NO_DATA) CDebugSet::ToLogFile("[JOINDBG] ReadImage(sql) chunk-read abnormal sReturn=%d lSize=%d", (int)sReturn, (int)lSize);
-			if (sReturn == SQL_NO_DATA || lSize == 0)
+			if (sReturn == SQL_NO_DATA || lSize == 0 || lSize == SQL_NULL_DATA || (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO))
 				break;
 		}
 

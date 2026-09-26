@@ -669,7 +669,7 @@ int COdbcManager::ReadClubMarkImage(DWORD dwClub, CByteStream &ByteStream)
 				lTotalSize += lSize;
 				ByteStream.WriteBuffer((LPBYTE) pBuffer, lSize);
 			}
-			if (sReturn == SQL_NO_DATA || lSize == 0)
+			if (sReturn == SQL_NO_DATA || lSize == 0 || lSize == SQL_NULL_DATA || (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO))
 				break;
 			Sleep( 0 );
 		}
@@ -1123,7 +1123,7 @@ int COdbcManager::ReadClubStorage(DWORD dwClub, CByteStream &ByteStream)
 				lTotalSize += lSize;
 				ByteStream.WriteBuffer((LPBYTE) pBuffer, lSize);
 			}
-			if (sReturn == SQL_NO_DATA || lSize == 0)
+			if (sReturn == SQL_NO_DATA || lSize == 0 || lSize == SQL_NULL_DATA || (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO))
 				break;
 			Sleep( 0 );
 		}

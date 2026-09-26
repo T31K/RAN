@@ -285,7 +285,7 @@ int	COdbcManager::ReadUserInven(int SGNum, DWORD dwUserNum, CByteStream &ByteStr
 				ByteStream.WriteBuffer((LPBYTE) pBuffer, lSize);
 			}
 			if (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO && sReturn != SQL_NO_DATA) CDebugSet::ToLogFile("[JOINDBG] ReadUserInvenImage chunk-read abnormal sReturn=%d lSize=%d user=%d", (int)sReturn, (int)lSize, (int)dwUserNum);
-			if (sReturn == SQL_NO_DATA || lSize == 0)
+			if (sReturn == SQL_NO_DATA || lSize == 0 || lSize == SQL_NULL_DATA || (sReturn != SQL_SUCCESS && sReturn != SQL_SUCCESS_WITH_INFO))
 				break;
 			Sleep( 0 );
 		}

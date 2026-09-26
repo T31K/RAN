@@ -89,7 +89,7 @@ CREATE TABLE `ChaInfo` (
   `ChangeClass` INT NOT NULL DEFAULT 0,
   `ChaKills` INT NOT NULL DEFAULT 0,
   `GraveYard` INT NOT NULL DEFAULT 0,
-  `ChaCoolTime` LONGBLOB,
+  `ChaCoolTime` LONGBLOB DEFAULT '',
   `FixInject` VARCHAR(33) CHARACTER SET utf8mb4,
   `AuctionTimeOut` VARBINARY(50),
   `ChaSpSID` INT DEFAULT 0,
