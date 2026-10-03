@@ -86,14 +86,14 @@ struct SlangFilter::IMPL
 {
     SlangNode* pRoot; ///< 최상위 노드
 
-	static const wstring s_Punctuations; ///< 문장 부호들
+	static const SLANG_STRING s_Punctuations; ///< 문장 부호들
 
     IMPL() : pRoot(new SlangNode) { /*AssertPtr(pRoot);*/ }
     ~IMPL() { SAFE_DELETE(pRoot); }
 };
 
 /// 문장 부호들
-const wstring SlangFilter::IMPL::s_Punctuations = L" `~!@#$%^&*()-_=+\\|[{]};:'\",<.>/?";
+const SLANG_STRING SlangFilter::IMPL::s_Punctuations = SLANG_W(" `~!@#$%^&*()-_=+\\|[{]};:'\",<.>/?");
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -127,13 +127,13 @@ void SlangFilter::Init()
 /// \param original 원래 문장
 /// \return std::string 비속어가 '*'로 치환된 문장
 //////////////////////////////////////////////////////////////////////////////
-std::wstring SlangFilter::filter(const std::wstring& original) const
+SLANG_STRING SlangFilter::filter(const SLANG_STRING& original) const
 {
-    std::wstring text(original);
-	std::wstring text_upper(original);
+    SLANG_STRING text(original);
+	SLANG_STRING text_upper(original);
 
 	if ( m_nCodePage != VN_CODEPAGE )
-		transform(text_upper.begin(), text_upper.end(), text_upper.begin(), toupper);
+		transform(text_upper.begin(), text_upper.end(), text_upper.begin(), ::toupper);
 	else
 		transform(text_upper.begin(), text_upper.end(), text_upper.begin(), ToUpperVN);
 	
@@ -143,7 +143,7 @@ std::wstring SlangFilter::filter(const std::wstring& original) const
         size_t size = match(text_upper.substr(i, text_upper.size() - i));
         if (size > 0)
         {
-            text.replace(i, size, std::wstring(size, '*'));
+            text.replace(i, size, SLANG_STRING(size, '*'));
             i += size;
         }
         else
@@ -161,7 +161,7 @@ std::wstring SlangFilter::filter(const std::wstring& original) const
 /// \param original 조사하고자하는 문장
 /// \return bool 비속어를 포함하고 있을 경우 true를 반환한다.
 //////////////////////////////////////////////////////////////////////////////
-bool SlangFilter::hasSlang(const std::wstring& original) const
+bool SlangFilter::hasSlang(const SLANG_STRING& original) const
 {
     for (size_t i=0; i<original.size(); i++)
     {
@@ -176,7 +176,7 @@ bool SlangFilter::hasSlang(const std::wstring& original) const
 /// \brief 비속어를 추가한다.
 /// \param slang 비속어에는 문장 부호가 포함되어 있지 않아야 한다.
 //////////////////////////////////////////////////////////////////////////////
-void SlangFilter::addSlang(const std::wstring& slang)
+void SlangFilter::addSlang(const SLANG_STRING& slang)
 {
     // 단어의 길이는 256바이트로 제한. 특별한 이유는 없다. 그냥 256바이트를 
     // 넘어가는 욕은 입력 자체가 뭔가 꼬인 거라고 생각했기 때문이다.
@@ -184,13 +184,13 @@ void SlangFilter::addSlang(const std::wstring& slang)
     // match() 함수를 보면, 알겠지만 문장 부호는 비교 대상으로 취급하지 않기
     // 위해서이다. (예를 들어 "바...보" 같은 욕을 검출하기 위해!)
     if (slang.size() > 256 ||
-        slang.find_first_of(IMPL::s_Punctuations) != std::wstring::npos)
+        slang.find_first_of(IMPL::s_Punctuations) != SLANG_STRING::npos)
         return;
 
     // char를 size_t로 바로 변환시키면 음수값일 경우 콩가루 변환이 일어난다.
     // 어쩔 수 없이 unsigned char로 먼저 변환한 뒤에 size_t로 변환시킨다.
-    wchar_t buf[256+1] = {0, };
-    _snwprintf_s(buf, sizeof(buf) - 1, L"%s", slang.c_str());
+    WCHAR buf[256+1] = {0, };
+    std::copy(slang.begin(), slang.end(), buf);		//	slang.size() <= 256 (checked above)
     buf[256] = 0;
 
     // 단어의 모든 바이트를 iteration하면서, 그에 따른 트리를 생성한다.
@@ -211,7 +211,7 @@ void SlangFilter::addSlang(const std::wstring& slang)
 /// \return size_t 비속어가 포함되어 있을 경우에는 그 비속어의 길이를 
 /// 리턴한다. 포함되어 있지 않을 경우에는 0을 리턴한다.
 //////////////////////////////////////////////////////////////////////////////
-size_t SlangFilter::match(const std::wstring& text) const
+size_t SlangFilter::match(const SLANG_STRING& text) const
 {
     if (text.empty()) return 0;
     if (isPunctutation(text[0])) return 0;
@@ -231,7 +231,7 @@ size_t SlangFilter::match(const std::wstring& text) const
         }
 
         // 자식 노드 중에 현재 바이트와 일치하는 값으로 이어지는 것을 찾는다.
-        size_t idx = (size_t)((wchar_t)text[i]);
+        size_t idx = (size_t)((WCHAR)text[i]);
         pCurrent = pCurrent->findChild(idx);
 
         // 더 이상 이어지는 노드가 없다는 말은 현재의 바이트들과 일치하는
@@ -257,7 +257,7 @@ size_t SlangFilter::match(const std::wstring& text) const
 /// \param c 검사하려는 글자
 /// \return bool 해당하는 글자가 문장 부호일 경우에는 true를 반환한다.
 //////////////////////////////////////////////////////////////////////////////
-bool SlangFilter::isPunctutation(wchar_t c) const
+bool SlangFilter::isPunctutation(WCHAR c) const
 {
     return IMPL::s_Punctuations.find(c) != std::string::npos;
 }

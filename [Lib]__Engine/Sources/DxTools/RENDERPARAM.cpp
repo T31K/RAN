@@ -43,10 +43,16 @@ namespace RENDERPARAM
 	BOOL	bRENDER_WORLD = TRUE;
 	BOOL	bRENDER_PIECE = TRUE;
 
+#if !defined(_M_IX86)
+	//	Native macOS (Apple Silicon): no x86 MMX/SSE. The CPU skinning code then takes its
+	//	portable path (DxSkinMesh9_CPU.cpp has a scalar PhysiqueTransform for non-x86).
+	bool isMMXSupported()	{ return false; }
+	bool isISSESupported()	{ return false; }
+#else
 	// MMX 제공하는지 체크
-	bool isMMXSupported() 
-	{ 
-		int fSupported; 
+	bool isMMXSupported()
+	{
+		int fSupported;
 
 		__asm 
 		{ 
@@ -101,16 +107,17 @@ namespace RENDERPARAM
 		}
 		else 
 		{
-			if (((ext_features >> 22) & 1) != 0) 
+			if (((ext_features >> 22) & 1) != 0)
 			{
-				return true; 
+				return true;
 			}
-			else 
+			else
 			{
-				return false; 
+				return false;
 			}
 		}
 	}
+#endif
 
 	void DeviceCheck( LPDIRECT3DDEVICEQ pd3dDevice )
 	{

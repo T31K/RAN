@@ -225,7 +225,7 @@ BOOL CRanFilter::Filter( CONST CString & strBuf, CONST SlangFilter & currentFilt
 	MultiByteToWideChar( m_nCodePage, 0, strBUFFER.GetString(), strBUFFER.GetLength()+1,
 						wszBUFFER, sizeof(wszBUFFER)/sizeof(wszBUFFER[0]) );
 
-	std::wstring strFilted( wszBUFFER );
+	SLANG_STRING strFilted( wszBUFFER );
 	BOOL bFind(FALSE);
 
 	strFilted = currentFilter.filter( strFilted );

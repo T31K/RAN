@@ -106,6 +106,43 @@ void DxSkinMesh9_CPU::PhysiqueTransform_SSE( VERTEX* pResult, BYTE* pBoneVertex,
 {
 	DWORD	  dwResultSize = sizeof(VERTEX);
 
+#if !defined(_M_IX86)
+	//	Native macOS (Apple Silicon): the SSE assembly below, in portable C++. Per vertex block
+	//	(dwBoneSize bytes): pos xyz @0x00, normal xyz @0x0C, influence count @0x18, then
+	//	{bone index, weight} pairs @0x1C; the block's last 8 bytes are the texture coords.
+	//	Output VERTEX: pos @0x00, normal @0x0C, tex @0x18.
+	const BYTE* pBone = pBoneVertex;
+	BYTE* pOut = (BYTE*)pResult;
+	for ( DWORD v = 0; v < dwVertexNum; ++v )
+	{
+		const float* pPos = (const float*)( pBone + 0x00 );
+		const float* pNor = (const float*)( pBone + 0x0C );
+		const DWORD dwInfluence = *(const DWORD*)( pBone + 0x18 );
+
+		float vPos[3] = { 0.f, 0.f, 0.f };
+		float vNor[3] = { 0.f, 0.f, 0.f };
+		for ( DWORD i = 0; i < dwInfluence; ++i )
+		{
+			const DWORD dwBone = *(const DWORD*)( pBone + 0x1C + i*8 );
+			const float fWeight = *(const float*)( pBone + 0x20 + i*8 );
+			const float* pMat = (const float*)( (const BYTE*)pAniMatrix + dwBone*0x40 );	//	row-major 4x4
+			for ( int c = 0; c < 3; ++c )
+			{
+				vPos[c] += ( pMat[0+c]*pPos[0] + pMat[4+c]*pPos[1] + pMat[8+c]*pPos[2] + pMat[12+c] ) * fWeight;
+				vNor[c] += ( pMat[0+c]*pNor[0] + pMat[4+c]*pNor[1] + pMat[8+c]*pNor[2] ) * fWeight;
+			}
+		}
+
+		float* pDst = (float*)pOut;
+		pDst[0] = vPos[0]; pDst[1] = vPos[1]; pDst[2] = vPos[2];
+		pDst[3] = vNor[0]; pDst[4] = vNor[1]; pDst[5] = vNor[2];
+
+		pBone += dwBoneSize;
+		*(DWORD*)( pOut + 0x18 ) = *(const DWORD*)( pBone - 0x8 );
+		*(DWORD*)( pOut + 0x1C ) = *(const DWORD*)( pBone - 0x4 );
+		pOut += dwResultSize;
+	}
+#else
 	__asm
 	{
 		mov		   	   esi,	   pBoneVertex		   	   	   // esi <- 버텍스와 본정보가 들어있는 구조체 포인터 세팅
@@ -227,6 +264,7 @@ void DxSkinMesh9_CPU::PhysiqueTransform_SSE( VERTEX* pResult, BYTE* pBoneVertex,
 		dec		   	   ecx		   	   	   	   	   	   	   	   // 버텍스수만큼 루프
 		jnz		   	   PHYSIQUETRANSFORM	  	   	   	   	   // (카운터에서 1을 빼주고 남아있으면 다시 루프)
 	}
+#endif
 }
 
 void DxSkinMesh9_CPU::UpdateSkinnedMesh_0( VERTEX* pDest, BYTE* pSrcIN, D3DXMATRIXA16* pBoneMatrices, DWORD dwStart, DWORD dwNumVertices )
@@ -1344,6 +1382,24 @@ void DxSkinMesh9_CPU::LoadLOD( CSerialFile& SFile, IDirect3DDevice9 *pd3dDevice 
 }
 
 
+#if !defined(_M_IX86)
+//	Native macOS (Apple Silicon): the SSE assembly below, in portable C++.
+//	mul: row i of the result = sum_k right[i][k] * left.row(k).
+void SMatrix4_SSE::mul(const SMatrix4_SSE& left, const SMatrix4_SSE& right)
+{
+	float fDst[16];
+	for ( int i = 0; i < 4; ++i )
+		for ( int c = 0; c < 4; ++c )
+			fDst[i*4+c] = right.m[i*4+0]*left.m[0*4+c] + right.m[i*4+1]*left.m[1*4+c]
+						+ right.m[i*4+2]*left.m[2*4+c] + right.m[i*4+3]*left.m[3*4+c];
+	for ( int n = 0; n < 16; ++n )	m[n] = fDst[n];		//	safe when this == &left or &right
+}
+
+void SMatrix4_SSE::add(const SMatrix4_SSE& left, const SMatrix4_SSE& right)
+{
+	for ( int n = 0; n < 16; ++n )	m[n] = left.m[n] + right.m[n];
+}
+#else
 void SMatrix4_SSE::mul(const SMatrix4_SSE& left, const SMatrix4_SSE& right)
 {
 	      float*	    	      fDst	  = m;
@@ -1501,6 +1557,7 @@ void SMatrix4_SSE::add(const SMatrix4_SSE& left, const SMatrix4_SSE& right)
 		movntps	   xmmword ptr [eax + 0x30], xmm3
 	}
 }
+#endif
 
 
 

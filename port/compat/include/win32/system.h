@@ -197,6 +197,35 @@ typedef struct _PERF_DATA_BLOCK { WCHAR Signature[4]; DWORD LittleEndian, Versio
 #define SPI_SETSTICKYKEYS 0x003B
 inline BOOL SystemParametersInfo(UINT, UINT, void*, UINT) { return FALSE; }
 #define SystemParametersInfoA SystemParametersInfo
+typedef struct tagTOGGLEKEYS { UINT cbSize; DWORD dwFlags; } TOGGLEKEYS, *LPTOGGLEKEYS;
+typedef struct _PERF_OBJECT_TYPE { DWORD TotalByteLength, DefinitionLength, HeaderLength, ObjectNameTitleIndex; } PERF_OBJECT_TYPE, *PPERF_OBJECT_TYPE;
+#define SPI_GETTOGGLEKEYS 0x0034
+#define SPI_SETTOGGLEKEYS 0x0035
+#define TIME_ONESHOT  0x0000
+#define TIME_PERIODIC 0x0001
+inline UINT timeSetEvent(UINT, UINT, LPTIMECALLBACK, DWORD_PTR, UINT) { return 0; }   // multimedia timers: unused natively
+inline UINT timeKillEvent(UINT) { return 0; }
+inline BOOL SetFileTime(HANDLE, const FILETIME*, const FILETIME*, const FILETIME*) { return FALSE; }
+inline void RaiseException(DWORD code, DWORD, DWORD, const ULONG_PTR*) { std::fprintf(stderr, "RaiseException 0x%08x\n", (unsigned)code); std::abort(); }
+#define LOGPIXELSX 88
+#define LOGPIXELSY 90
+inline int GetDeviceCaps(HDC, int index) { return (index == LOGPIXELSX || index == LOGPIXELSY) ? 96 : 0; }
+#define GWL_WNDPROC   (-4)
+#define GWL_HINSTANCE (-6)
+#define GWL_ID        (-12)
+#define GWL_USERDATA  (-21)
+inline LONG GetWindowLong(HWND, int) { return 0; }
+inline LONG SetWindowLong(HWND, int, LONG) { return 0; }
+#define GetWindowLongA GetWindowLong
+#define SetWindowLongA SetWindowLong
+inline int GetDIBits(HDC, HBITMAP, UINT, UINT, void*, void* /*BITMAPINFO*/, UINT) { return 0; }
+inline HBITMAP CreateDIBSection(HDC, const void* /*BITMAPINFO*/, UINT, void** bits, HANDLE, DWORD) { if (bits) *bits = nullptr; return nullptr; }
+inline HRESULT CoCreateInstance(REFCLSID, IUnknown*, DWORD, REFIID, void** out) { if (out) *out = nullptr; return E_NOINTERFACE; }
+#define EM_LIMITTEXT    0x00C5
+#define CB_GETITEMDATA  0x0150
+#define CB_SETITEMDATA  0x0151
+#define CB_ADDSTRING    0x0143
+#define CB_RESETCONTENT 0x014B
 inline HCURSOR SetCursor(HCURSOR) { return nullptr; }
 inline int ShowCursor(BOOL show) { return show ? 0 : -1; }
 inline BOOL ScreenToClient(HWND, POINT*) { return TRUE; }

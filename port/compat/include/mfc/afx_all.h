@@ -16,10 +16,19 @@ inline void AfxThrowUserException() { throw new CException(); }
 #define OFN_ALLOWMULTISELECT 0x00000200
 #define OFN_FILEMUSTEXIST   0x00001000
 
+typedef struct tagOFNA {
+    DWORD lStructSize; HWND hwndOwner; HINSTANCE hInstance;
+    const char* lpstrFilter; char* lpstrCustomFilter; DWORD nMaxCustFilter, nFilterIndex;
+    char* lpstrFile; DWORD nMaxFile; char* lpstrFileTitle; DWORD nMaxFileTitle;
+    const char* lpstrInitialDir; const char* lpstrTitle; DWORD Flags;
+    WORD nFileOffset, nFileExtension; const char* lpstrDefExt;
+} OPENFILENAME, *LPOPENFILENAME;
+
 // MFC common file dialog: the native game never shows one (editor/debug paths only).
 class CFileDialog : public CDialog
 {
 public:
+    OPENFILENAME m_ofn = {};
     CFileDialog(BOOL, const char* = nullptr, const char* = nullptr, DWORD = 0, const char* = nullptr, CWnd* = nullptr, DWORD = 0) {}
     INT_PTR DoModal() override { return IDCANCEL; }
     CString GetPathName() const { return CString(); }

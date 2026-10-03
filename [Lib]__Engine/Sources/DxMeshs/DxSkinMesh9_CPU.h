@@ -95,6 +95,13 @@ typedef struct __declspec(intrin_type) __declspec(align(16)) __m128 {
 } __m128;
 #endif
 
+#if !defined(_M_IX86) && !defined(_M_X64) && !defined(__SSE__)
+//	Native macOS (Apple Silicon): no SSE. Same size/alignment so SMatrix4_SSE keeps its layout.
+typedef struct alignas(16) __m128 {
+   float m128_f32[4];
+} __m128;
+#endif
+
 struct SMatrix4_SSE  
 {
 	union 

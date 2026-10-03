@@ -2,6 +2,15 @@
 
 #include <string>
 
+//	The filter works on UTF-16 code units (WCHAR): wchar_t on Windows, char16_t in the native
+//	macOS build. SLANG_STRING is std::wstring on Windows.
+typedef std::basic_string<WCHAR> SLANG_STRING;
+#if defined(_MSC_VER)
+#define SLANG_W(s)	L##s
+#else
+#define SLANG_W(s)	u##s
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 /// \file SlangFilter.h
 /// \author excel96
@@ -54,13 +63,13 @@ public:
 
 public:
     /// \brief 비속어를 '*'로 치환한 문장을 리턴한다.
-    std::wstring filter(const std::wstring& original) const;
+    SLANG_STRING filter(const SLANG_STRING& original) const;
 
     /// \brief 해당하는 문장이 비속어를 포함하고 있는지의 여부를 리턴한다.
-    bool hasSlang(const std::wstring& original) const;
+    bool hasSlang(const SLANG_STRING& original) const;
 
     /// \brief 비속어를 추가한다.
-    void addSlang(const std::wstring& slang);
+    void addSlang(const SLANG_STRING& slang);
 
 	void Init();
 
@@ -68,10 +77,10 @@ public:
 
 private:
     /// \brief 해당하는 문장의 첫 바이트부터 비속어가 포함되어있는지 검사한다.
-    size_t match(const std::wstring& text) const;
+    size_t match(const SLANG_STRING& text) const;
 
     /// \brief 해당하는 글자가 문장 부호인지 검사한다.
-    bool isPunctutation(wchar_t c) const;
+    bool isPunctutation(WCHAR c) const;
 };
 
 int ToUpperVN( int ch );	// 베트남어도 대문자로 변경해준다.
