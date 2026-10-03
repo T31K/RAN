@@ -34,3 +34,35 @@ jobs:
           name: ran-binaries
           path: build-output/
           if-no-files-found: warn
+
+      # Golden network-message struct sizes for the native macOS port (port/scripts/check-struct-sizes.sh).
+      # Same compiler settings as [Lib]__RanClient Release|Win32.
+      - name: Set up MSVC x86 environment
+        if: hashFiles('port/tests/golden/struct_sizes.cpp') != ''
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+
+      - name: Measure message struct sizes (Win32)
+        if: hashFiles('port/tests/golden/struct_sizes.cpp') != ''
+        shell: pwsh
+        working-directory: '[Lib]__RanClient'
+        run: |
+          $vcx = Get-Content -Raw '[Lib]__RanClient.vcxproj'
+          $dirs = ([regex]::Match($vcx, '<AdditionalIncludeDirectories>([^<]*)')).Groups[1].Value -split ';' |
+                  Where-Object { $_ -and $_ -notmatch '%\(' }
+          $incs = $dirs | ForEach-Object { "/I$_" }
+          cl /nologo /EHsc /MD /O2 /DWIN32 /DNDEBUG /D_LIB /D_AFXDLL /D_MBCS $incs `
+             ..\port\tests\golden\struct_sizes.cpp /Fe:struct_sizes.exe /Fo:struct_sizes.obj
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force -Path $env:GITHUB_WORKSPACE\msg-sizes | Out-Null
+          .\struct_sizes.exe | Out-File -Encoding ascii $env:GITHUB_WORKSPACE\msg-sizes\msg_sizes_win32.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Content $env:GITHUB_WORKSPACE\msg-sizes\msg_sizes_win32.txt | Measure-Object -Line
+
+      - name: Upload message struct sizes
+        if: hashFiles('port/tests/golden/struct_sizes.cpp') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: msg-sizes-win32
+          path: msg-sizes/msg_sizes_win32.txt
