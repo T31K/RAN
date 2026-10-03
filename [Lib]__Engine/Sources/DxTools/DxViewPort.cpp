@@ -585,7 +585,8 @@ HRESULT DxViewPort::FrameMove ( float fTime, float fElapsedTime )
 	
 	POINT ptCurPos;
 	GetCursorPos ( &ptCurPos );
-	BOOL bTARPOSWIN = GetMouseTargetPosWnd ( D3DXVECTOR3((float)ptCurPos.x,(float)ptCurPos.y,0) );
+	D3DXVECTOR3 vTarPosWnd((float)ptCurPos.x,(float)ptCurPos.y,0);
+	BOOL bTARPOSWIN = GetMouseTargetPosWnd ( vTarPosWnd );
 
 	BOOL bCURSOR_SHOW(TRUE);
 	bool bHandling(false);

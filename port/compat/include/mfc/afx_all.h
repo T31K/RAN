@@ -72,6 +72,17 @@ inline HINSTANCE AfxGetResourceHandle() { return AfxGetInstanceHandle(); }
 #define DECLARE_MESSAGE_MAP()
 #define BEGIN_MESSAGE_MAP(c, b)
 #define END_MESSAGE_MAP()
+// Message-map entries: the native build routes input through the Phase 2 platform layer.
+#define ON_WM_PAINT()
+#define ON_WM_CHAR()
+#define ON_WM_SETFOCUS()
+#define ON_WM_KILLFOCUS()
+#define ON_WM_KEYDOWN()
+#define ON_WM_KEYUP()
+#define ON_WM_CREATE()
+#define ON_WM_DESTROY()
+#define ON_WM_SIZE()
+#define ON_WM_TIMER()
 #define RUNTIME_CLASS(c) nullptr
 #define DECLARE_EVENTSINK_MAP()
 #define BEGIN_EVENTSINK_MAP(c, b)

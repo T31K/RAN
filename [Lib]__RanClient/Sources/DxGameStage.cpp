@@ -74,7 +74,8 @@ void DxCharJoinData::ResetData ()
 	m_dwReceiveItemCoolTime = 0;
 
 	m_cCLUB.RESET();
-	m_CharData2.Assign ( SCHARDATA2() );
+	SCHARDATA2 sDefault;
+	m_CharData2.Assign ( sDefault );
 }
 
 DxGameStage::DxGameStage(void)

@@ -85,7 +85,7 @@ public:
 
 	GLClubDeathMatch& operator= ( const GLClubDeathMatch& value );
 
-	bool operator < ( const GLClubDeathMatch& sClubDM )
+	bool operator < ( const GLClubDeathMatch& sClubDM ) const
 	{
 		return m_dwID < sClubDM.m_dwID;
 	}

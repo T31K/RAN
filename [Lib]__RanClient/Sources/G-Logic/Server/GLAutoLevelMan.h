@@ -17,7 +17,7 @@ public:
 	~GLAutoLevelMan();
 
 public:
-	bool LOAD( std::string & strFileName );
+	bool LOAD( const std::string & strFileName );
 	bool FrameMove();
 
 protected:

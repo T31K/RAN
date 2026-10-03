@@ -94,7 +94,7 @@ bool GLCharAG::IsFieldCheckComplete ( bool *pFieldSvr )
 	return true;
 }
 
-void GLCharAG::SetCurrentField ( DWORD dwSvr, SNATIVEID &sNID )
+void GLCharAG::SetCurrentField ( DWORD dwSvr, const SNATIVEID &sNID )
 {
 	if ( m_dwPartyID!=PARTY_NULL && m_sCurMapID!=sNID )
 	{

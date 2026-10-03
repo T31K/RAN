@@ -83,6 +83,13 @@ public:
     DWORD m_dwError;
 };
 
+class CInternetFile : public CObject
+{
+public:
+    UINT Read(void*, UINT) { return 0; }
+    void Close() {}
+};
+
 class CHttpFile : public CObject
 {
 public:
@@ -113,6 +120,7 @@ public:
     BOOL GetFile(const char*, const char*, BOOL = TRUE, DWORD = 0, DWORD = 0, DWORD_PTR = 1) { return FALSE; }
     BOOL PutFile(const char*, const char*, DWORD = 0, DWORD_PTR = 1) { return FALSE; }
     BOOL SetCurrentDirectory(const char*) { return FALSE; }
+    BOOL GetCurrentDirectory(CString& dir) const { dir.Empty(); return FALSE; }
     void Close() {}
 };
 

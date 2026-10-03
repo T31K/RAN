@@ -7,11 +7,14 @@
 #include <cerrno>
 #include <cstdio>
 #include <dirent.h>
-#include <mach-o/dyld.h>
 #include <string>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
+
+// From <mach-o/dyld.h>. That header #undefs TRUE/FALSE and redeclares them as enum DYLD_BOOL,
+// which breaks the game's `return FALSE;` from pointer-returning functions, so declare just this.
+extern "C" int _NSGetExecutablePath(char* buf, uint32_t* bufsize);
 
 #ifndef FILE_ATTRIBUTE_READONLY
 #define FILE_ATTRIBUTE_READONLY  0x01u

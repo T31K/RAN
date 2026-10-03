@@ -7,6 +7,7 @@
 //-----------------------------------------------------------------------------
 #include "pch.h"
 
+#include <set>
 #include "DxFontMan.h"
 #include "D3DFont.h"
 

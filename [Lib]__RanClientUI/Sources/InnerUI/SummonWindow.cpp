@@ -275,7 +275,7 @@ void CSummonWindow::Update ( int x, int y, BYTE LB, BYTE MB, BYTE RB, int nScrol
 	if ( pItemMove ) sHOLD_ITEM_ID = pItemMove->GetItem();
 
 	SNATIVEID & sPosionOldID = m_sPosionID;
-	SNATIVEID & sPosionID = GLGaeaClient::GetInstance().GetSummonClient()->GetPosionItem();
+	SNATIVEID sPosionID =GLGaeaClient::GetInstance().GetSummonClient()->GetPosionItem();
 
 	if ( sPosionID != NATIVEID_NULL() )
 	{

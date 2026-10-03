@@ -614,7 +614,7 @@ HRESULT DxBgmSound::CtrlVolume ()
 {
 	if ( !m_BgmDC.m_lpDSB ) return S_FALSE;
 
-	long lBufferVolume = 0;
+	LONG lBufferVolume = 0;		//	GetVolume writes a 32-bit LONG
 
 	if ( m_bActivated )
 	{

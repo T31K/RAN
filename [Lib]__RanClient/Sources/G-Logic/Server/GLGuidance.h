@@ -104,7 +104,7 @@ public:
 
 	GLGuidance& operator= ( const GLGuidance& value );
 
-	bool operator < ( const GLGuidance& sGuidance )
+	bool operator < ( const GLGuidance& sGuidance ) const
 	{
 		return m_dwID < sGuidance.m_dwID;
 	}

@@ -1268,11 +1268,12 @@ _RETURN:
 		_strlwr_s ( strTextureNameLwr, nStrLen );
 
 		// Note : CompleteMap 확인후 있다면 RefCount++ 한다.
+		TextureContainer* pTexture = NULL;	// declared before the goto (standard C++)
 		if( pddsCubeTexture = GetCompleteTex_AddRefCUBE(strTextureNameLwr) )	goto _RETURN;
 
 		//	Note : 텍스쳐 콘테이너 생성.
 		//
-		TextureContainer* pTexture = new TextureContainer;
+		pTexture = new TextureContainer;
 		if( !pTexture )
 		{
 			hr = E_OUTOFMEMORY;
@@ -1591,12 +1592,14 @@ unsigned int WINAPI LOADING_THREAD::LoadThread( LPVOID pData )
 		LeaveCriticalSection(&TextureManager::m_CSLockLoading);
 
 		// Note : Loading Map에 없다.
+		TextureManager::TextureContainer* pTexture = NULL;	// declared before the goto (standard C++)
+		bool bEncrypt = false;
 		if( !strName.size() )	goto _RETURN;
 
 		// Note : 텍스쳐 이름으로만 로딩 작업을 한다.
-		TextureManager::TextureContainer* pTexture = new TextureManager::TextureContainer;
+		pTexture = new TextureManager::TextureContainer;
 
-		bool bEncrypt = pTexture->IsEncrypt( strName.c_str() );
+		bEncrypt = pTexture->IsEncrypt( strName.c_str() );
 
 		hr = pTexture->LoadTexture( strName.c_str(), _pData->pd3dDevice, dwFlags, dwStage, bEncrypt );
 

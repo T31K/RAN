@@ -45,7 +45,7 @@ D3DXVECTOR3  GLSUMMON::GetRandomPostision ()
 {
 
 
-	srand(unsigned int(time(NULL)));
+	srand((unsigned int)time(NULL));
 	WORD idx = (WORD)(rand() % 8);
 	return m_RandPos[idx];
 }

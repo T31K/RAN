@@ -53,16 +53,16 @@ protected:
 	BOOL	m_fStat;					// true이면 IME 합성 문자열입니다.
 	BYTE	m_bComAttr[BUFFERSIZE+1];	// 컴퍼지션 문자열의 특성입니다.
 	DWORD	m_dwCompCls[BUFFERSIZE+1];	// 컴퍼지션입니다. 
-	wchar_t	m_szBuffer[BUFFERSIZE+1];	// 입력 문자열의 버퍼입니다.
-	wchar_t	m_szComStr[BUFFERSIZE+1];	// 컴퍼지션 문자열의 버퍼입니다.
-	wchar_t	m_szBackup[BUFFERSIZE+1];	// 마지막 문자열 백업을 위한 버퍼입니다.
+	WCHAR	m_szBuffer[BUFFERSIZE+1];	// 입력 문자열의 버퍼입니다.
+	WCHAR	m_szComStr[BUFFERSIZE+1];	// 컴퍼지션 문자열의 버퍼입니다.
+	WCHAR	m_szBackup[BUFFERSIZE+1];	// 마지막 문자열 백업을 위한 버퍼입니다.
 
 	char	m_szBufferMbs[BUFFERSIZE*2+1];
 	BOOL	m_bKeyUse;					// 키보드 사용여부
 	bool	m_bWideCaret;
 
 public:
-	wchar_t m_szWFontName[50];			// 글꼴 이름(유니코드)입니다.
+	WCHAR m_szWFontName[50];			// 글꼴 이름(유니코드)입니다.
 	char	m_szMBFontName[50];			// 글꼴 이름(멀티바이트)입니다.
 	int		m_nLanguage;				// 언어의 내부 인덱스입니다.
 	BOOL	m_fIsNT;					// true이면 NT이고, 그렇지 않으면 Win9X입니다.
@@ -106,7 +106,7 @@ public:
 	void OnImeEndComposition(WPARAM wParam,LPARAM lParam);
 	int	 InsertCompStr();
 	void ShowCaretOnView();
-	int  GetWidthOfString(wchar_t*);
+	int  GetWidthOfString(WCHAR*);
 	void SetFont(HKL hKeyboardLayout, LPCTSTR szSelectedFont);
 	void ClearBuffer();
 	int  GetCombinedCharLength(int); 

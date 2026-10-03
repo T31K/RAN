@@ -2732,7 +2732,7 @@ HRESULT GLLandMan::DeleteDeviceObjects()
 	return S_OK;
 }
 
-BOOL GLLandMan::IsCollisionNavi ( D3DXVECTOR3 &vPoint1, D3DXVECTOR3 &vPoint2, D3DXVECTOR3 &vCollision )
+BOOL GLLandMan::IsCollisionNavi ( const D3DXVECTOR3 &vPoint1, const D3DXVECTOR3 &vPoint2, D3DXVECTOR3 &vCollision )
 {
 	BOOL bCollision;
 	DWORD dwCollisionID;

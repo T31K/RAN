@@ -67,13 +67,13 @@ protected:
 	HRESULT GetCenterDistNode ( D3DXMATRIX &matComb, DWORD	*pCellIndex, DWORD nCellIndex, D3DXVECTOR3 &vMax, D3DXVECTOR3 &vMin );
 	HRESULT GetSizeNode ( D3DXMATRIX &matComb, DWORD *pCellIndex, DWORD nCellIndex,	D3DXVECTOR3 &vMax, D3DXVECTOR3 &vMin );
 	BOOL	IsWithInTriangle ( D3DXMATRIX &matComb, LPD3DXVECTOR3 pvT1, LPD3DXVECTOR3 pvT2, LPD3DXVECTOR3 pvT3, float fDivision, DWORD dwAxis );
-	void	IsCollision ( DxAABBNode *pAABBCur, D3DXVECTOR3 &vP1, D3DXVECTOR3 &vP2, D3DXVECTOR3 &vCollision, DWORD &CollisionID );
+	void	IsCollision ( DxAABBNode *pAABBCur, const D3DXVECTOR3 &vP1, const D3DXVECTOR3 &vP2, D3DXVECTOR3 &vCollision, DWORD &CollisionID );
 	void	GetAllCollisionCell ( DWORD *pCollisionCellID, DWORD& CollisionIDCount, D3DXVECTOR3& vAMax, D3DXVECTOR3& vAMin, DxAABBNode *pAABBCur );	
 	//	-->	AABB Tree ¸¸µé±â	
 
 public:
 	BOOL	IsVailedCollision ()	{ return m_pAABBTreeRoot!=NULL; }
-	void	IsCollision ( D3DXVECTOR3 &vPoint1, D3DXVECTOR3 &vPoint2, D3DXVECTOR3 &vCollision, DWORD &CollisionID, BOOL &bCollision );
+	void	IsCollision ( const D3DXVECTOR3 &vPoint1, const D3DXVECTOR3 &vPoint2, D3DXVECTOR3 &vCollision, DWORD &CollisionID, BOOL &bCollision );
 
 public:
 	BOOL	GetAABB ( D3DXVECTOR3 &vMax, D3DXVECTOR3 &vMin );

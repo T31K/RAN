@@ -229,6 +229,9 @@ static const GUID GUID_NULL = {0, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0}};
 #ifndef __min
 #define __min(a, b) (((a) < (b)) ? (a) : (b))
 #endif
+#ifndef FIELD_OFFSET
+#define FIELD_OFFSET(type, field) ((LONG)offsetof(type, field))
+#endif
 #ifndef _countof
 #define _countof(a) (sizeof(a) / sizeof((a)[0]))
 #endif

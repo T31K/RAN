@@ -15,6 +15,8 @@ typedef struct tagTEXTMETRICA {
     BYTE tmFirstChar, tmLastChar, tmDefaultChar, tmBreakChar;
     BYTE tmItalic, tmUnderlined, tmStruckOut, tmPitchAndFamily, tmCharSet;
 } TEXTMETRICA, *LPTEXTMETRICA;
+typedef TEXTMETRICA TEXTMETRIC;
+typedef LPTEXTMETRICA LPTEXTMETRIC;
 
 typedef struct tagTEXTMETRICW {
     LONG tmHeight, tmAscent, tmDescent, tmInternalLeading, tmExternalLeading;
@@ -72,3 +74,26 @@ typedef LPLOGFONTA LPLOGFONT;
 #define FIXED_PITCH          1
 #define VARIABLE_PITCH       2
 #define FF_DONTCARE          0
+
+inline void* CreateFontIndirect(const LOGFONTA*) { return nullptr; }   // GDI fonts: CoreText in Phase 3
+#define CreateFontIndirectA CreateFontIndirect
+
+// GDI text rasterisation used by d3dfont.cpp / D3DFontX.cpp to bake glyph textures. Phase 3
+// replaces these with CoreText (same metrics contract: extents in pixels, glyphs drawn into the
+// DIB section); until then they measure nothing and draw nothing.
+#ifndef ETO_OPAQUE
+#define ETO_OPAQUE  0x0002
+#define ETO_CLIPPED 0x0004
+#endif
+inline HFONT CreateFont(int, int, int, int, int, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, const char*) { return nullptr; }
+#define CreateFontA CreateFont
+inline HFONT CreateFontW(int, int, int, int, int, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, const WCHAR*) { return nullptr; }
+inline BOOL GetTextExtentPoint32(HDC, const char*, int, LPSIZE size) { if (size) { size->cx = 0; size->cy = 0; } return FALSE; }
+inline BOOL GetTextExtentPoint32W(HDC, const WCHAR*, int, LPSIZE size) { if (size) { size->cx = 0; size->cy = 0; } return FALSE; }
+#define GetTextExtentPoint32A GetTextExtentPoint32
+inline BOOL ExtTextOut(HDC, int, int, UINT, const RECT*, const char*, UINT, const INT*) { return FALSE; }
+inline BOOL ExtTextOutW(HDC, int, int, UINT, const RECT*, const WCHAR*, UINT, const INT*) { return FALSE; }
+#define ExtTextOutA ExtTextOut
+inline BOOL TextOutW(HDC, int, int, const WCHAR*, int) { return FALSE; }
+inline COLORREF SetTextColor(HDC, COLORREF) { return 0; }
+inline COLORREF SetBkColor(HDC, COLORREF) { return 0; }

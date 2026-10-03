@@ -1,6 +1,7 @@
 #pragma once
 
 #include <queue>
+#include <list>
 
 #define MAX_EVENT_POS 5
 

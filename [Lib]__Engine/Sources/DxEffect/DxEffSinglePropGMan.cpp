@@ -449,7 +449,7 @@ HRESULT EFF_PROPGROUP::LoadFile ( const char* szFileName, LPDIRECT3DDEVICEQ pd3d
 	if ( !szFileName )		return S_FALSE;
 	
 	m_strFileName = szFileName;
-	std::transform ( m_strFileName.begin(), m_strFileName.end(), m_strFileName.begin(), tolower );
+	std::transform ( m_strFileName.begin(), m_strFileName.end(), m_strFileName.begin(), ::tolower );
 
 	HRESULT hr = S_OK;
 
@@ -590,7 +590,7 @@ HRESULT EFF_PROPGROUP::SaveFile ( const char* szFileName )
 	GASSERT(szFileName);
 
 	m_strFileName = szFileName;
-	std::transform ( m_strFileName.begin(), m_strFileName.end(), m_strFileName.begin(), tolower );
+	std::transform ( m_strFileName.begin(), m_strFileName.end(), m_strFileName.begin(), ::tolower );
 
 	CSerialFile SFile;
 	SFile.SetFileType ( "EFF_PROPGROUP", EFF_PROPGROUP::FILEVERSION );
@@ -669,7 +669,7 @@ EFF_PROPGROUP* DxEffSinglePropGMan::FindEffGProp ( const char* szFileName )
 	GASSERT(szFileName);
 
 	std::string strFindFile = szFileName;
-	std::transform ( strFindFile.begin(), strFindFile.end(), strFindFile.begin(), tolower );
+	std::transform ( strFindFile.begin(), strFindFile.end(), strFindFile.begin(), ::tolower );
 
 	MAPPROPGROUP_ITER pos = m_mapPROPGROUP.find ( strFindFile );
 	if ( pos == m_mapPROPGROUP.end() )	return NULL;
@@ -682,7 +682,7 @@ HRESULT DxEffSinglePropGMan::DeleteEffectGProp ( const char* szFileName )
 	GASSERT(szFileName);
 
 	std::string strFindFile = szFileName;
-	std::transform ( strFindFile.begin(), strFindFile.end(), strFindFile.begin(), tolower );
+	std::transform ( strFindFile.begin(), strFindFile.end(), strFindFile.begin(), ::tolower );
 
 	MAPPROPGROUP_ITER pos = m_mapPROPGROUP.find ( strFindFile );
 	if ( pos == m_mapPROPGROUP.end() )	return NULL;
@@ -705,7 +705,7 @@ EFF_PROPGROUP* DxEffSinglePropGMan::LoadEffectGProp ( const char* szFileName )
 	}
 
 	std::string strFindFile = szFileName;
-	std::transform ( strFindFile.begin(), strFindFile.end(), strFindFile.begin(), tolower );
+	std::transform ( strFindFile.begin(), strFindFile.end(), strFindFile.begin(), ::tolower );
 
 	EFF_PROPGROUP* pPropGroup;
 

@@ -253,7 +253,7 @@ BOOL GLCrow::IsVisibleDetect ( const BOOL bRECVISIBLE )
 	return TRUE;
 }
 
-HRESULT GLCrow::ESCAPE ( STARGETID &sTARID, const DWORD dwDamage )
+HRESULT GLCrow::ESCAPE ( const STARGETID &sTARID, const DWORD dwDamage )
 {
 	if ( m_pCrowData->IsPosHold() )		return S_FALSE;
 

@@ -79,7 +79,7 @@ GLAgentServer::~GLAgentServer(void)
 	DeleteCriticalSection(&m_CSPCLock);
 }
 
-DWORD GLAgentServer::GetFieldServer ( SNATIVEID &sMapID )
+DWORD GLAgentServer::GetFieldServer ( const SNATIVEID &sMapID )
 {
 	SMAPNODE* pMapNode = m_sMapList.FindMapNode ( sMapID );
 	if ( !pMapNode )	CDebugSet::ToLogFile ( "[JOINDBG] GetFieldServer map=%d/%d -> fieldID=%d (FIELDSERVER_MAX=%d means NOT FOUND)", (int)sMapID.wMainID, (int)sMapID.wSubID, (int)FIELDSERVER_MAX, (int)FIELDSERVER_MAX );

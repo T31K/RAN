@@ -118,7 +118,7 @@ struct D3DAdapterInfo
     DWORD          dwCurrentDevice;
 };
 
-enum EMSCREEN_FORMAT
+enum EMSCREEN_FORMAT : int	// fixed type so VideoOption.h can forward-declare it (standard C++)
 {
 	EMSCREEN_F16		= 0,
 	EMSCREEN_F32		= 1,

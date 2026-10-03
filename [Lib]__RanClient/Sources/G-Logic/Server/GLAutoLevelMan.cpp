@@ -26,7 +26,7 @@ GLAutoLevelMan::~GLAutoLevelMan()
 	m_listAutoLevel.clear();
 }
 
-bool GLAutoLevelMan::LOAD( std::string & strFileName )
+bool GLAutoLevelMan::LOAD( const std::string & strFileName )
 {
 	if( strFileName.empty() )	return false;
 

@@ -75,7 +75,7 @@ struct SCDM_RANK_INFO
 		return *this;
 	}
 
-	bool operator < ( const SCDM_RANK_INFO& sCdmRank )
+	bool operator < ( const SCDM_RANK_INFO& sCdmRank ) const
 	{			
 		if ( wKillNum > sCdmRank.wKillNum ) return true;
 		else if ( wKillNum == sCdmRank.wKillNum && wDeathNum < sCdmRank.wDeathNum ) return true;

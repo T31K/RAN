@@ -56,7 +56,7 @@ struct GLPARTY_CLIENT
 		return FALSE;
 	}
 
-	void ASSIGN ( GLPARTY_FNET &sPartyNet )
+	void ASSIGN ( const GLPARTY_FNET &sPartyNet )
 	{
 		m_dwGaeaID = sPartyNet.m_dwGaeaID;
 		StringCchCopy ( m_szName, CHAR_SZNAME, sPartyNet.m_szName );

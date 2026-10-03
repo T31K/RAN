@@ -48,7 +48,7 @@ public:
 		m_EffectMMap.clear();
 	}
 
-	void AfterRender ( DWORD dwOrder, DXEFFECTREND &sEffRend )
+	void AfterRender ( DWORD dwOrder, const DXEFFECTREND &sEffRend )
 	{
 		m_EffectMMap.insert ( std::make_pair(dwOrder,sEffRend) );
 	}

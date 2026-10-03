@@ -48,8 +48,8 @@ protected:
 public:
 	DXInputString ();
 
-	void Create ( CWnd *_pWnd, CRect &rtPosition );
-	void Move ( CRect &rtPosition );
+	void Create ( CWnd *_pWnd, const CRect &rtPosition );
+	void Move ( const CRect &rtPosition );
 
 public:
 	BOOL OnInput ();

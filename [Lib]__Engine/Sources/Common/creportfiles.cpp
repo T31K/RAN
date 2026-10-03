@@ -55,7 +55,7 @@ namespace REPORTFILES
 
 		CString strROOT = GetAppPath ();
 		strROOT.MakeLower();
-		std::string strRoot = strROOT;		
+		std::string strRoot = strROOT.GetString();		
 
 		std::string strSAVEFILE = strRoot + "\\" + g_strReport.c_str();
 		g_file.open ( strSAVEFILE.c_str(), std::ios_base::out | std::ios_base::trunc );
@@ -159,7 +159,7 @@ namespace REPORTFILES
 			{
 				CString strPATH = finder.GetFilePath();
 				strPATH.MakeLower ();
-				std::string strPath = strPATH;
+				std::string strPath = strPATH.GetString();
 				
 				std::string strSubPath = std::string ( strPath.begin()+strRootPath.length(), strPath.end() );
 				

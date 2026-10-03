@@ -28,7 +28,7 @@ namespace GLPETDEFINE
 
 	D3DXVECTOR3 GetRandomPostision ()
 	{
-		srand(unsigned int(time(NULL)));
+		srand((unsigned int)time(NULL));
 		WORD idx = (WORD)(rand() % 8);
 		return RANDPOS[idx];
 	}

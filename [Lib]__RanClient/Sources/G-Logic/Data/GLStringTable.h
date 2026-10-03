@@ -29,7 +29,7 @@ public:
 
 	const TCHAR * GetString( const TCHAR * szKey, EMST_TYPE emType );
 	void InsertString( std::string & strKey, std::string & strSub, EMST_TYPE emType );
-	void DeleteString( std::string & strKeyName, std::string & strKeyDesc, EMST_TYPE emType );
+	void DeleteString( const std::string & strKeyName, const std::string & strKeyDesc, EMST_TYPE emType );
 	void DeleteString( WORD wMID, WORD wSID, EMST_TYPE emType );
 
 private:

@@ -44,7 +44,8 @@ void GLCHARLOGIC::RESET_DATA ()
 {
 	int i=0;
 
-	SCHARDATA2::Assign ( SCHARDATA2() );
+	SCHARDATA2 sDefault;
+	SCHARDATA2::Assign ( sDefault );
 
 	m_CHARINDEX = GLCI_FIGHTER_M;
 	m_SKILLDELAY.clear();
@@ -3030,7 +3031,7 @@ BOOL GLCHARLOGIC::DOGRINDING(	SITEMCUSTOM &sCusItem,
 //		착용복장, 인벤토리에서 검색.
 //		겹침가능 아이템의 경우 full 로 있을 경우만 소지한 것으로 판단.
 //
-BOOL GLCHARLOGIC::ISHAVEITEM ( SNATIVEID &sNID, DWORD *pNum )
+BOOL GLCHARLOGIC::ISHAVEITEM ( const SNATIVEID &sNID, DWORD *pNum )
 {
 	DWORD dwNum = 0;
 	for ( int i=0; i<SLOT_TSIZE; ++i )

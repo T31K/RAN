@@ -7,6 +7,7 @@
 
 #pragma	once
 
+#include <list>
 #include "UIDataType.h"
 #include "UIControl.h"
 

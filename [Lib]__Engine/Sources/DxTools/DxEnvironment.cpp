@@ -774,7 +774,7 @@ void DxEnvironment::NightViewRender ( LPDIRECT3DDEVICEQ pd3dDevice )
 {
 	D3DXVECTOR3	vLeft;
 	D3DXVECTOR3& vFromPt = DxViewPort::GetInstance().GetFromPt();
-	D3DXVECTOR3& vDir = DxViewPort::GetInstance().GetLookDir_Y0();
+	D3DXVECTOR3 vDir = DxViewPort::GetInstance().GetLookDir_Y0();
 	D3DXVECTOR3 vUP = D3DXVECTOR3 ( 0.f, 1.f, 0.f );
 
 	// Cross 선 만들기

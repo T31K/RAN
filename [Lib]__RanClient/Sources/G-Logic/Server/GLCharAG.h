@@ -89,7 +89,7 @@ public:
 	bool IsCHATBLOCK ();
 
 public:
-	void SetCurrentField ( DWORD dwSvr, SNATIVEID &sNID );
+	void SetCurrentField ( DWORD dwSvr, const SNATIVEID &sNID );
 
 	void ResetNextFieldSvr ();
 	void SetNextFieldSvr ( SNATIVEID sMID, DWORD dwGateID, D3DXVECTOR3 vPos, DWORD dwFieldSvr );

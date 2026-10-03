@@ -311,7 +311,7 @@ protected:
 
 protected:
 	HRESULT MoveTo ( const D3DXVECTOR3 &vTarPos );
-	HRESULT ESCAPE ( STARGETID &sTARID, const DWORD dwDamage );
+	HRESULT ESCAPE ( const STARGETID &sTARID, const DWORD dwDamage );
 
 protected:
 	void ToRun ();

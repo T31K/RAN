@@ -222,7 +222,7 @@ void CPetRebirthDialogue::TranslateUIMessage ( UIGUID ControlID, DWORD dwMsg )
 				m_nIndex = m_pcbPetNameRollOver->GetSelectIndex ();
 				if ( m_nIndex < 0 ) return ;
 
-				CString & strText = m_pcbPetNameRollOver->GetSelectText( m_nIndex );
+				CString strText = m_pcbPetNameRollOver->GetSelectText( m_nIndex );
 				m_pcbPetName->SetText( strText );
 			}
 		}

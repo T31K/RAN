@@ -592,7 +592,7 @@ void CBasicTextBox::SetOneLineText ( const CString& strText, const D3DCOLOR& Tex
 {
 	if ( 1 == GetCount () )
 	{
-		CString& strOldText = GetText ( 0 );
+		CString strOldText = GetText ( 0 );
 		if ( strOldText == strText ) return ;
 	}
 

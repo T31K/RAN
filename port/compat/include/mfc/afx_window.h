@@ -63,6 +63,12 @@ public:
     int GetWindowTextLength() const { return m_strText.GetLength(); }
     void MoveWindow(int, int, int, int, BOOL = TRUE) {}
     void MoveWindow(const RECT*, BOOL = TRUE) {}
+    // Edit-box caret: the game draws its own caret in D3D, the Win32 one is never visible.
+    void CreateSolidCaret(int, int) {}
+    void ShowCaret() {}
+    void HideCaret() {}
+    static void SetCaretPos(POINT) {}
+    static CPoint GetCaretPos() { return CPoint(0, 0); }
     BOOL SetWindowPos(const CWnd*, int, int, int, int, UINT) { return FALSE; }
     void GetClientRect(RECT* r) const { if (r) SetRectEmpty(r); }
     void ScreenToClient(POINT*) const {}
@@ -103,6 +109,24 @@ protected:
     CString m_strText;
 };
 
+// MFC application object. The SDL3 platform layer (Phase 2) owns the event loop; PumpMessage
+// lets long-running code (the loading thread) keep the window responsive through that hook.
+class CWinThread : public CCmdTarget
+{
+public:
+    CWnd* m_pMainWnd = nullptr;
+    virtual BOOL PumpMessage() { return ran_PumpMessageHook() ? ran_PumpMessageHook()() : TRUE; }
+    static BOOL (*&ran_PumpMessageHook())() { static BOOL (*hook)() = nullptr; return hook; }
+};
+class CWinApp : public CWinThread
+{
+public:
+    const char* m_pszAppName = "RanOnline";
+    HINSTANCE m_hInstance = nullptr;
+};
+inline CWinApp* AfxGetApp() { static CWinApp app; return &app; }
+inline CWnd* AfxGetMainWnd() { return AfxGetApp()->m_pMainWnd; }
+
 class CEdit : public CWnd
 {
 public:
@@ -126,8 +150,64 @@ public:
     int GetCheck() const { return 0; }
     void SetCheck(int) {}
 };
-class CComboBox : public CWnd {};
-class CListBox : public CWnd {};
+// List and combo boxes keep their items in memory (strings, item data, selection), so code that
+// fills a list and reads it back behaves as on Windows; nothing is drawn natively.
+class CListItemsWnd : public CWnd
+{
+public:
+    void ResetContent() { m_items.clear(); m_data.clear(); m_cur = -1; }
+    int AddString(const char* s) { m_items.push_back(CString(s ? s : "")); m_data.push_back(0); return (int)m_items.size() - 1; }
+    int InsertString(int i, const char* s)
+    {
+        if (i < 0 || i > (int)m_items.size()) i = (int)m_items.size();
+        m_items.insert(m_items.begin() + i, CString(s ? s : ""));
+        m_data.insert(m_data.begin() + i, 0);
+        return i;
+    }
+    int DeleteString(UINT i)
+    {
+        if (i >= m_items.size()) return -1;
+        m_items.erase(m_items.begin() + i);
+        m_data.erase(m_data.begin() + i);
+        if (m_cur >= (int)m_items.size()) m_cur = -1;
+        return (int)m_items.size();
+    }
+    int GetCount() const { return (int)m_items.size(); }
+    int GetCurSel() const { return m_cur; }
+    int SetCurSel(int i) { m_cur = (i >= 0 && i < (int)m_items.size()) ? i : -1; return m_cur; }
+    DWORD_PTR GetItemData(int i) const { return (i >= 0 && i < (int)m_data.size()) ? m_data[i] : 0; }
+    int SetItemData(int i, DWORD_PTR d) { if (i < 0 || i >= (int)m_data.size()) return -1; m_data[i] = d; return 0; }
+    int FindStringExact(int, const char* s) const
+    {
+        for (size_t i = 0; i < m_items.size(); ++i) if (s && m_items[i].CompareNoCase(s) == 0) return (int)i;
+        return -1;
+    }
+protected:
+    int TextAt(int i, CString& out) const { if (i < 0 || i >= (int)m_items.size()) return -1; out = m_items[i]; return out.GetLength(); }
+    int TextAt(int i, char* out) const
+    {
+        if (!out || i < 0 || i >= (int)m_items.size()) return -1;
+        std::strcpy(out, m_items[i].GetString());
+        return m_items[i].GetLength();
+    }
+    std::vector<CString> m_items;
+    std::vector<DWORD_PTR> m_data;
+    int m_cur = -1;
+};
+class CComboBox : public CListItemsWnd
+{
+public:
+    int GetLBText(int i, CString& out) const { return TextAt(i, out); }
+    int GetLBText(int i, char* out) const { return TextAt(i, out); }
+    int GetLBTextLen(int i) const { return (i >= 0 && i < (int)m_items.size()) ? m_items[i].GetLength() : -1; }
+};
+class CListBox : public CListItemsWnd
+{
+public:
+    int GetText(int i, CString& out) const { return TextAt(i, out); }
+    int GetText(int i, char* out) const { return TextAt(i, out); }
+    int GetTextLen(int i) const { return (i >= 0 && i < (int)m_items.size()) ? m_items[i].GetLength() : -1; }
+};
 class CProgressCtrl : public CWnd {};
 
 struct CCreateContext {};
@@ -152,8 +232,22 @@ public:
     HANDLE m_hObject = nullptr;
     BOOL DeleteObject() { m_hObject = nullptr; return TRUE; }
 };
-class CPen : public CGdiObject {};
-class CBrush : public CGdiObject {};
+#ifndef PS_SOLID
+#define PS_SOLID 0
+#define PS_DASH  1
+#define PS_DOT   2
+#endif
+class CPen : public CGdiObject
+{
+public:
+    CPen() = default;
+    CPen(int, int, COLORREF) {}
+};
+class CBrush : public CGdiObject
+{
+public:
+    static CBrush* FromHandle(HBRUSH) { static CBrush b; return &b; }
+};
 class CFont : public CGdiObject
 {
 public:
@@ -170,13 +264,28 @@ class CBitmap : public CGdiObject
 {
 public:
     int GetBitmap(BITMAP* bm) const { if (bm) std::memset(bm, 0, sizeof(*bm)); return 0; }
+    DWORD GetBitmapBits(DWORD, void*) const { return 0; }
 };
 
+// Device contexts of Win32 windows. The edit-box paint code that uses them only draws into a
+// window that never appears natively, so drawing is a no-op; text metrics are zero.
 class CDC : public CObject
 {
 public:
     HDC m_hDC = nullptr;
+    operator HDC() const { return m_hDC; }
+    CPen* SelectObject(CPen* p) { return p; }
+    CFont* SelectObject(CFont* f) { return f; }
+    CBrush* SelectObject(CBrush* b) { return b; }
+    CPoint MoveTo(int x, int y) { return CPoint(x, y); }
+    BOOL LineTo(int, int) { return TRUE; }
+    BOOL GetTextMetrics(TEXTMETRICA* tm) const { if (tm) std::memset(tm, 0, sizeof(*tm)); return FALSE; }
+    BOOL GetTextMetricsA(TEXTMETRICA* tm) const { return GetTextMetrics(tm); }   // after a GetTextMetrics->A macro
+    void InvertRect(const RECT*) {}
+    void FillRect(const RECT*, CBrush*) {}
 };
+class CPaintDC : public CDC { public: explicit CPaintDC(CWnd*) {} };
+class CClientDC : public CDC { public: explicit CClientDC(CWnd*) {} };
 
 #define IMAGE_BITMAP        0
 #define LR_LOADFROMFILE     0x00000010

@@ -437,7 +437,7 @@ namespace EDITMESHS
 		pd3dDevice->SetRenderState ( D3DRS_LIGHTING, OldLighting );
 	}
 
-	void RENDERLINE ( LPDIRECT3DDEVICEQ pd3dDevice, D3DXVECTOR3 &vPoint1, D3DXVECTOR3 &vPoint2, DWORD dwColor )
+	void RENDERLINE ( LPDIRECT3DDEVICEQ pd3dDevice, const D3DXVECTOR3 &vPoint1, const D3DXVECTOR3 &vPoint2, DWORD dwColor )
 	{
 		DWORD OldFillMode;
 		pd3dDevice->GetRenderState (D3DRS_FILLMODE, &OldFillMode );

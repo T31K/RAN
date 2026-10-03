@@ -28,5 +28,32 @@
 [Client]__Game/Sources/BasicWndD3d.cpp
 # Anti-cheat / anti-debug (GameGuard-era Protection). Compiled out on macOS per the plan.
 [Client]__Game/Sources/Protection.cpp
-# BugTrap/SEH crash-handler hookup. Native crash reporting is a signal handler (plan Phase 4).
+# BugTrap/SEH crash-handler hookup and minidump writer. Native crash reporting is a signal
+# handler (plan Phase 4).
 [Client]__Game/Sources/ExceptionAttacher.cpp
+[Lib]__MfcEx/Sources/ExceptionHandler.cpp
+[Lib]__MfcEx/Sources/MinBugTrap.cpp
+# Process blocker (CBLOCK_PROG/CHPro/CSimpleProcessAPI: scans running processes against a
+# "form.set" blacklist). Its only client use in BasicWnd.cpp is commented out.
+[Lib]__MfcEx/Sources/BlockProg.cpp
+[Lib]__MfcEx/Sources/HPro.cpp
+[Lib]__MfcEx/Sources/SimpleProcessAPI.cpp
+# Unused by the client (checked 2026-10-04, no references outside the file itself):
+# RanXML.cpp is an MSXML/COM reader (game text goes through RanXMLParser on tinyxml);
+# minUuid.cpp is a server-side UUID helper; s_CPatch.cpp is the old FTP auto-patcher
+# (the Mac app updates through the launcher's OTA).
+[Lib]__EngineUI/Sources/RanXML.cpp
+[Lib]__NetClient/Sources/minUuid.cpp
+[Lib]__NetClient/Sources/s_CPatch.cpp
+# Microsoft's DXUT sample framework (device enumeration, sample GUI, sample mesh/camera helpers).
+# The game runs its own CD3DApplication loop and only calls two DXUT functions:
+# DXUTGetD3DDevice (DxSkinMesh9.cpp) and DXUTGetHWNDDeviceFullScreen (d3dapp.cpp). The Phase 2
+# SDL3 platform layer provides those two (checked 2026-10-04: no other DXUT symbol is used
+# outside DxCommon9). DirectX version probes are only called from the excluded Basic.cpp.
+[Lib]__Engine/Sources/DxCommon9/DXUT.cpp
+[Lib]__Engine/Sources/DxCommon9/DXUTenum.cpp
+[Lib]__Engine/Sources/DxCommon9/DXUTgui.cpp
+[Lib]__Engine/Sources/DxCommon9/DXUTmisc.cpp
+[Lib]__Engine/Sources/DxCommon9/DXUTMesh.cpp
+[Lib]__Engine/Sources/DxCommon9/getdxver.cpp
+[Lib]__MfcEx/Sources/ExLibs/GetDxVer.cpp

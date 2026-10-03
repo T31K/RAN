@@ -134,7 +134,7 @@ namespace GLMSG
 			dwMaster = _dwMaster;
 		}
 
-		void ADDMEMBER ( GLPARTY_FNET &sParty )
+		void ADDMEMBER ( const GLPARTY_FNET &sParty )
 		{
 			if (dwPartyNum < (MAXPARTY))
 			{

@@ -47,8 +47,7 @@ typedef struct pcmwaveformat_tag {
 #define WAVE_FORMAT_PCM 1
 #endif
 
-// RIFF/mmio types used by the WAV loader (DSUtil). The mmio functions themselves move to the
-// native sound layer in Phase 2.
+// RIFF/mmio types used by the WAV loader (DSUtil). The functions are in win32/mmio.h below.
 typedef void* HMMIO;
 typedef struct _MMCKINFO {
     FOURCC ckid;
@@ -74,6 +73,7 @@ typedef struct _MMIOINFO {
     DWORD  dwReserved1, dwReserved2;
     HMMIO  hmmio;
 } MMIOINFO, *PMMIOINFO, *LPMMIOINFO;
+typedef const MMIOINFO* LPCMMIOINFO;
 #define MMIO_READ       0x00000000
 #define MMIO_WRITE      0x00000001
 #define MMIO_READWRITE  0x00000002
@@ -86,3 +86,5 @@ typedef struct _MMIOINFO {
 #define SEEK_SET_MMIO   0
 #define FOURCC_RIFF     mmioFOURCC('R', 'I', 'F', 'F')
 #define FOURCC_MEM      mmioFOURCC('M', 'E', 'M', ' ')
+
+#include "win32/mmio.h"

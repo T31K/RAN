@@ -1,5 +1,5 @@
 diff --git a/include/native/windows/windows_base.h b/include/native/windows/windows_base.h
-index f008a53..c06b4e5 100644
+index f008a53..9600907 100644
 --- a/include/native/windows/windows_base.h
 +++ b/include/native/windows/windows_base.h
 @@ -27,7 +27,13 @@ typedef int32_t *LPLONG;
@@ -28,6 +28,25 @@ index f008a53..c06b4e5 100644
  
  typedef struct LUID {
    DWORD LowPart;
+@@ -175,7 +181,18 @@ typedef union {
+ 
+ typedef struct MEMORYSTATUS {
+   DWORD  dwLength;
++#ifdef __APPLE__
++  // RAN macOS port: the full Windows layout (the game reads the other fields).
++  DWORD  dwMemoryLoad;
+   SIZE_T dwTotalPhys;
++  SIZE_T dwAvailPhys;
++  SIZE_T dwTotalPageFile;
++  SIZE_T dwAvailPageFile;
++  SIZE_T dwTotalVirtual;
++  SIZE_T dwAvailVirtual;
++#else
++  SIZE_T dwTotalPhys;
++#endif
+ } MEMORYSTATUS;
+ 
+ typedef struct SECURITY_ATTRIBUTES {
 diff --git a/src/d3d9/d3d9_device.cpp b/src/d3d9/d3d9_device.cpp
 index 42b51a9..b4f4cb1 100644
 --- a/src/d3d9/d3d9_device.cpp

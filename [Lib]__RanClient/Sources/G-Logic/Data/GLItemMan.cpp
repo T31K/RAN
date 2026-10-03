@@ -968,7 +968,7 @@ SNATIVEID GLItemMan::GetRandomQItemID ( SNATIVEID sNativeID )
 	{
 		if ( sNativeID == m_sQITEMID[idx] )
 		{
-			srand(unsigned int(time(NULL)));
+			srand((unsigned int)time(NULL));
 			WORD idx = (WORD)(rand() % MAX_NUM);
 			return m_sQITEMID[idx];
 		}

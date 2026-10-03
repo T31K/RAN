@@ -44,7 +44,7 @@ public:
 		m_sTARGETID = sTARID;
 	}
 
-	bool operator < ( const STARDIST &rvalue )
+	bool operator < ( const STARDIST &rvalue ) const
 	{
 		return m_fDIST < rvalue.m_fDIST;
 	}
@@ -578,7 +578,7 @@ public:
 
 	BOOL ISLONGRANGE_ARMS ();
 
-	BOOL ISHAVEITEM ( SNATIVEID &sNID, DWORD *pNum=NULL );
+	BOOL ISHAVEITEM ( const SNATIVEID &sNID, DWORD *pNum=NULL );
 	BOOL ISREVIVE ();
 
 	SITEM* GET_ELMT_ITEM ();	//	왼손, 오른손 아이템중에서 'BLOW' 속성이 있는 아이템을 반환.

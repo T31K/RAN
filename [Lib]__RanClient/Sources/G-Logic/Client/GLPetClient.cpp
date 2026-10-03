@@ -1355,7 +1355,7 @@ void GLPetClient::MakeAniSubKey ( float fTime )
 {
 	static bool bPlus(true);
 
-	srand ( unsigned int(fTime) );
+	srand ( (unsigned int)fTime );
 	m_wAniSub[0] = rand()%3+1;
 	m_wAniSub[1] = rand()%3+1;
 	if ( m_wAniSub[0] == m_wAniSub[1] )

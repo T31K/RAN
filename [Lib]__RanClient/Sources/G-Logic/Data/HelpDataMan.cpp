@@ -128,7 +128,7 @@ VOID SHELPNODE::LoadCsvFile( CStringArray &StrArray )
 {
 	strTitle = StrArray[2];
 
-	std::string strTemp = StrArray[3];
+	std::string strTemp = StrArray[3].GetString();
 	for( std::string::iterator ci = strTemp.begin(); ci != strTemp.end(); ++ci )
 	{
 		if( ( *ci ) == 7 )

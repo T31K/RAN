@@ -819,6 +819,7 @@ BOOL GLGaeaServer::RequestCreateInstantMapReq( DWORD dwClientID, DWORD dwGaeaID,
 	PGLCHAR pPC = GetChar ( dwGaeaID );	
 
 	if ( !pPC )								return FALSE;
+	{	// scope: the error gotos below must not jump over initialisations (standard C++)
 	if ( pPC->m_dwClientID!=dwClientID )	goto _CreteInstantMapReqError;
 
 	DWORD dwGateID = pNetMsg->dwGateID;
@@ -930,6 +931,7 @@ BOOL GLGaeaServer::RequestCreateInstantMapReq( DWORD dwClientID, DWORD dwGaeaID,
 	SENDTOAGENT ( (LPVOID) &NetMsg );
 
 	return TRUE;
+	}
 
 _CreteInstantMapReqError:
 	NetMsgFB.emFB = EMCHAR_CREATE_INSTANT_MAP_FAIL;
@@ -950,6 +952,7 @@ BOOL GLGaeaServer::RequestGateOutReq ( DWORD dwClientID, DWORD dwGaeaID, GLMSG::
 	PGLCHAR pPC = GetChar ( dwGaeaID );	
 
 	if ( !pPC )								return FALSE;
+	{	// scope: the error gotos below must not jump over initialisations (standard C++)
 	if ( pPC->m_dwClientID!=dwClientID )	goto _GateOutError;
 
 	DWORD dwGateID = pNetMsg->dwGateID;
@@ -1084,6 +1087,7 @@ BOOL GLGaeaServer::RequestGateOutReq ( DWORD dwClientID, DWORD dwGaeaID, GLMSG::
 	SENDTOAGENT ( (LPVOID) &NetMsg );
 
 	return TRUE;
+	}
 
 _GateOutError:
 	NetMsgFB.emFB = EMCHAR_GATEOUT_FAIL;
@@ -4159,6 +4163,7 @@ BOOL GLGaeaServer::RequestChargedItem2Inven ( DWORD dwClientID, DWORD dwGaeaID, 
 	GLMSG::SNETPC_INVEN_INSERT NetMsgInven;
 
 	GLChar *pChar = GetChar(dwGaeaID);
+	{	// scope: the gotos below must not jump over initialisations (standard C++)
 	if ( !pChar )									goto _DB_RESTORE;
 
 	if ( pNetMsg->dwUserID != pChar->GetUserID() )	goto _DB_RESTORE;
@@ -4220,6 +4225,7 @@ BOOL GLGaeaServer::RequestChargedItem2Inven ( DWORD dwClientID, DWORD dwGaeaID, 
 	SENDTOCLIENT ( pChar->m_dwClientID, &NetMsgDel );
 
 	return TRUE;
+	}
 
 _DB_RESTORE:
 	if ( GetDBMan() )

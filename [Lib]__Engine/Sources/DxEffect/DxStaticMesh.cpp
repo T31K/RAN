@@ -906,7 +906,7 @@ namespace NSSTATICMESH
 			{
 			case D3DFMT_DXT1:
 				strName = szName;
-				std::transform ( strName.begin(), strName.end(), strName.begin(), tolower );
+				std::transform ( strName.begin(), strName.end(), strName.begin(), ::tolower );
 				idx = strName.find("_a.");
 				if( idx!=std::string::npos )
 				{
@@ -935,7 +935,7 @@ namespace NSSTATICMESH
 
 			case D3DFMT_DXT5:
 				strName = szName;
-				std::transform ( strName.begin(), strName.end(), strName.begin(), tolower );
+				std::transform ( strName.begin(), strName.end(), strName.begin(), ::tolower );
 
 				idx = strName.find("_a1.");		// 2¹øÂ° »Ñ¸°´Ù.
 				if( idx!=std::string::npos )

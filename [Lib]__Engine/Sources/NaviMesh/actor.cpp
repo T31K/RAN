@@ -465,7 +465,7 @@ void Actor::GotoLocation(const D3DXVECTOR3& Position, DWORD CellID)
 			m_bFirstWayPointPass = FALSE;
 			//	첫번째 구간까지의 거리
 			//
-			NavigationPath::WayPointID& NextWaypoint = m_Path.GetFurthestVisibleWayPoint(m_NextWaypoint);
+			NavigationPath::WayPointID NextWaypoint =m_Path.GetFurthestVisibleWayPoint(m_NextWaypoint);
 			D3DXVECTOR3 vNextPosition = (*NextWaypoint).Position;
 			D3DXVECTOR3	vMovePosition ( vNextPosition.x - m_Position.x, 0.0f, vNextPosition.z - m_Position.z );
 			m_fFirstPathDist = D3DXVec3Length ( &vMovePosition );			

@@ -86,7 +86,7 @@ const char* CIMEEdit::GetString ()
 	/*
 	WCHAR		wChar;
 	INT			nXStart, nXEnd;
-	wchar_t		szTempStr[BUFFERSIZE+1];
+	WCHAR		szTempStr[BUFFERSIZE+1];
 	CStringW	strDes, strSour( m_szBuffer );
 
 	// Draw dotted line under composition string
@@ -213,7 +213,7 @@ HRESULT CIMEEdit::Render ( LPDIRECT3DDEVICEQ pd3dDevice, int x, int y, DWORD dwC
 	if ( !pFont )		return E_FAIL;
 
 	int nXStart(0), nXEnd(0);
-	wchar_t uzTempStr[BUFFERSIZE+1]={0};
+	WCHAR uzTempStr[BUFFERSIZE+1]={0};
 	TCHAR szTempStr[BUFFERSIZE*2+1]={0};
 
 	pFont->DrawText ( (float)x, (float)y, dwColor, GetString() );
@@ -316,7 +316,7 @@ void CIMEEdit::OnPaint()
 	CRect		cRect;
 	HFONT		pOldFont = (HFONT)SelectObject(dc, m_hFont);
 	CPen		*pPen, *pOldPen;
-	wchar_t		szTempStr[BUFFERSIZE+1]={0};
+	WCHAR		szTempStr[BUFFERSIZE+1]={0};
 	RECT		rcBounds;
 
 	HideCaret();
@@ -447,7 +447,7 @@ void CIMEEdit::OnKillFocus(CWnd* pNewWnd)
 \*****************************************************************************/
 void CIMEEdit::ShowCaretOnView()
 {
-	wchar_t *szTmpStr = new(wchar_t[m_xCaretPos + 1]);
+	WCHAR *szTmpStr = new(WCHAR[m_xCaretPos + 1]);
 
 	HideCaret();
 
@@ -473,7 +473,7 @@ void CIMEEdit::ShowCaretOnView()
 * 인수:
 *	LPCTSTR szStr - 문자열입니다.
 \*****************************************************************************/
-int CIMEEdit::GetWidthOfString(wchar_t *szStr)
+int CIMEEdit::GetWidthOfString(WCHAR *szStr)
 {
 	SIZE		Size;
 	CClientDC	dc(this);
@@ -686,7 +686,7 @@ int CIMEEdit::InsertCompStr()
 {
 	HIMC	hIMC;
 	int		nTmpPos, nTmpInc;
-	wchar_t	szTmpStr[BUFFERSIZE+1]={0};
+	WCHAR	szTmpStr[BUFFERSIZE+1]={0};
 
 	// 삽입 위치 뒤의 하위 문자열을 백업합니다.
 	nTmpPos = m_xEndPos - m_xInsertPos;
@@ -736,7 +736,7 @@ int CIMEEdit::InsertCompStr()
 void CIMEEdit::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags) 
 {
 	int		nTmpDec;
-	wchar_t wChar, szTmpStr[BUFFERSIZE+1]={0};
+	WCHAR wChar, szTmpStr[BUFFERSIZE+1]={0};
 
 	// 현재 상태를 확인합니다.
 	//if (m_fStat)
@@ -940,7 +940,7 @@ BOOL CIMEEdit::IsNativeMode ()
 *
 * 인수:
 *	HKL  hKeyboardLayout - 새 키보드 레이아웃의 문자 집합을 지정합니다.
-*	wchar_t *szSelectedFont - 글꼴 이름입니다. 
+*	WCHAR *szSelectedFont - 글꼴 이름입니다. 
 \*****************************************************************************/
 void CIMEEdit::SetFont(HKL  hKeyboardLayout, LPCTSTR szSelectedFont)
 {
@@ -981,7 +981,7 @@ void CIMEEdit::SetFont(HKL  hKeyboardLayout, LPCTSTR szSelectedFont)
 		m_nCharSet = CD3DFontPar::nCharSet[m_nLanguage];
 
 		// 기본 글꼴을 적용합니다.
-		StringCchCopyW( m_szWFontName, 50, (wchar_t *)CD3DFontPar::szDefaultFontName[m_nLanguage] );
+		StringCchCopyW( m_szWFontName, 50, (WCHAR *)CD3DFontPar::szDefaultFontName[m_nLanguage] );
 		WideCharToMultiByte(m_nCodePage, 0, m_szWFontName, -1, (char *)m_szMBFontName, 50, NULL, NULL);
 
 		// IME 속성을 가져옵니다.
@@ -1008,7 +1008,7 @@ void CIMEEdit::SetFont(HKL  hKeyboardLayout, LPCTSTR szSelectedFont)
 	if (!m_hFont)
 	{
 		// 기본 글꼴을 적용합니다.
-		StringCchCopyW( m_szWFontName, 50, (wchar_t *)CD3DFontPar::szDefaultFontName[DEFAULT] );
+		StringCchCopyW( m_szWFontName, 50, (WCHAR *)CD3DFontPar::szDefaultFontName[DEFAULT] );
 		WideCharToMultiByte(m_nCodePage, 0, m_szWFontName, -1, (char *)m_szMBFontName, 50, NULL, NULL);
 
 		if (m_fIsNT)
@@ -1105,7 +1105,7 @@ void CIMEEdit::SetCandiDateWindowPos()
 		//if (m_nLanguage == JAPANESE) 
 		//{
 		//	// 편집 가능한 문자 가까이에 후보 창 위치를 설정합니다.
-		//	wchar_t *szTmpStr = new(wchar_t[m_xInsertPos + m_nComCursorPos + 1]);
+		//	WCHAR *szTmpStr = new(WCHAR[m_xInsertPos + m_nComCursorPos + 1]);
 		//	memcpy(szTmpStr, m_szBuffer, WCHARSIZE * (m_xInsertPos + m_nComCursorPos));	 
 		//	szTmpStr[m_xInsertPos + m_nComCursorPos] = L'\0';
 		//	Candidate.ptCurrentPos.x = X_INIT + GetWidthOfString(szTmpStr);

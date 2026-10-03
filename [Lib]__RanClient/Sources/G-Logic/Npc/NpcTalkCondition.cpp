@@ -71,7 +71,7 @@ BOOL SNpcTalkCondition::LOADCSVFILE( CStringArray &StrArray, int iReadStart, int
 	// ConditionLivingScoreSize 
 	m_signActionPoint = (EM_CONDITIONSIGN)atoi(StrArray[iCsvCur++]); 
 	// ConditionQuestMID & ConditionQuestSID
-	string szTemp33 = StrArray[iCsvCur];
+	string szTemp33 = StrArray[iCsvCur].GetString();
 	int MID = atoi(StrArray[iCsvCur++]);
 	int SID = atoi(StrArray[iCsvCur++]);
 	m_dwQUEST_NID = MID | ( SID << 0x10 );

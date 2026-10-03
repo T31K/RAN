@@ -419,7 +419,7 @@ void CPetWindow::TranslateUIMessage ( UIGUID ControlID, DWORD dwMsg )
 					}
 				}
 
-				CString & strText = m_pcbSkillRollOver->GetSelectText( nIndex );
+				CString strText = m_pcbSkillRollOver->GetSelectText( nIndex );
 				m_pcbSkill->SetText( strText );
 
 				if( nIndex == 0 ) sID = NATIVEID_NULL();

@@ -239,19 +239,19 @@ void DxWeatherMan::LoadSet ( CSerialFile &SFile, LPDIRECT3DDEVICEQ pd3dDevice )
 	{
 		while ( true )
 		{
-			SFile >> (BOOL)bUse;
+			SFile >> bUse;
 			if ( !bUse )	break;
 			m_sRain.LoadSet ( SFile );
 
-			SFile >> (BOOL)bUse;
+			SFile >> bUse;
 			if ( !bUse )	break;
 			m_sSnow.LoadSet ( SFile );
 
-			SFile >> (BOOL)bUse;
+			SFile >> bUse;
 			if ( !bUse )	break;
 			m_sCloud.LoadSet ( SFile );
 
-			SFile >> (BOOL)bUse;
+			SFile >> bUse;
 			if ( !bUse )	break;
 
 			break;
@@ -261,19 +261,19 @@ void DxWeatherMan::LoadSet ( CSerialFile &SFile, LPDIRECT3DDEVICEQ pd3dDevice )
 	{
 		while ( true )
 		{
-			SFile >> (BOOL)bUse;
+			SFile >> bUse;
 			if ( !bUse )	break;
 			m_sRain.LoadSet ( SFile );
 
-			SFile >> (BOOL)bUse;
+			SFile >> bUse;
 			if ( !bUse )	break;
 			m_sSnow.LoadSet ( SFile );
 
-			SFile >> (BOOL)bUse;
+			SFile >> bUse;
 			if ( !bUse )	break;
 			m_sCloud.LoadSet ( SFile );
 
-			SFile >> (BOOL)bUse;
+			SFile >> bUse;
 			if ( !bUse )	break;
 
 			break;

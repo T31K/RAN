@@ -137,7 +137,7 @@ void GLStringTable::InsertString( std::string & strKey, std::string & strSub, EM
 	(*pMap)[strKey] = strSub;
 }
 
-void GLStringTable::DeleteString( std::string & strKeyName, std::string & strKeyDesc, EMST_TYPE emType )
+void GLStringTable::DeleteString( const std::string & strKeyName, const std::string & strKeyDesc, EMST_TYPE emType )
 {
 	SetCurrentMap( emType );
 

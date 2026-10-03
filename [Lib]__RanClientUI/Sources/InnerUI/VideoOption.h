@@ -7,7 +7,7 @@ class	CBasicButton;
 class	CD3DFontPar;
 class	CBasicComboBox;
 class	CBasicComboBoxRollOver;
-enum	EMSCREEN_FORMAT;
+enum	EMSCREEN_FORMAT : int;
 
 #define DEFAULT_OPTION_SIZE 4
 

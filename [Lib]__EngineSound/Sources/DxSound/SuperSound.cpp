@@ -195,7 +195,7 @@ bool SSound::SetVolume ( const long lVolume )
 	LPDIRECTSOUNDBUFFER pDSBuffer = m_pSound->GetBuffer ( m_BufferID );	
 	if ( !pDSBuffer ) return false;
 
-	long lPrevVolume;
+	LONG lPrevVolume;		//	GetVolume writes a 32-bit LONG
 	hr = pDSBuffer->GetVolume ( &lPrevVolume );
 	if ( FAILED ( hr ) ) return false;
 

@@ -221,8 +221,8 @@ public:
 	PGLCHARAG GetCharUA ( const char* szUAccount );
 	PGLCHARAG GetCharID ( const DWORD dwCharID );
 
-	DWORD GetFieldServer ( SNATIVEID &sMapID );
-	GLAGLandMan* GetByMapID ( SNATIVEID &sMapID );
+	DWORD GetFieldServer ( const SNATIVEID &sMapID );
+	GLAGLandMan* GetByMapID ( const SNATIVEID &sMapID );
 	GLDBMan* GetDBMan ()						{ return m_pDBMan; }
 	const char* GetMapName ( SNATIVEID sMapID )	{ return m_sMapList.GetMapName(sMapID); }
 
@@ -432,7 +432,7 @@ inline PGLCHARAG GLAgentServer::GetCharID ( const DWORD dwCharID )
 	return GetChar((*iter).second);
 }
 
-inline GLAGLandMan* GLAgentServer::GetByMapID ( SNATIVEID &sMapID )
+inline GLAGLandMan* GLAgentServer::GetByMapID ( const SNATIVEID &sMapID )
 {
 	if ( sMapID.wMainID >= MAXLANDMID )		return NULL;
 	if ( sMapID.wSubID >= MAXLANDSID )		return NULL;

@@ -477,7 +477,7 @@ void DxLandMan::AddEffectFrameList ( DxEffectBase* pEffect )
 HRESULT DxLandMan::EffectAdaptToFrame ( DxOctree &OcNode, DWORD TypeID, char* szFrame, LPDIRECT3DDEVICEQ pd3dDevice,
 							PBYTE pProperty, DWORD dwSize, DWORD dwVer, LPDXAFFINEPARTS pAffineParts, DxEffectBase* pEffectSrc )
 {
-	HRESULT hr S_OK;
+	HRESULT hr = S_OK;
 
 	DxFrame	*pDxFrameResult = NULL;
 

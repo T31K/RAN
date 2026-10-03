@@ -26,6 +26,18 @@
 #include <unistd.h>
 #include <vector>
 
+// macOS defines the byte-order helpers as macros, which breaks the game's `::htons(port)`.
+// Winsock has them as functions; Apple Silicon and Intel Macs are both little-endian.
+static_assert(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__, "byte-order helpers assume little-endian");
+#undef htons
+#undef ntohs
+#undef htonl
+#undef ntohl
+inline uint16_t htons(uint16_t v) { return __builtin_bswap16(v); }
+inline uint16_t ntohs(uint16_t v) { return __builtin_bswap16(v); }
+inline uint32_t htonl(uint32_t v) { return __builtin_bswap32(v); }
+inline uint32_t ntohl(uint32_t v) { return __builtin_bswap32(v); }
+
 typedef UINT_PTR         SOCKET;
 typedef HANDLE           WSAEVENT;
 typedef WSAEVENT*        LPWSAEVENT;
@@ -395,6 +407,14 @@ inline int ioctlsocket(SOCKET s, long cmd, u_long* arg)
     }
     errno = EINVAL;
     return SOCKET_ERROR;
+}
+// Windows u_long is the 4-byte ULONG; the game passes ULONG*. BSD u_long is 8 bytes.
+inline int ioctlsocket(SOCKET s, long cmd, ULONG* arg)
+{
+    u_long v = arg ? *arg : 0;
+    const int r = ioctlsocket(s, cmd, &v);
+    if (arg) *arg = (ULONG)v;
+    return r;
 }
 
 inline WSAEVENT WSACreateEvent() { return CreateEvent(nullptr, TRUE, FALSE, nullptr); }

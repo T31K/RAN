@@ -40,14 +40,14 @@ DXInputString::DXInputString()
 	m_bCaratMove = TRUE;
 }
 
-void DXInputString::Create ( CWnd *_pWnd, CRect &rtPosition )
+void DXInputString::Create ( CWnd *_pWnd, const CRect &rtPosition )
 {
 	m_pParentWnd = _pWnd;
 	m_editIME.Create ( NULL, rtPosition, m_pParentWnd, 1201 );
 	m_editIME.SetFont ( 0, NULL );
 }
 
-void DXInputString::Move ( CRect &rtPosition )
+void DXInputString::Move ( const CRect &rtPosition )
 {
 	m_editIME.MoveWindow ( rtPosition.left, rtPosition.top, rtPosition.Width(), rtPosition.Height(), FALSE );
 }

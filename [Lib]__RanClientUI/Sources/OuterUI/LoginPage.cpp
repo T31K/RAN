@@ -327,7 +327,7 @@ void CLoginPage::ResetAll ()
 		m_pEditBoxMan->DoMODE_TOGGLE();
 	}
 
-	std::string& strSavedUserID = RANPARAM::GETUSERID_DEC();
+	std::string strSavedUserID =RANPARAM::GETUSERID_DEC();
 	if ( strSavedUserID.size() )
 	{
 		m_pEditBoxMan->SetEditString ( LOGIN_EDIT_ID, CString ( strSavedUserID.c_str() ) );

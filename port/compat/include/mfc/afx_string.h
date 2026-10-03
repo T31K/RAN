@@ -39,6 +39,7 @@ class CString
 public:
     CString() = default;
     CString(const char* sz) : m_str(sz ? sz : "") {}
+    CString(const unsigned char* sz) : CString((const char*)sz) {}   // MFC accepts LPCBYTE text too
     CString(const char* sz, int len) : m_str(sz ? sz : "", sz ? (size_t)len : 0) {}
     CString(char ch, int repeat = 1) : m_str((size_t)(repeat > 0 ? repeat : 0), ch) {}
     CString(const std::string& s) : m_str(s) {}
@@ -51,6 +52,7 @@ public:
     void Empty() { m_str.clear(); }
     const char* GetString() const { return m_str.c_str(); }
     operator const char*() const { return m_str.c_str(); }
+    static int StringLength(const char* sz) { return sz ? (int)std::strlen(sz) : 0; }
 
     char GetAt(int i) const { return m_str[(size_t)i]; }
     char operator[](int i) const { return m_str[(size_t)i]; }
@@ -349,6 +351,7 @@ public:
     const CString& GetAt(int i) const { return m_items[(size_t)i]; }
     CString& ElementAt(int i) { return m_items[(size_t)i]; }
     void SetAt(int i, const CString& s) { m_items[(size_t)i] = s; }
+    void SetAtGrow(int i, const CString& s) { if (i >= GetSize()) m_items.resize((size_t)i + 1); m_items[(size_t)i] = s; }
     CString& operator[](int i) { return m_items[(size_t)i]; }
     const CString& operator[](int i) const { return m_items[(size_t)i]; }
     void SetSize(int n, int /*growBy*/ = -1) { m_items.resize(n > 0 ? (size_t)n : 0); }

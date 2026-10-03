@@ -814,7 +814,7 @@ BOOL GLLandManClient::DropItem ( SDROP_CLIENT_ITEM *pItemDrop )
 	pNewItem->pCellList = pLandNode->pData->m_ItemList.ADDHEAD ( pNewItem );		// - 트리 노드.
 
 	std::string strFieldFile = pITEM->sBasicOp.strFieldFile;
-	std::transform ( strFieldFile.begin(), strFieldFile.end(), strFieldFile.begin(), tolower );
+	std::transform ( strFieldFile.begin(), strFieldFile.end(), strFieldFile.begin(), ::tolower );
 
 	bool bSIMMESH = false;
 	bool bEFFECT = false;

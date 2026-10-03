@@ -201,7 +201,7 @@ BOOL DxClubMan::LoadClubMark ( const char* cName, LPDWORD& pColor )
 	//	BMP, TGA 인지 찾기
 	BOOL	bBMP = TRUE;
 	std::string	strSrcName = cName;
-	std::transform ( strSrcName.begin(), strSrcName.end(), strSrcName.begin(), tolower );
+	std::transform ( strSrcName.begin(), strSrcName.end(), strSrcName.begin(), ::tolower );
 	std::string	strExtName;
 	std::string::size_type idx = strSrcName.find('.');
 
@@ -650,6 +650,7 @@ void DxClubMan::LoadData( LPDIRECT3DDEVICEQ pd3dDevice )
 
 	CSerialFile SFile;
 	BOOL bOPEN = SFile.OpenFile ( FOT_READ, strPathname.c_str() );
+	DWORD dwVer = 0;	// declared before the goto (standard C++)
 	if ( !bOPEN )
 	{
 		NewData();
@@ -658,7 +659,6 @@ void DxClubMan::LoadData( LPDIRECT3DDEVICEQ pd3dDevice )
 		goto _RETURN;
 	}
 
-	DWORD dwVer = 0;
 	SFile >> dwVer;
 
 	if ( dwVer==VERSION )

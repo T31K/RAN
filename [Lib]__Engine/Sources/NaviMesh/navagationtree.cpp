@@ -425,7 +425,7 @@ e_failed:
 }
 
 static BOOL s_bCollision;
-void NavigationMesh::IsCollision ( DxAABBNode *pAABBCur, D3DXVECTOR3 &vP1, D3DXVECTOR3 &vP2, D3DXVECTOR3 &vCollision, DWORD &CollisionID )
+void NavigationMesh::IsCollision ( DxAABBNode *pAABBCur, const D3DXVECTOR3 &vP1, const D3DXVECTOR3 &vP2, D3DXVECTOR3 &vCollision, DWORD &CollisionID )
 {
 	D3DXVECTOR3 vNewP1=vP1, vNewP2=vP2;
 
@@ -468,7 +468,7 @@ void NavigationMesh::IsCollision ( DxAABBNode *pAABBCur, D3DXVECTOR3 &vP1, D3DXV
 	}
 }
 
-void NavigationMesh::IsCollision ( D3DXVECTOR3 &vPoint1, D3DXVECTOR3 &vPoint2,
+void NavigationMesh::IsCollision ( const D3DXVECTOR3 &vPoint1, const D3DXVECTOR3 &vPoint2,
 								D3DXVECTOR3 &vCollision, DWORD &CollisionID, BOOL &bCollision )
 {
 	bCollision = FALSE;

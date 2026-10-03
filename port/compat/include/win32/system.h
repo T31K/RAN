@@ -93,6 +93,12 @@ inline BOOL GetProcessMemoryInfo(HANDLE, PPROCESS_MEMORY_COUNTERS pmc, DWORD cb)
     pmc->PagefileUsage = (SIZE_T)info.virtual_size;
     return TRUE;
 }
+// Other processes (the game's process-list diagnostics): not inspectable natively.
+#define PROCESS_QUERY_INFORMATION 0x0400
+#define PROCESS_VM_READ           0x0010
+inline HANDLE OpenProcess(DWORD, BOOL, DWORD) { return NULL; }
+inline DWORD GetModuleFileNameEx(HANDLE, HMODULE, char* buf, DWORD size) { if (buf && size) buf[0] = 0; return 0; }
+#define GetModuleFileNameExA GetModuleFileNameEx
 inline BOOL GlobalMemoryStatusEx(LPMEMORYSTATUSEX m)
 {
     if (!m) return FALSE;
@@ -221,6 +227,78 @@ inline LONG SetWindowLong(HWND, int, LONG) { return 0; }
 inline int GetDIBits(HDC, HBITMAP, UINT, UINT, void*, void* /*BITMAPINFO*/, UINT) { return 0; }
 inline HBITMAP CreateDIBSection(HDC, const void* /*BITMAPINFO*/, UINT, void** bits, HANDLE, DWORD) { if (bits) *bits = nullptr; return nullptr; }
 inline HRESULT CoCreateInstance(REFCLSID, IUnknown*, DWORD, REFIID, void** out) { if (out) *out = nullptr; return E_NOINTERFACE; }
+typedef struct tagFILTERKEYS { UINT cbSize; DWORD dwFlags, iWaitMSec, iDelayMSec, iRepeatMSec, iBounceMSec; } FILTERKEYS, *LPFILTERKEYS;
+typedef struct _PERF_INSTANCE_DEFINITION { DWORD ByteLength, ParentObjectTitleIndex, ParentObjectInstance; LONG UniqueID; DWORD NameOffset, NameLength; } PERF_INSTANCE_DEFINITION, *PPERF_INSTANCE_DEFINITION;
+typedef float* PFLOAT;
+#define SPI_GETFILTERKEYS 0x0032
+#define SPI_SETFILTERKEYS 0x0033
+#define TRANSPARENT 1
+#define OPAQUE      2
+#define TIME_CALLBACK_FUNCTION    0x0000
+#define TIME_CALLBACK_EVENT_SET   0x0010
+#define TIME_CALLBACK_EVENT_PULSE 0x0020
+inline int MulDiv(int a, int b, int c) { return c ? (int)(((long long)a * b + (c / 2)) / c) : -1; }
+#define SM_CXCURSOR 13
+#define SM_CYCURSOR 14
+inline int GetSystemMetrics(int index)
+{
+    // Phase 2 reports the real screen through SDL; until then a common desktop size.
+    switch (index) { case SM_CXSCREEN: return 1920; case SM_CYSCREEN: return 1080; case SM_CXCURSOR: case SM_CYCURSOR: return 32; default: return 0; }
+}
+#define GCLP_HCURSOR (-12)
+#define GCL_HCURSOR  (-12)
+inline ULONG_PTR SetClassLongPtr(HWND, int, LONG_PTR) { return 0; }
+inline ULONG_PTR GetClassLongPtr(HWND, int) { return 0; }
+#define SetClassLong SetClassLongPtr
+#define GetClassLong GetClassLongPtr
+inline HWND WindowFromPoint(POINT) { return nullptr; }
+inline HCURSOR GetCursor() { return nullptr; }
+inline int GetWindowText(HWND, char* buf, int max) { if (buf && max > 0) buf[0] = 0; return 0; }
+#define GetWindowTextA GetWindowText
+#define SMTO_NORMAL 0x0000
+#define SMTO_ABORTIFHUNG 0x0002
+inline LRESULT SendMessageTimeout(HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR result) { if (result) *result = 0; return 0; }
+// The game was a 32-bit build where DWORD_PTR == DWORD, so it passes DWORD* here.
+inline LRESULT SendMessageTimeout(HWND h, UINT m, WPARAM w, LPARAM l, UINT f, UINT t, DWORD* result)
+{
+    DWORD_PTR r = 0;
+    const LRESULT ok = SendMessageTimeout(h, m, w, l, f, t, &r);
+    if (result) *result = (DWORD)r;
+    return ok;
+}
+#define PM_NOREMOVE 0x0000
+#define PM_REMOVE   0x0001
+inline BOOL PeekMessage(MSG*, HWND, UINT, UINT, UINT) { return FALSE; }   // Phase 2: SDL event loop
+#define PeekMessageA PeekMessage
+// Clipboard: Phase 2 maps it onto SDL_GetClipboardText / SDL_SetClipboardText.
+#define CF_TEXT 1
+inline BOOL OpenClipboard(HWND) { return FALSE; }
+inline BOOL CloseClipboard() { return TRUE; }
+inline BOOL EmptyClipboard() { return FALSE; }
+inline HANDLE GetClipboardData(UINT) { return nullptr; }
+inline HANDLE SetClipboardData(UINT, HANDLE) { return nullptr; }
+inline BOOL IsClipboardFormatAvailable(UINT) { return FALSE; }
+// UUIDs (rpc.h).
+typedef GUID UUID;
+#define RPC_S_UUID_LOCAL_ONLY 1824
+inline long UuidCreate(UUID* u)
+{
+    if (!u) return 1;
+    arc4random_buf(u, sizeof(*u));
+    u->Data3 = (WORD)((u->Data3 & 0x0FFF) | 0x4000);                   // version 4
+    u->Data4[0] = (BYTE)((u->Data4[0] & 0x3F) | 0x80);                 // RFC 4122 variant
+    return 0;   // RPC_S_OK
+}
+typedef long RPC_STATUS;
+typedef struct _PERF_COUNTER_BLOCK { DWORD ByteLength; } PERF_COUNTER_BLOCK, *PPERF_COUNTER_BLOCK;
+#ifndef DECLSPEC_IMPORT
+#define DECLSPEC_IMPORT
+#endif
+inline UINT WinExec(const char*, UINT) { return 2; }   // ERROR_FILE_NOT_FOUND: no Windows programs to start
+inline int SetBkMode(HDC, int) { return 0; }
+inline BOOL MoveWindow(HWND, int, int, int, int, BOOL) { return FALSE; }
+inline BOOL ClipCursor(const RECT*) { return TRUE; }   // Phase 2: SDL mouse grab
+#define EM_SETSEL       0x00B1
 #define EM_LIMITTEXT    0x00C5
 #define CB_GETITEMDATA  0x0150
 #define CB_SETITEMDATA  0x0151
@@ -246,6 +324,13 @@ typedef struct tagBITMAPINFOHEADER {
     DWORD biCompression, biSizeImage; LONG biXPelsPerMeter, biYPelsPerMeter; DWORD biClrUsed, biClrImportant;
 } BITMAPINFOHEADER, *LPBITMAPINFOHEADER;
 typedef struct tagRGBQUAD { BYTE rgbBlue, rgbGreen, rgbRed, rgbReserved; } RGBQUAD;
+#pragma pack(push, 2)
+typedef struct tagBITMAPFILEHEADER { WORD bfType; DWORD bfSize; WORD bfReserved1, bfReserved2; DWORD bfOffBits; } BITMAPFILEHEADER, *LPBITMAPFILEHEADER;
+#pragma pack(pop)
+static_assert(sizeof(BITMAPFILEHEADER) == 14, "BITMAPFILEHEADER is read straight from .bmp files");
+// Keyboard layout / code page: the game is a Korean (CP949) client.
+inline HKL GetKeyboardLayout(DWORD) { return (HKL)(uintptr_t)0x04120412; }   // ko-KR
+inline UINT GetACP() { return 949; }
 typedef struct tagBITMAPINFO { BITMAPINFOHEADER bmiHeader; RGBQUAD bmiColors[1]; } BITMAPINFO, *LPBITMAPINFO;
 inline BOOL GetWindowRect(HWND, RECT* r) { if (r) SetRectEmpty(r); return FALSE; }
 inline BOOL GetClientRect(HWND, RECT* r) { if (r) SetRectEmpty(r); return FALSE; }
@@ -280,12 +365,17 @@ inline BOOL GetComputerName(char* buf, LPDWORD size)
 }
 #define GetComputerNameA GetComputerName
 inline DWORD GetVersion() { return 0x47BB0A00u; }   // 10.0 build 18363-style: major 10, minor 0
-inline void GlobalMemoryStatus(MEMORYSTATUS* m)   // DXVK's MEMORYSTATUS carries only the total
+inline void GlobalMemoryStatus(MEMORYSTATUS* m)   // full layout via the DXVK windows_base.h patch
 {
     if (!m) return;
     MEMORYSTATUSEX ex = {};
     GlobalMemoryStatusEx(&ex);
+    m->dwMemoryLoad = ex.dwMemoryLoad;
     m->dwTotalPhys = (SIZE_T)ex.ullTotalPhys;
+    m->dwAvailPhys = (SIZE_T)ex.ullAvailPhys;
+    m->dwTotalPageFile = m->dwAvailPageFile = 0;
+    m->dwTotalVirtual = (SIZE_T)ex.ullTotalVirtual;
+    m->dwAvailVirtual = (SIZE_T)ex.ullAvailVirtual;
 }
 inline DWORD GetFullPathName(const char* path, DWORD size, char* buf, char** filePart)
 {
@@ -343,6 +433,9 @@ typedef union _ULARGE_INTEGER { struct { DWORD LowPart, HighPart; }; ULONGLONG Q
 // ---- Process snapshots (tlhelp32): there is no Windows process list to walk.
 #define TH32CS_SNAPPROCESS 0x00000002
 #define TH32CS_SNAPMODULE  0x00000008
+#define TH32CS_SNAPHEAPLIST 0x00000001
+#define TH32CS_SNAPTHREAD  0x00000004
+#define TH32CS_SNAPALL     (TH32CS_SNAPHEAPLIST | TH32CS_SNAPPROCESS | TH32CS_SNAPTHREAD | TH32CS_SNAPMODULE)
 typedef struct tagPROCESSENTRY32 {
     DWORD dwSize, cntUsage, th32ProcessID; ULONG_PTR th32DefaultHeapID; DWORD th32ModuleID, cntThreads, th32ParentProcessID;
     LONG pcPriClassBase; DWORD dwFlags; char szExeFile[MAX_PATH];
@@ -373,6 +466,91 @@ inline char* lstrcpy(char* d, const char* s) { return std::strcpy(d, s); }
 inline char* lstrcpyn(char* d, const char* s, int n) { if (n <= 0) return d; std::strncpy(d, s, (size_t)n - 1); d[n - 1] = 0; return d; }
 #define lstrcpyA lstrcpy
 #define lstrcpynA lstrcpyn
+
+// ---- Window class / creation / message loop of the Windows shell (CD3DApplication). The
+// native build never creates a Win32 window: the Phase 2 SDL3 main owns the window and calls
+// the engine's frame functions directly, so these report "no window" and "no message".
+typedef struct tagWNDCLASSA {
+    UINT style; WNDPROC lpfnWndProc; int cbClsExtra, cbWndExtra; HINSTANCE hInstance;
+    HICON hIcon; HCURSOR hCursor; HBRUSH hbrBackground; const char* lpszMenuName; const char* lpszClassName;
+} WNDCLASSA, WNDCLASS, *LPWNDCLASS;
+typedef WORD ATOM;
+inline ATOM RegisterClass(const WNDCLASS*) { return 1; }
+#define RegisterClassA RegisterClass
+#ifndef CW_USEDEFAULT
+#define CW_USEDEFAULT ((int)0x80000000)
+#endif
+inline HWND CreateWindowEx(DWORD, const char*, const char*, DWORD, int, int, int, int, HWND, HMENU, HINSTANCE, void*) { return nullptr; }
+inline HWND CreateWindow(const char* cls, const char* title, DWORD style, int x, int y, int w, int h, HWND parent, HMENU menu, HINSTANCE inst, void* param)
+{
+    return CreateWindowEx(0, cls, title, style, x, y, w, h, parent, menu, inst, param);
+}
+#define CreateWindowA CreateWindow
+#define CreateWindowExA CreateWindowEx
+inline BOOL AdjustWindowRectEx(RECT*, DWORD, BOOL, DWORD) { return TRUE; }   // no frame: client == window
+inline BOOL AdjustWindowRect(RECT* rc, DWORD style, BOOL menu) { return AdjustWindowRectEx(rc, style, menu, 0); }
+inline LRESULT DefWindowProc(HWND, UINT, WPARAM, LPARAM) { return 0; }
+#define DefWindowProcA DefWindowProc
+inline BOOL DestroyWindow(HWND) { return TRUE; }
+inline HMENU GetMenu(HWND) { return nullptr; }
+inline BOOL DestroyMenu(HMENU) { return TRUE; }
+inline BOOL SetMenu(HWND, HMENU) { return FALSE; }
+inline BOOL GetMessage(MSG* msg, HWND, UINT, UINT) { if (msg) { std::memset(msg, 0, sizeof(*msg)); msg->message = WM_QUIT; } return FALSE; }
+#define GetMessageA GetMessage
+inline BOOL TranslateMessage(const MSG*) { return FALSE; }
+inline LRESULT DispatchMessage(const MSG*) { return 0; }
+#define DispatchMessageA DispatchMessage
+namespace ran_compat {
+    // Set by the Phase 2 main loop: PostQuitMessage asks it to leave.
+    inline void (*&QuitHook())(int) { static void (*hook)(int) = nullptr; return hook; }
+}
+inline void PostQuitMessage(int code) { if (ran_compat::QuitHook()) ran_compat::QuitHook()(code); }
+inline BOOL SetWindowPos(HWND, HWND, int, int, int, int, UINT) { return FALSE; }
+#define WHITE_BRUSH 0
+#define BLACK_BRUSH 4
+inline HGDIOBJ GetStockObject(int) { return nullptr; }
+#define HTCLIENT          1
+#define SC_SIZE           0xF000
+#define SC_MOVE           0xF010
+#define SC_MINIMIZE       0xF020
+#define SC_MAXIMIZE       0xF030
+#define SC_CLOSE          0xF060
+#define SC_KEYMENU        0xF100
+#define SC_MONITORPOWER   0xF170
+#define SIZE_RESTORED     0
+#define SIZE_MINIMIZED    1
+#define SIZE_MAXIMIZED    2
+#define SIZE_MAXSHOW      3
+#define SIZE_MAXHIDE      4
+#define WM_CONTEXTMENU    0x007B
+#define WM_ENTERMENULOOP  0x0211
+#define WM_EXITMENULOOP   0x0212
+
+// ---- Edit/list/combo box messages (sent to MFC controls that do not exist natively).
+#define EM_SCROLL         0x00B5
+#define EM_LINESCROLL     0x00B6
+#define EM_SCROLLCARET    0x00B7
+#define EM_REPLACESEL     0x00C2
+#define SB_LINEDOWN       1
+#define SB_PAGEDOWN       3
+#define SMTO_BLOCK        0x0001
+#define LB_ERR            (-1)
+#define CB_ERR            (-1)
+#define CB_SETCURSEL      0x014E
+#define CB_FINDSTRING     0x014C
+#define CB_FINDSTRINGEXACT 0x0158
+
+// ---- Embedded resources: a Mach-O binary has no .rsrc section; game data lives in files.
+#ifndef E_UNEXPECTED
+#define E_UNEXPECTED ((HRESULT)0x8000FFFFL)
+#endif
+typedef void* HRSRC;
+inline HRSRC FindResource(HMODULE, const char*, const char*) { return nullptr; }
+#define FindResourceA FindResource
+inline HGLOBAL LoadResource(HMODULE, HRSRC) { return nullptr; }
+inline void* LockResource(HGLOBAL) { return nullptr; }
+inline DWORD SizeofResource(HMODULE, HRSRC) { return 0; }
+#define CREATE_NO_WINDOW 0x08000000
 
 // ---- Misc constants.
 #ifndef NO_ERROR

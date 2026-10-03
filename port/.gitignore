@@ -1,0 +1,3 @@
+# Local editor/tool caches (clangd index etc.)
+.cache/
+**/.cache/

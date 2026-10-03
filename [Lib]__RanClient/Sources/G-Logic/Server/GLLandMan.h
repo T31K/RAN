@@ -464,7 +464,7 @@ public:
 	HRESULT SendMsgPCViewAround ( int nX, int nZ, DWORD dwReqClientID, const LPNET_MSG_GENERIC &nmg );
 	HRESULT SendMsgPC ( const LPNET_MSG_GENERIC &nmg );
 
-	BOOL IsCollisionNavi ( D3DXVECTOR3 &vPoint1, D3DXVECTOR3 &vPoint2, D3DXVECTOR3 &vCollision );
+	BOOL IsCollisionNavi ( const D3DXVECTOR3 &vPoint1, const D3DXVECTOR3 &vPoint2, D3DXVECTOR3 &vCollision );
 	BOOL IsCollision ( const D3DXVECTOR3 &vP1, const D3DXVECTOR3 &vP2, const BOOL bFrontColl );
 
 	BOOL DoGateOutPCAll ( DWORD dwExceptClubID, DWORD dwGateID );

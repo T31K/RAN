@@ -24,6 +24,7 @@
 #include "win32/fpu.h"
 #include "win32/files.h"
 #include "win32/codepage.h"
+#include "win32/wchar16.h"
 #include "win32/crt_io.h"
 #include "win32/registry.h"
 #include "win32/shell.h"

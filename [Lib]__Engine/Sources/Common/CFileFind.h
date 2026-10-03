@@ -21,14 +21,14 @@ protected:
 public:
 	void Add ( std::string &strFile, std::string &strPath );
 
-	std::string* FindPathName ( std::string &str );
+	std::string* FindPathName ( const std::string &str );
 
 protected:
 	void PathRecurse ( std::string &strDir );
 	void CleanUp ();
 
 public:
-	void CreateTree ( std::string &strPath );
+	void CreateTree ( const std::string &strPath );
 
 public:
 	CFileFindTree (void);

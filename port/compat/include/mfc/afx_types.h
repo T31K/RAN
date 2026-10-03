@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <cstdint>
 #include <ctime>
+#include "win32/extra_types.h"   // SYSTEMTIME
 #include "mfc/afx_string.h"
 
 #ifndef _TIME64_T_DEFINED
@@ -30,6 +31,8 @@ public:
 
     CTimeSpan operator+(CTimeSpan o) const { return CTimeSpan(m_span + o.m_span); }
     CTimeSpan operator-(CTimeSpan o) const { return CTimeSpan(m_span - o.m_span); }
+    CTimeSpan& operator+=(CTimeSpan o) { m_span += o.m_span; return *this; }
+    CTimeSpan& operator-=(CTimeSpan o) { m_span -= o.m_span; return *this; }
     bool operator==(CTimeSpan o) const { return m_span == o.m_span; }
     bool operator!=(CTimeSpan o) const { return m_span != o.m_span; }
     bool operator<(CTimeSpan o) const { return m_span < o.m_span; }
@@ -59,6 +62,8 @@ public:
         tmv.tm_isdst = dst;
         m_time = (__time64_t)std::mktime(&tmv);
     }
+    CTime(const SYSTEMTIME& st, int dst = -1)
+        : CTime(st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, dst) {}
 
     static CTime GetCurrentTime() { return CTime((__time64_t)std::time(nullptr)); }
     __time64_t GetTime() const { return m_time; }

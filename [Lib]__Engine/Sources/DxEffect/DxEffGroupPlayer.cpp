@@ -46,7 +46,7 @@ HRESULT DxEffGroupPlayer::PassiveEffect ( const char* szFileName, const D3DXMATR
 	if ( !szFileName || szFileName[0]==NULL )	return E_FAIL;
 
 	std::string strFileName = szFileName;
-	std::transform ( strFileName.begin(), strFileName.end(), strFileName.begin(), tolower );
+	std::transform ( strFileName.begin(), strFileName.end(), strFileName.begin(), ::tolower );
 
 	BOOL bExist = FALSE;
 
@@ -93,7 +93,7 @@ HRESULT DxEffGroupPlayer::DeletePassiveEffect ( const char* szFileName, const ST
 	if ( sTargetID.dwID==EMTARGET_NULL )	return E_FAIL;
 
 	std::string strFileName = szFileName;
-	std::transform ( strFileName.begin(), strFileName.end(), strFileName.begin(), tolower );
+	std::transform ( strFileName.begin(), strFileName.end(), strFileName.begin(), ::tolower );
 
 	EFFSGMAP_PAIR pairESG = m_mapESG.equal_range ( sTargetID );
 	EFFSGMAP_ITER iter = pairESG.first;
@@ -122,7 +122,7 @@ BOOL DxEffGroupPlayer::FindPassiveEffect ( const char* szFileName, const STARGET
 	if ( sTargetID.dwID==EMTARGET_NULL )	return FALSE;
 
 	std::string strFileName = szFileName;
-	std::transform ( strFileName.begin(), strFileName.end(), strFileName.begin(), tolower );
+	std::transform ( strFileName.begin(), strFileName.end(), strFileName.begin(), ::tolower );
 
 	EFFSGMAP_PAIR pairESG = m_mapESG.equal_range ( sTargetID );
 	EFFSGMAP_ITER iter = pairESG.first;
@@ -303,7 +303,7 @@ HRESULT DxEffGroupPlayer::DeleteEff ( const char* szFile )
 	if ( m_mapESG.empty() )				return S_FALSE;
 
 	std::string strFileName = szFile;
-	std::transform ( strFileName.begin(), strFileName.end(), strFileName.begin(), tolower );
+	std::transform ( strFileName.begin(), strFileName.end(), strFileName.begin(), ::tolower );
 
 	EFFSGMAP_ITER iter = m_mapESG.begin();
 	EFFSGMAP_ITER iter_end = m_mapESG.end();
@@ -326,7 +326,7 @@ HRESULT DxEffGroupPlayer::DeleteAllEff ( const char* szFile )
 	if ( m_mapESG.empty() )				return S_FALSE;
 
 	std::string strFileName = szFile;
-	std::transform ( strFileName.begin(), strFileName.end(), strFileName.begin(), tolower );
+	std::transform ( strFileName.begin(), strFileName.end(), strFileName.begin(), ::tolower );
 
 	EFFSGMAP_ITER iter = m_mapESG.begin();
 	EFFSGMAP_ITER iter_end = m_mapESG.end();

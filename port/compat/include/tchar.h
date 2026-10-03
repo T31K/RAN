@@ -35,6 +35,7 @@
 #define _tcscat_s   strcat_s
 #define _tcsncpy_s  strncpy_s
 #define _stprintf   std::sprintf
+#define _stscanf    std::sscanf
 #define _stprintf_s sprintf_s
 #define _sntprintf  std::snprintf
 #define _vsntprintf std::vsnprintf

@@ -769,7 +769,7 @@ namespace NS_ITEMINFO
 					BYTE uGRADE = 0;
 
 					//	공격력
-					GLPADATA &sDamage = sItemCustom.getdamage();
+					GLPADATA sDamage = sItemCustom.getdamage();
 					nExtraValue = sItemCustom.GETGRADE_DAMAGE();
 					uGRADE = sItemCustom.GETGRADE(EMGRINDING_DAMAGE);
 					AddInfoItemAddonRange ( sDamage.wLow, sDamage.wHigh, nExtraValue, uGRADE, ID2GAMEWORD("ITEM_ADVANCED_INFO", 0) );
@@ -1362,7 +1362,7 @@ namespace NS_ITEMINFO
 					AddTextNoSplit ( ID2GAMEWORD ( "ITEM_CATEGORY", 1 ), NS_UITEXTCOLOR::LIGHTSKYBLUE );
 
 					//	공격력
-					GLPADATA &sDAMAGE = sItemCustom.GETDAMAGE();
+					GLPADATA sDAMAGE = sItemCustom.GETDAMAGE();
 					if ( sDAMAGE.wLow || sDAMAGE.wHigh  )
 					{
 						strText.Format("%s:%s~%s ", ID2GAMEWORD("ITEM_ARROW_INFO", 0 ), 

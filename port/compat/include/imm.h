@@ -70,6 +70,14 @@ typedef struct tagCANDIDATELIST {
     DWORD dwOffset[1];
 } CANDIDATELIST, *PCANDIDATELIST, *LPCANDIDATELIST;
 
+#ifndef CFS_POINT
+#define CFS_DEFAULT   0x0000
+#define CFS_RECT      0x0001
+#define CFS_POINT     0x0002
+#define CFS_FORCE_POSITION 0x0020
+#define CFS_CANDIDATEPOS   0x0040
+#define CFS_EXCLUDE   0x0080
+#endif
 typedef struct tagCOMPOSITIONFORM {
     DWORD dwStyle;
     POINT ptCurrentPos;

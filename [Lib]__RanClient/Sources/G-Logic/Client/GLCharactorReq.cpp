@@ -3615,11 +3615,12 @@ HRESULT GLCharacter::ReqCharReset ( DWORD dwNpcID )
 	PLANDMANCLIENT pLandMan = GLGaeaClient::GetInstance().GetActiveMap ();
 	PGLCROWCLIENT pCrow = pLandMan->GetCrow ( dwNpcID );
 
+	bool bITEM = false;	// declared before the gotos (standard C++)
 	if ( !pCrow )										goto _REQ_FAIL;
 	if ( pCrow->GETCROW() != CROW_NPC )					goto _REQ_FAIL;
 
 
-	bool bITEM = m_cInventory.GetCharResetItem ( wPosX, wPosY );
+	bITEM = m_cInventory.GetCharResetItem ( wPosX, wPosY );
 	if ( !bITEM )
 	{
 		emFB = EMREGEN_CHARRESET_ITEM_FAIL;
@@ -3658,11 +3659,11 @@ HRESULT GLCharacter::ReqItemTrade ( DWORD dwNpcID, DWORD dwGlobalID, DWORD *pDwA
 	PLANDMANCLIENT pLandMan = GLGaeaClient::GetInstance().GetActiveMap ();
 	PGLCROWCLIENT pCrow = pLandMan->GetCrow ( dwNpcID );
 
+	// Need Add New Item Con. (declared before the gotos: standard C++)
+	BOOL bOK[] = { FALSE, FALSE, FALSE, FALSE, FALSE };
 	if ( !pCrow )										goto _REQ_FAIL;
 	if ( pCrow->GETCROW() != CROW_NPC )					goto _REQ_FAIL;
 
-	// Need Add New Item Con.
-	BOOL bOK[] = { FALSE, FALSE, FALSE, FALSE, FALSE };
 	bOK[0] = ISHAVEITEM ( SNATIVEID(pDwA_NID[0]) );
 	BYTE i;
 	// MAX_NEEDITEM_COUNT 5

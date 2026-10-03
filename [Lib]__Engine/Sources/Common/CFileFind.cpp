@@ -18,7 +18,7 @@ void CFileFindTree::Add ( std::string &strFile, std::string &strPath )
 	m_mapFile[strFile] = strPath;
 }
 
-std::string* CFileFindTree::FindPathName ( std::string &str )
+std::string* CFileFindTree::FindPathName ( const std::string &str )
 {
 	FILEMAP_ITER iter = m_mapFile.find ( str );
 	if ( iter != m_mapFile.end() )	return &(iter->second);
@@ -48,13 +48,13 @@ void CFileFindTree::PathRecurse ( std::string &strDir )
 		//	if it's a directory, recursively search it
 		if ( finder.IsDirectory() )
 		{
-			std::string strPath = finder.GetFilePath();
+			std::string strPath = finder.GetFilePath().GetString();
 			PathRecurse ( strPath );
 		}
 		else
 		{
 			std::string strName = finder.GetFileName().GetString();
-			std::transform ( strName.begin(), strName.end(), strName.begin(), std::tolower );
+			std::transform ( strName.begin(), strName.end(), strName.begin(), ::tolower );
 			
 			std::string strPath = finder.GetFilePath().GetString();
 
@@ -65,7 +65,7 @@ void CFileFindTree::PathRecurse ( std::string &strDir )
 	finder.Close();
 }
 
-void CFileFindTree::CreateTree ( std::string &strPath )
+void CFileFindTree::CreateTree ( const std::string &strPath )
 {
 	m_strPath = strPath;
 	

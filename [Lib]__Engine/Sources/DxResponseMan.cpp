@@ -748,7 +748,7 @@ HRESULT DxResponseMan::FrameMove ( float fTime, float fElapsedTime, BOOL bDefWin
 	//	Note : 카메라 방향에 따라 소리변화 반영	
 	//
 	D3DXVECTOR3 &vLookatPt = DxViewPort::GetInstance().GetLookatPt();
-	D3DXVECTOR3	&vLookDir = DxViewPort::GetInstance().GetLookDir();
+	D3DXVECTOR3	vLookDir = DxViewPort::GetInstance().GetLookDir();
 
 	PROFILE_BEGIN("DxSoundMan::FrameMove");
 	DxSoundLib::GetInstance()->Update ();
