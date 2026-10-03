@@ -1,0 +1,26 @@
+# Client sources left out of the native macOS build, one path per line (repo-relative).
+# Every entry needs a reason. Verified when the native client links: if anything here turns
+# out to be referenced, the link fails and the entry has to come back.
+#
+# MFC UI controls used only by the editor tools. No client source includes their headers
+# (checked 2026-10-03: grep for each header outside ExLibs returns nothing).
+[Lib]__MfcEx/Sources/ExLibs/BmpButton.cpp
+[Lib]__MfcEx/Sources/ExLibs/Bubble.cpp
+[Lib]__MfcEx/Sources/ExLibs/CheckListBoxLog.cpp
+[Lib]__MfcEx/Sources/ExLibs/CJFlatComboBox.cpp
+[Lib]__MfcEx/Sources/ExLibs/CoolDialogBar.cpp
+[Lib]__MfcEx/Sources/ExLibs/DIB.cpp
+[Lib]__MfcEx/Sources/ExLibs/DxControlFunc.cpp
+[Lib]__MfcEx/Sources/ExLibs/flatedit.cpp
+[Lib]__MfcEx/Sources/ExLibs/HyperlinkStatic.cpp
+[Lib]__MfcEx/Sources/ExLibs/MacButtons.cpp
+[Lib]__MfcEx/Sources/ExLibs/MacProgressCtrl.cpp
+[Lib]__MfcEx/Sources/ExLibs/memdc.cpp
+[Lib]__MfcEx/Sources/ExLibs/MultiSlider.cpp
+[Lib]__MfcEx/Sources/ExLibs/ReportCtrl.cpp
+[Lib]__MfcEx/Sources/ExLibs/Separator.cpp
+[Lib]__MfcEx/Sources/ExLibs/StColor.cpp
+[Lib]__MfcEx/Sources/ExLibs/ToolBarEx.cpp
+# Embedded Internet Explorer control (ActiveX). Its one user, Engine Common/CommonWeb.h
+# (in-game web pages), needs a native replacement (WKWebView) or to be switched off - Phase 3/4.
+[Lib]__MfcEx/Sources/ExLibs/webbrowser2.cpp

@@ -34,8 +34,8 @@ case "$FILE" in *.h) LANG_FLAG=(-x c++-header) ;; esac
 # game is fixed in source instead; -fms-extensions keeps __declspec/__int64 style extensions.
 # No -fshort-wchar either: it silently breaks libc++'s char16_t/wchar_t algorithms on macOS.
 # WCHAR is char16_t instead (2 bytes, same layout as Windows).
-# _LIBCPP_ENABLE_CXX17_REMOVED_*: the game still uses std::random_shuffle and std::auto_ptr.
-clang++ ${LANG_FLAG[@]+"${LANG_FLAG[@]}"} -std=c++20 -fsyntax-only -fms-extensions -fdeclspec \
-  -D_LIBCPP_ENABLE_CXX17_REMOVED_RANDOM_SHUFFLE -D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR \
+# C++14 like the Windows build (VS2022 v143 default; no LanguageStandard in the .vcxproj files).
+# That also keeps std::auto_ptr/random_shuffle and avoids std::byte clashing with the game's byte.
+clang++ ${LANG_FLAG[@]+"${LANG_FLAG[@]}"} -std=c++14 -fsyntax-only -fms-extensions -fdeclspec \
   -Wno-everything -ferror-limit="$LIMIT" \
   "${INCS[@]}" "$FILE"

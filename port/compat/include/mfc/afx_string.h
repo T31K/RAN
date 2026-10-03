@@ -212,7 +212,7 @@ public:
     char* GetBuffer(int minLen = 0)
     {
         if (minLen > GetLength()) m_str.resize((size_t)minLen);
-        return m_str.data();
+        return &m_str[0];   // C++14: std::string::data() is const
     }
     void ReleaseBuffer(int newLen = -1)
     {
@@ -246,7 +246,7 @@ private:
         va_end(ap2);
         if (n <= 0) return std::string();
         std::string out((size_t)n, '\0');
-        std::vsnprintf(out.data(), (size_t)n + 1, fmt, ap);
+        std::vsnprintf(&out[0], (size_t)n + 1, fmt, ap);
         return out;
     }
     void MapAscii(int (*fn)(int))

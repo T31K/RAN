@@ -33,5 +33,4 @@
 #define DECLARE_MESSAGE_MAP()
 #define BEGIN_MESSAGE_MAP(c, b)
 #define END_MESSAGE_MAP()
-#define afx_msg
 #define RUNTIME_CLASS(c) nullptr

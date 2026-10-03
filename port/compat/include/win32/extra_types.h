@@ -155,7 +155,7 @@ constexpr std::common_type_t<A, B> max(A a, B b) { return (a < b) ? b : a; }
 #define SUBLANG_KOREAN      0x01
 
 #ifndef GUID_NULL
-inline const GUID GUID_NULL = {0, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0}};
+static const GUID GUID_NULL = {0, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0}};
 #endif
 #ifndef OPTIONAL
 #define OPTIONAL

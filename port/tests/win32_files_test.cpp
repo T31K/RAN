@@ -2,6 +2,7 @@
 #include <windows.h>
 #include "win32/kernel.h"
 #include "win32/files.h"
+#include "mfc/afx_all.h"
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
@@ -96,6 +97,23 @@ int main()
     // GetModuleFileName returns this executable's absolute path.
     char exe[1024];
     CHECK(GetModuleFileName(nullptr, exe, sizeof(exe)) > 0 && exe[0] == '/');
+
+    // CFileFind over a directory with backslash pattern (screenshot-name probing in DxGrapUtils).
+    WriteText(root / "Data" / "shot001.jpg", "a");
+    WriteText(root / "Data" / "shot002.jpg", "b");
+    CFileFind ff;
+    CHECK(ff.FindFile((r + "\\Data\\shot001.jpg").c_str()));
+    CHECK(!ff.FindFile((r + "\\Data\\shot999.jpg").c_str()));
+    int found = 0;
+    BOOL more = ff.FindFile((r + "\\Data\\*.jpg").c_str());
+    while (more) {
+        more = ff.FindNextFile();
+        CHECK(ff.GetFileName() == "shot001.jpg" || ff.GetFileName() == "shot002.jpg");
+        CHECK(!ff.IsDirectory());
+        ++found;
+    }
+    CHECK(found == 2);
+    ff.Close();
 
     fs::remove_all(root);
     if (g_failed == 0) std::printf("PASS win32_files_test\n");

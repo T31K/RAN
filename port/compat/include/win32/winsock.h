@@ -289,7 +289,9 @@ namespace ran_compat {
                 {
                     std::lock_guard<std::mutex> lock(m_mutex);
                     fds.push_back({m_wake[0], POLLIN, 0});
-                    for (auto& [fd, r] : m_regs) {
+                    for (auto& kv : m_regs) {
+                        const int fd = kv.first;
+                        Reg& r = kv.second;
                         short events = 0;
                         if (!r.connected && (r.mask & FD_CONNECT)) events |= POLLOUT;
                         if (r.connected && !r.closed && (r.mask & (FD_READ | FD_CLOSE)) &&
@@ -342,9 +344,10 @@ namespace ran_compat {
                     }
                 }
                 // Re-check fullness: a socket stays "writable" until its send buffer fills up.
-                for (auto& [fd, r] : m_regs) {
+                for (auto& kv : m_regs) {
+                    Reg& r = kv.second;
                     if (!r.writable || r.closed) continue;
-                    pollfd p = {fd, POLLOUT, 0};
+                    pollfd p = {kv.first, POLLOUT, 0};
                     if (::poll(&p, 1, 0) == 0) r.writable = false;   // full now; next POLLOUT edge posts FD_WRITE
                 }
             }
