@@ -16,10 +16,16 @@ void __cdecl operator delete[](void* p, LPCSTR lpszFileName, int nLine);
 //
 bool _gassert ( bool bExp, const char *const szExp, const char *const szFile, const long nLine  );
 
+#if defined(_MSC_VER)
+#define GASSERT_BREAK()	__debugbreak()
+#else
+#define GASSERT_BREAK()	__builtin_debugtrap()
+#endif
+
 #ifdef  NDEBUG
 #define GASSERT(exp)	((void)0)
 #else
-#define GASSERT(exp)	{ if ( _gassert ( (exp)?true:false, #exp, __FILE__, __LINE__ ) )	{ _asm { int 3 } } }
+#define GASSERT(exp)	{ if ( _gassert ( (exp)?true:false, #exp, __FILE__, __LINE__ ) )	{ GASSERT_BREAK(); } }
 #endif
 
 

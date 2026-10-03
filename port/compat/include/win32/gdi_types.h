@@ -1,0 +1,70 @@
+// GDI font types/constants used by the game's font code and D3DX's ID3DXFont declarations
+// (native macOS build). Text is rasterised with CoreText in Phase 3; these keep the
+// declarations and the data that flows through them intact.
+#pragma once
+#include <windows.h>
+
+#ifndef LF_FACESIZE
+#define LF_FACESIZE 32
+#endif
+
+typedef struct tagTEXTMETRICA {
+    LONG tmHeight, tmAscent, tmDescent, tmInternalLeading, tmExternalLeading;
+    LONG tmAveCharWidth, tmMaxCharWidth, tmWeight, tmOverhang;
+    LONG tmDigitizedAspectX, tmDigitizedAspectY;
+    BYTE tmFirstChar, tmLastChar, tmDefaultChar, tmBreakChar;
+    BYTE tmItalic, tmUnderlined, tmStruckOut, tmPitchAndFamily, tmCharSet;
+} TEXTMETRICA, *LPTEXTMETRICA;
+
+typedef struct tagTEXTMETRICW {
+    LONG tmHeight, tmAscent, tmDescent, tmInternalLeading, tmExternalLeading;
+    LONG tmAveCharWidth, tmMaxCharWidth, tmWeight, tmOverhang;
+    LONG tmDigitizedAspectX, tmDigitizedAspectY;
+    WCHAR tmFirstChar, tmLastChar, tmDefaultChar, tmBreakChar;
+    BYTE tmItalic, tmUnderlined, tmStruckOut, tmPitchAndFamily, tmCharSet;
+} TEXTMETRICW, *LPTEXTMETRICW;
+typedef TEXTMETRICA TEXTMETRIC;
+typedef LPTEXTMETRICA LPTEXTMETRIC;
+
+typedef struct tagLOGFONTA {
+    LONG lfHeight, lfWidth, lfEscapement, lfOrientation, lfWeight;
+    BYTE lfItalic, lfUnderline, lfStrikeOut, lfCharSet;
+    BYTE lfOutPrecision, lfClipPrecision, lfQuality, lfPitchAndFamily;
+    char lfFaceName[LF_FACESIZE];
+} LOGFONTA, *LPLOGFONTA;
+typedef struct tagLOGFONTW {
+    LONG lfHeight, lfWidth, lfEscapement, lfOrientation, lfWeight;
+    BYTE lfItalic, lfUnderline, lfStrikeOut, lfCharSet;
+    BYTE lfOutPrecision, lfClipPrecision, lfQuality, lfPitchAndFamily;
+    WCHAR lfFaceName[LF_FACESIZE];
+} LOGFONTW, *LPLOGFONTW;
+typedef LOGFONTA LOGFONT;
+typedef LPLOGFONTA LPLOGFONT;
+
+#define FW_DONTCARE   0
+#define FW_THIN       100
+#define FW_LIGHT      300
+#define FW_NORMAL     400
+#define FW_MEDIUM     500
+#define FW_SEMIBOLD   600
+#define FW_BOLD       700
+#define FW_HEAVY      900
+
+#define ANSI_CHARSET        0
+#define DEFAULT_CHARSET     1
+#define SHIFTJIS_CHARSET    128
+#define HANGUL_CHARSET      129
+#define GB2312_CHARSET      134
+#define CHINESEBIG5_CHARSET 136
+#define THAI_CHARSET        222
+
+#define OUT_DEFAULT_PRECIS   0
+#define OUT_TT_PRECIS        4
+#define CLIP_DEFAULT_PRECIS  0
+#define DEFAULT_QUALITY      0
+#define ANTIALIASED_QUALITY  4
+#define NONANTIALIASED_QUALITY 3
+#define DEFAULT_PITCH        0
+#define FIXED_PITCH          1
+#define VARIABLE_PITCH       2
+#define FF_DONTCARE          0

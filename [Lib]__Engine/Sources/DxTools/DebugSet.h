@@ -67,9 +67,32 @@ namespace CDebugSet
 	void TempToFile( const char* szFormat, ... );
 };
 
+#if !defined(_M_IX86)
+#include <mach/mach_time.h>
+#endif
+
 namespace CLOCKCHECK
 {
 	extern DWORD dwShi, dwSlo, dwEhi, dwElo;
+#if !defined(_M_IX86)
+	//	Native macOS build: mach_absolute_time() ticks stand in for rdtsc (x86 only).
+	inline void CLOCKCHK_ST ()
+	{
+		const unsigned long long t = mach_absolute_time();
+		dwShi = (DWORD)( t >> 32 );
+		dwSlo = (DWORD)t;
+	}
+
+	inline void CLOCKCHK_ED ( DWORD &dwHigh, DWORD &dwLow )
+	{
+		const unsigned long long t = mach_absolute_time();
+		dwEhi = (DWORD)( t >> 32 );
+		dwElo = (DWORD)t;
+
+		dwHigh = dwEhi - dwShi;
+		dwLow = dwElo - dwSlo;
+	}
+#else
 	inline void CLOCKCHK_ST ()
 	{
 		__asm
@@ -92,6 +115,7 @@ namespace CLOCKCHECK
 		dwHigh = dwEhi - dwShi;
 		dwLow = dwElo - dwSlo;
 	}
+#endif
 };
 
 #endif	//	__C_DEBUGSET__
