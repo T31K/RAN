@@ -13,20 +13,23 @@ Last updated 2026-10-04.
 | P1.4 CP949 text round trip | **Done** - Item/Crow/SkillStrTable + UI tables, byte-exact (55 lines already corrupt in the shipped SkillStrTable degrade like Windows) | `port/scripts/check-cp949.sh` |
 | P1.5 Windows paths resolve to data files | **Done** - 4626 files x 3 spellings, also on a case-sensitive volume | `port/scripts/check-paths.sh` |
 
-Compat-layer unit tests: 14 suites, all passing (`port/scripts/run-tests.sh`).
+Compat/platform/D3DX unit tests: 15 suites, all passing (`port/scripts/run-tests.sh`).
 
 ## Phase 2 - platform layer (started)
 
-- **The native client builds and links except for 32 symbols** (`port/scripts/build_native.sh`,
+- **The native client builds and links except for 29 symbols** (`port/scripts/build_native.sh`,
   list in `docs/port/link-gaps.md`): 26 D3DX mesh/texture/effect/sprite/font functions and the
-  `.x` loader (Phase 3), DirectInput (3) and DirectSound (2) - the input/sound backends below.
+  `.x` loader (Phase 3), and DirectSound (2) - the sound backend below.
+- Input: **done** - DirectInput 8 implemented on SDL3 events (`port/platform/dinput_sdl.cpp`,
+  test `dinput_sdl_test`); DxInputDevice is unchanged. Acquire never fails and focus loss
+  releases held keys, so the Wine Cmd+Tab input bug has no counterpart.
 - Startup path is the game's own: SDL3 `main` (`port/platform/main_sdl.cpp`) -> `theApp.InitInstance()`
   -> `CBasicWnd::Create` -> `CWnd::CreateEx` (SDL window, = DXVK's HWND) -> `CD3DApplication::Create`
   -> `theApp.Run()`, whose `PeekMessage/GetMessage` pump SDL events into the game's real MFC
   message maps (WM_ACTIVATEAPP / WM_SIZE / ...).
 - P2.2 input map: **done** (`port/platform/input_map.h`, test `input_map_test`).
-- Next: DxInputDevice on SDL keyboard/mouse state (replaces DirectInput8Create), DirectSound on
-  miniaudio (DirectSoundCreate8), then run the binary against `RAN_GAME_DIR=~/Projects/RAN/client`.
+- Next: DirectSound on miniaudio (DirectSoundCreate8 / DirectSoundEnumerateA), then the D3DX
+  texture/mesh loaders so the binary links, then run it against `RAN_GAME_DIR=~/Projects/RAN/client`.
 
 ## Phase 3 - graphics (started)
 
