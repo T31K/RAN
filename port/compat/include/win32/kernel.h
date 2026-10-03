@@ -134,6 +134,17 @@ namespace ran_compat {
     inline DWORD& LastError() { thread_local DWORD e = 0; return e; }
 }
 
+// Overlapped I/O descriptor (the client's sockets are event-driven; this only needs to exist).
+typedef struct _OVERLAPPED {
+    ULONG_PTR Internal;
+    ULONG_PTR InternalHigh;
+    union {
+        struct { DWORD Offset; DWORD OffsetHigh; };
+        void* Pointer;
+    };
+    HANDLE hEvent;
+} OVERLAPPED, *LPOVERLAPPED;
+
 // ---- Critical sections (recursive, like Windows) ----
 typedef struct RAN_CRITICAL_SECTION { std::recursive_mutex* m; } CRITICAL_SECTION, *LPCRITICAL_SECTION;
 

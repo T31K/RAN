@@ -134,9 +134,8 @@ namespace ITEM
 			, wPileNum(1)
 			
 			, bRatio(FALSE)
-			, wCureVolume(0)
-			, wArrowNum(0)
-			
+			, wCureVolume(0)	//	also zeroes wArrowNum (same union storage)
+
 			, dwCureDISORDER(NULL)
 		{
 		}

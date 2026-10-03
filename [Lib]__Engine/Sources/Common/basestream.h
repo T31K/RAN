@@ -83,7 +83,9 @@ public:
 	virtual BOOL operator << ( int Value ){CALLERROR; return TRUE;}
 	virtual BOOL operator << ( WORD Value ){CALLERROR; return TRUE;}
 	virtual BOOL operator << ( DWORD Value ){CALLERROR; return TRUE;}
+#ifndef RAN_DWORD_IS_UINT	//	native macOS build: DWORD and UINT are the same type
 	virtual BOOL operator << ( UINT Value ){CALLERROR; return TRUE;}
+#endif
 
 	virtual BOOL operator << ( float Value ){CALLERROR; return TRUE;}
 	virtual BOOL operator << ( double Value ){CALLERROR; return TRUE;}
@@ -110,7 +112,9 @@ public:
 	virtual BOOL operator >> ( int &Value ) = 0;
 	virtual BOOL operator >> ( WORD &Value ) = 0;
 	virtual BOOL operator >> ( DWORD &Value ) = 0;
+#ifndef RAN_DWORD_IS_UINT
 	virtual BOOL operator >> ( UINT &Value ) = 0;
+#endif
 
 	virtual BOOL operator >> ( float &Value ) = 0;
 	virtual BOOL operator >> ( double &Value ) = 0;

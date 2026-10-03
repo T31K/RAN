@@ -285,6 +285,7 @@ BOOL CSerialMemory::operator >> ( DWORD &Value )
 	return TRUE;
 }
 
+#ifndef RAN_DWORD_IS_UINT	//	native macOS build: DWORD and UINT are the same type
 BOOL CSerialMemory::operator >> ( UINT &Value )
 {
 	GASSERT(m_OpenType==FOT_READ);
@@ -294,6 +295,7 @@ BOOL CSerialMemory::operator >> ( UINT &Value )
 
 	return TRUE;
 }
+#endif
 
 BOOL CSerialMemory::operator >> ( float &Value )
 {

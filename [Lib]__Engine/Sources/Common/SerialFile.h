@@ -67,7 +67,9 @@ public:
 	virtual BOOL operator << ( int Value );
 	virtual BOOL operator << ( WORD Value );
 	virtual BOOL operator << ( DWORD Value );
+#ifndef RAN_DWORD_IS_UINT	//	native macOS build: DWORD and UINT are the same type
 	virtual BOOL operator << ( UINT Value );
+#endif
 
 	virtual BOOL operator << ( float Value );
 	virtual BOOL operator << ( double Value );
@@ -94,7 +96,9 @@ public:
 	virtual BOOL operator >> ( int &Value );
 	virtual BOOL operator >> ( WORD &Value );
 	virtual BOOL operator >> ( DWORD &Value );
+#ifndef RAN_DWORD_IS_UINT
 	virtual BOOL operator >> ( UINT &Value );
+#endif
 
 	virtual BOOL operator >> ( float &Value );
 	virtual BOOL operator >> ( double &Value );

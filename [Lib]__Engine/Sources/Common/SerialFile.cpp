@@ -368,6 +368,7 @@ BOOL CSerialFile::operator << ( DWORD Value )
 	return TRUE;
 }
 
+#ifndef RAN_DWORD_IS_UINT	//	native macOS build: DWORD and UINT are the same type
 BOOL CSerialFile::operator << ( UINT Value )
 {
 	GASSERT(m_OpenType==FOT_WRITE);
@@ -377,6 +378,7 @@ BOOL CSerialFile::operator << ( UINT Value )
 
 	return TRUE;
 }
+#endif
 
 BOOL CSerialFile::operator << ( float Value )
 {
@@ -514,6 +516,7 @@ BOOL CSerialFile::operator >> ( DWORD &Value )
 	return TRUE;
 }
 
+#ifndef RAN_DWORD_IS_UINT
 BOOL CSerialFile::operator >> ( UINT &Value )
 {
 	GASSERT(m_OpenType==FOT_READ);
@@ -523,6 +526,7 @@ BOOL CSerialFile::operator >> ( UINT &Value )
 
 	return TRUE;
 }
+#endif
 
 BOOL CSerialFile::operator >> ( float &Value )
 {

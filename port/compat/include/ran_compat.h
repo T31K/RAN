@@ -8,6 +8,10 @@
 #define WIN32 1
 #endif
 #include <windows.h>            // DXVK native: base types, COM macros, GUID, IUnknown, RECT/POINT
+
+// On Windows DWORD (unsigned long) and UINT (unsigned int) are distinct types; here both are
+// uint32_t. Game code that overloads on both compiles the UINT overload out under this macro.
+#define RAN_DWORD_IS_UINT 1
 #include "win32/extra_types.h"
 #include "win32/gdi_types.h"
 #include "win32/user_types.h"

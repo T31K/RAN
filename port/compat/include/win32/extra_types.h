@@ -8,6 +8,7 @@ typedef uint64_t    DWORD64;
 typedef int64_t     LONG64;
 typedef uint64_t    ULONG64;
 typedef uint8_t     BOOLEAN;
+typedef unsigned char byte;     // rpcndr.h
 typedef char*       PSTR;
 typedef char        CCHAR;
 typedef char*       PCHAR;

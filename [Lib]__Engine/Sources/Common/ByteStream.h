@@ -20,7 +20,9 @@ public:
 	virtual BOOL operator << ( int Value );
 	virtual BOOL operator << ( WORD Value );
 	virtual BOOL operator << ( DWORD Value );
+#ifndef RAN_DWORD_IS_UINT	//	native macOS build: DWORD and UINT are the same type
 	virtual BOOL operator << ( UINT Value );
+#endif
 
 	virtual BOOL operator << ( float Value );
 	virtual BOOL operator << ( double Value );
@@ -47,7 +49,9 @@ public:
 	virtual BOOL operator >> ( int &Value );
 	virtual BOOL operator >> ( WORD &Value );
 	virtual BOOL operator >> ( DWORD &Value );
+#ifndef RAN_DWORD_IS_UINT
 	virtual BOOL operator >> ( UINT &Value );
+#endif
 
 	virtual BOOL operator >> ( float &Value );
 	virtual BOOL operator >> ( double &Value );
@@ -144,11 +148,13 @@ inline BOOL CByteStream::operator << ( DWORD Value )
 	return TRUE;
 }
 
+#ifndef RAN_DWORD_IS_UINT
 inline BOOL CByteStream::operator << ( UINT Value )
 {
 	m_Buffer.insert ( m_Buffer.end(), LPBYTE(&Value), LPBYTE(&Value) + sizeof(Value) );
 	return TRUE;
 }
+#endif
 
 inline BOOL CByteStream::operator << ( float Value )
 {
@@ -265,6 +271,7 @@ inline BOOL CByteStream::operator >> ( DWORD &Value )
 	return TRUE;
 }
 
+#ifndef RAN_DWORD_IS_UINT
 inline BOOL CByteStream::operator >> ( UINT &Value )
 {
 	int sizeBuff = (int)(m_Buffer.end() - (m_Buffer.begin()+m_dwIter));
@@ -276,6 +283,7 @@ inline BOOL CByteStream::operator >> ( UINT &Value )
 
 	return TRUE;
 }
+#endif
 
 inline BOOL CByteStream::operator >> ( float &Value )
 {
