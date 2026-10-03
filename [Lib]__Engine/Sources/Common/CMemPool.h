@@ -10,8 +10,8 @@ class CMemPool
 private:
 	struct DeleteObject
 	{
-		template<typename TYPE>
-			void operator() ( const TYPE* ptr ) const
+		template<typename OBJ>
+			void operator() ( const OBJ* ptr ) const
 		{
 			delete ptr;
 		}

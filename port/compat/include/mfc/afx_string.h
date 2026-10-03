@@ -361,15 +361,18 @@ namespace ran_compat {
     inline size_t IndexFromPos(POSITION p) { return reinterpret_cast<size_t>(p) - 1; }
 }
 
-class CMapStringToString
+// MFC CMapStringTo* family: CString keys, one value type. Iteration order is key order (MFC's
+// is hash order; neither is guaranteed by MFC's contract).
+template <class VALUE>
+class CMapStringToT
 {
 public:
     int GetCount() const { return (int)m_map.size(); }
     int GetSize() const { return (int)m_map.size(); }
     bool IsEmpty() const { return m_map.empty(); }
-    void SetAt(const char* key, const char* value) { m_map[key] = value; }
-    CString& operator[](const char* key) { return m_map[key]; }
-    BOOL Lookup(const char* key, CString& value) const
+    void SetAt(const char* key, const VALUE& value) { m_map[key] = value; }
+    VALUE& operator[](const char* key) { return m_map[key]; }
+    BOOL Lookup(const char* key, VALUE& value) const
     {
         const auto it = m_map.find(key);
         if (it == m_map.end()) return FALSE;
@@ -379,7 +382,7 @@ public:
     BOOL RemoveKey(const char* key) { return m_map.erase(key) ? TRUE : FALSE; }
     void RemoveAll() { m_map.clear(); }
     POSITION GetStartPosition() const { return m_map.empty() ? nullptr : ran_compat::PosFromIndex(0); }
-    void GetNextAssoc(POSITION& pos, CString& key, CString& value) const
+    void GetNextAssoc(POSITION& pos, CString& key, VALUE& value) const
     {
         const size_t i = ran_compat::IndexFromPos(pos);
         auto it = std::next(m_map.begin(), (std::ptrdiff_t)i);
@@ -389,8 +392,44 @@ public:
     }
 
 private:
-    std::map<CString, CString> m_map;
+    std::map<CString, VALUE> m_map;
 };
+typedef CMapStringToT<CString> CMapStringToString;
+typedef CMapStringToT<void*>   CMapStringToPtr;
+
+// MFC CArray<TYPE, ARG_TYPE> over std::vector.
+template <class TYPE, class ARG_TYPE = const TYPE&>
+class CArray
+{
+public:
+    int GetSize() const { return (int)m_items.size(); }
+    int GetCount() const { return (int)m_items.size(); }
+    int GetUpperBound() const { return GetSize() - 1; }
+    bool IsEmpty() const { return m_items.empty(); }
+    int Add(ARG_TYPE v) { m_items.push_back(v); return GetSize() - 1; }
+    const TYPE& GetAt(int i) const { return m_items[(size_t)i]; }
+    TYPE& ElementAt(int i) { return m_items[(size_t)i]; }
+    void SetAt(int i, ARG_TYPE v) { m_items[(size_t)i] = v; }
+    void SetAtGrow(int i, ARG_TYPE v) { if (i >= GetSize()) m_items.resize((size_t)i + 1); m_items[(size_t)i] = v; }
+    TYPE& operator[](int i) { return m_items[(size_t)i]; }
+    const TYPE& operator[](int i) const { return m_items[(size_t)i]; }
+    TYPE* GetData() { return m_items.data(); }
+    const TYPE* GetData() const { return m_items.data(); }
+    void SetSize(int n, int /*growBy*/ = -1) { m_items.resize(n > 0 ? (size_t)n : 0); }
+    void RemoveAll() { m_items.clear(); }
+    void InsertAt(int i, ARG_TYPE v, int count = 1) { m_items.insert(m_items.begin() + i, (size_t)count, v); }
+    void RemoveAt(int i, int count = 1) { m_items.erase(m_items.begin() + i, m_items.begin() + i + count); }
+    int Append(const CArray& o) { const int at = GetSize(); m_items.insert(m_items.end(), o.m_items.begin(), o.m_items.end()); return at; }
+    void Copy(const CArray& o) { m_items = o.m_items; }
+
+private:
+    std::vector<TYPE> m_items;
+};
+typedef CArray<UINT, UINT>   CUIntArray;
+typedef CArray<DWORD, DWORD> CDWordArray;
+typedef CArray<WORD, WORD>   CWordArray;
+typedef CArray<BYTE, BYTE>   CByteArray;
+typedef CArray<void*, void*> CPtrArray;
 
 class CStringList
 {

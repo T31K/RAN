@@ -1,3 +1,4 @@
-// Stand-in for the MFC/ATL header <afxinet.h> (native macOS build). MFC types live in mfc/.
+// Stand-in for the MFC header <afxinet.h> (native macOS build).
 #pragma once
 #include "mfc/afx_all.h"
+#include "mfc/afx_inet.h"

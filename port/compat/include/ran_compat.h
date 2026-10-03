@@ -12,12 +12,23 @@
 // On Windows DWORD (unsigned long) and UINT (unsigned int) are distinct types; here both are
 // uint32_t. Game code that overloads on both compiles the UINT overload out under this macro.
 #define RAN_DWORD_IS_UINT 1
+
+// unixODBC (headers for the server-side DbAction code): use our Windows types instead of its
+// own, which would make DWORD 8 bytes.
+#define ALREADY_HAVE_WINDOWS_TYPE 1
 #include "win32/extra_types.h"
 #include "win32/gdi_types.h"
 #include "win32/user_types.h"
+#include "win32/odbc_types.h"
 #include "win32/kernel.h"
 #include "win32/fpu.h"
 #include "win32/files.h"
 #include "win32/codepage.h"
 #include "mfc/afx_string.h"
 #include "mfc/afx_types.h"
+
+// POSIX macros whose names the game uses as identifiers (enum values etc.). The system headers
+// that define them are pulled in here first, so the #undef sticks (they are include-guarded).
+#include <csignal>
+#undef SS_DISABLE      // <sys/signal.h>; DxEffectMan.h enum value
+#undef SS_ONSTACK

@@ -168,6 +168,34 @@ int main()
     map.RemoveAll();
     CHECK(map.IsEmpty());
 
+    // CMapStringToPtr (same contract, void* values).
+    CMapStringToPtr ptrs;
+    int target = 7;
+    ptrs.SetAt("x", &target);
+    void* pv = nullptr;
+    CHECK(ptrs.Lookup("x", pv) && pv == &target && !ptrs.Lookup("y", pv));
+    POSITION pp = ptrs.GetStartPosition();
+    CString pk;
+    void* pval = nullptr;
+    ptrs.GetNextAssoc(pp, pk, pval);
+    CHECK(pk == "x" && pval == &target && pp == NULL);
+
+    // CArray / CUIntArray.
+    CArray<int, int> ia;
+    CHECK(ia.Add(5) == 0 && ia.Add(6) == 1 && ia.GetSize() == 2 && ia[1] == 6);
+    ia.SetAt(0, 9);
+    ia.InsertAt(1, 8);
+    CHECK(ia.GetAt(0) == 9 && ia[1] == 8 && ia[2] == 6);
+    ia.RemoveAt(0);
+    CHECK(ia.GetSize() == 2 && ia.GetData()[0] == 8);
+    ia.SetSize(4);
+    CHECK(ia.GetSize() == 4 && ia.GetUpperBound() == 3);
+    ia.RemoveAll();
+    CHECK(ia.IsEmpty());
+    CUIntArray ua;
+    ua.Add(3u);
+    CHECK(ua.GetCount() == 1 && ua[0] == 3u);
+
     // CStringList.
     CStringList list;
     list.AddTail("b");

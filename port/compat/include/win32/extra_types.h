@@ -5,6 +5,8 @@
 
 typedef uintptr_t   DWORD_PTR, *PDWORD_PTR;
 typedef uint64_t    DWORD64;
+typedef uint64_t    DWORDLONG;
+typedef DWORDLONG*  PDWORDLONG;
 typedef int64_t     LONG64;
 typedef uint64_t    ULONG64;
 typedef uint8_t     BOOLEAN;
@@ -29,6 +31,7 @@ typedef UINT_PTR    WPARAM;
 typedef LONG_PTR    LPARAM;
 typedef LONG_PTR    LRESULT;
 typedef char        TCHAR;              // MultiByte build
+typedef char        _TCHAR;
 typedef char*       LPTSTR;
 typedef const char* LPCTSTR;
 typedef void*       HICON;
@@ -50,6 +53,8 @@ typedef BOOL*       LPBOOL;
 typedef double      DOUBLE;
 typedef GUID*       LPGUID;
 typedef IUnknown*   LPUNKNOWN;
+typedef GUID        CLSID;
+typedef CLSID*      LPCLSID;
 
 typedef struct _FILETIME { DWORD dwLowDateTime; DWORD dwHighDateTime; } FILETIME, *PFILETIME, *LPFILETIME;
 typedef struct _SYSTEMTIME {
@@ -190,6 +195,11 @@ inline const GUID GUID_NULL = {0, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0}};
 #endif
 #ifndef _countof
 #define _countof(a) (sizeof(a) / sizeof((a)[0]))
+#endif
+#ifndef _ASSERT
+#include <cassert>
+#define _ASSERT(e)  assert(e)
+#define _ASSERTE(e) assert(e)
 #endif
 #ifndef UNREFERENCED_PARAMETER
 #define UNREFERENCED_PARAMETER(p) (void)(p)

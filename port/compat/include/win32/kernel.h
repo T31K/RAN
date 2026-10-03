@@ -8,6 +8,7 @@
 // (auto/manual-reset events, wait-any/wait-all) at no practical cost.
 #pragma once
 #include <windows.h>
+#include "win32/extra_types.h"
 #include <chrono>
 #include <condition_variable>
 #include <cstdarg>
@@ -144,6 +145,12 @@ typedef struct _OVERLAPPED {
     };
     HANDLE hEvent;
 } OVERLAPPED, *LPOVERLAPPED;
+
+typedef struct _MEMORYSTATUSEX {   // MEMORYSTATUS itself comes from DXVK's windows_base.h
+    DWORD dwLength, dwMemoryLoad;
+    DWORDLONG ullTotalPhys, ullAvailPhys, ullTotalPageFile, ullAvailPageFile;
+    DWORDLONG ullTotalVirtual, ullAvailVirtual, ullAvailExtendedVirtual;
+} MEMORYSTATUSEX, *LPMEMORYSTATUSEX;
 
 // ---- Critical sections (recursive, like Windows) ----
 typedef struct RAN_CRITICAL_SECTION { std::recursive_mutex* m; } CRITICAL_SECTION, *LPCRITICAL_SECTION;

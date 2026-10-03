@@ -21,3 +21,17 @@
 #define TRACE3 TRACE
 #define ASSERT_VALID(p) ((void)0)
 #define DEBUG_NEW new
+
+// MFC runtime-class and message-map macros. They wire MFC window/dialog classes into MFC's
+// message routing, which the SDL3 platform layer replaces (Phase 2); here they expand to nothing.
+#define DECLARE_DYNAMIC(c)
+#define DECLARE_DYNCREATE(c)
+#define DECLARE_SERIAL(c)
+#define IMPLEMENT_DYNAMIC(c, b)
+#define IMPLEMENT_DYNCREATE(c, b)
+#define IMPLEMENT_SERIAL(c, b, s)
+#define DECLARE_MESSAGE_MAP()
+#define BEGIN_MESSAGE_MAP(c, b)
+#define END_MESSAGE_MAP()
+#define afx_msg
+#define RUNTIME_CLASS(c) nullptr

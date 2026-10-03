@@ -24,14 +24,18 @@ if [ ! -s "$CACHE" ] || [ -n "$(find "$ROOT" -maxdepth 2 -name '*.vcxproj' -newe
   mv -f "$TMPLIST" "$CACHE"   # atomic replace
 fi
 while IFS= read -r d; do INCS+=("-I$d"); done < "$CACHE"
+# ODBC headers for the server-side DbAction code that lives in the shared RanClient library
+# (Homebrew unixODBC; headers only - the client never opens a database). Searched last.
+ODBC_INC="$(brew --prefix unixodbc 2>/dev/null)/include"
+[ -d "$ODBC_INC" ] && INCS+=("-idirafter" "$ODBC_INC")
 LANG_FLAG=()
 case "$FILE" in *.h) LANG_FLAG=(-x c++-header) ;; esac
 # No -fms-compatibility: it hides __GNUC__ and breaks Apple's SDK headers. MSVC-only C++ in the
 # game is fixed in source instead; -fms-extensions keeps __declspec/__int64 style extensions.
 # No -fshort-wchar either: it silently breaks libc++'s char16_t/wchar_t algorithms on macOS.
 # WCHAR is char16_t instead (2 bytes, same layout as Windows).
-# _LIBCPP_ENABLE_CXX17_REMOVED_RANDOM_SHUFFLE: the game still calls std::random_shuffle.
+# _LIBCPP_ENABLE_CXX17_REMOVED_*: the game still uses std::random_shuffle and std::auto_ptr.
 clang++ ${LANG_FLAG[@]+"${LANG_FLAG[@]}"} -std=c++20 -fsyntax-only -fms-extensions -fdeclspec \
-  -D_LIBCPP_ENABLE_CXX17_REMOVED_RANDOM_SHUFFLE \
+  -D_LIBCPP_ENABLE_CXX17_REMOVED_RANDOM_SHUFFLE -D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR \
   -Wno-everything -ferror-limit="$LIMIT" \
   "${INCS[@]}" "$FILE"
