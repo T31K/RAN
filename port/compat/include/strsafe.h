@@ -1,6 +1,6 @@
 // Stand-in for <strsafe.h> (native macOS build). Same contract as Windows: results are always
 // NUL-terminated, truncation returns STRSAFE_E_INSUFFICIENT_BUFFER with the truncated text in
-// the buffer. Wide variants work on 2-byte WCHAR (-fshort-wchar) without libc's 4-byte wide
+// the buffer. Wide variants work on 2-byte WCHAR (char16_t) without libc's 4-byte wide
 // functions; the wide printf follows MSVC's W-printf rules (%s = wide, %S = narrow).
 #pragma once
 #include "ran_compat.h"

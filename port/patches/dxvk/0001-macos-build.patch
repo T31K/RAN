@@ -1,3 +1,33 @@
+diff --git a/include/native/windows/windows_base.h b/include/native/windows/windows_base.h
+index f008a53..c06b4e5 100644
+--- a/include/native/windows/windows_base.h
++++ b/include/native/windows/windows_base.h
+@@ -27,7 +27,13 @@ typedef int32_t *LPLONG;
+ 
+ typedef int32_t HRESULT;
+ 
++#ifdef __APPLE__
++// RAN macOS port: WCHAR stays 2 bytes like Windows (file/packet layouts) without -fshort-wchar,
++// which silently breaks libc++'s char16_t/wchar_t algorithms on macOS.
++typedef char16_t WCHAR;
++#else
+ typedef wchar_t WCHAR;
++#endif
+ typedef WCHAR *NWPSTR, *LPWSTR, *PWSTR;
+ typedef unsigned char UCHAR, *PUCHAR;
+ 
+@@ -131,9 +137,9 @@ typedef UINT_PTR* PUINT_PTR;
+ #endif /*STRICT*/
+ 
+ typedef char* LPSTR;
+-typedef wchar_t* LPWSTR;
++typedef WCHAR* LPWSTR;
+ typedef const char* LPCSTR;
+-typedef const wchar_t* LPCWSTR;
++typedef const WCHAR* LPCWSTR;
+ 
+ typedef struct LUID {
+   DWORD LowPart;
 diff --git a/src/d3d9/d3d9_device.cpp b/src/d3d9/d3d9_device.cpp
 index 42b51a9..b4f4cb1 100644
 --- a/src/d3d9/d3d9_device.cpp
@@ -220,3 +250,25 @@ index f9d1e98..c9fad42 100644
  #else
        "libvulkan.so",
        "libvulkan.so.1",
+diff --git a/src/wsi/sdl3/wsi_monitor_sdl3.cpp b/src/wsi/sdl3/wsi_monitor_sdl3.cpp
+index f568847..7e4b985 100644
+--- a/src/wsi/sdl3/wsi_monitor_sdl3.cpp
++++ b/src/wsi/sdl3/wsi_monitor_sdl3.cpp
+@@ -46,13 +46,12 @@ namespace dxvk::wsi {
+     if (!displayId)
+       return false;
+ 
+-    std::wstringstream nameStream;
+-    nameStream << LR"(\\.\DISPLAY)" << displayId;
+-
+-    std::wstring name = nameStream.str();
++    // Built as ASCII and widened per character, so it works whether WCHAR is wchar_t or char16_t.
++    std::string name = std::string(R"(\\.\DISPLAY)") + std::to_string(displayId);
+ 
+     std::memset(Name, 0, sizeof(Name));
+-    name.copy(Name, name.length(), 0);
++    for (size_t i = 0; i < name.length() && i + 1 < sizeof(Name) / sizeof(Name[0]); i++)
++      Name[i] = WCHAR(name[i]);
+ 
+     return true;
+   }

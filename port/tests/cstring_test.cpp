@@ -147,6 +147,40 @@ int main()
     arr.RemoveAll();
     CHECK(arr.GetSize() == 0);
 
+    // CMapStringToString.
+    CMapStringToString map;
+    CHECK(map.IsEmpty() && map.GetCount() == 0);
+    map.SetAt("k1", "v1");
+    map["k2"] = "v2";
+    CString got;
+    CHECK(map.Lookup("k1", got) && got == "v1");
+    CHECK(map.Lookup("k2", got) && got == "v2");
+    CHECK(!map.Lookup("nope", got));
+    int seen = 0;
+    for (POSITION pos = map.GetStartPosition(); pos != NULL; ) {
+        CString key, val;
+        map.GetNextAssoc(pos, key, val);
+        CHECK((key == "k1" && val == "v1") || (key == "k2" && val == "v2"));
+        ++seen;
+    }
+    CHECK(seen == 2);
+    CHECK(map.RemoveKey("k1") && !map.RemoveKey("k1") && map.GetCount() == 1);
+    map.RemoveAll();
+    CHECK(map.IsEmpty());
+
+    // CStringList.
+    CStringList list;
+    list.AddTail("b");
+    list.AddTail("c");
+    list.AddHead("a");
+    CHECK(list.GetCount() == 3 && list.GetHead() == "a" && list.GetTail() == "c");
+    CString joined;
+    for (POSITION pos = list.GetHeadPosition(); pos != NULL; ) joined += list.GetNext(pos);
+    CHECK(joined == "abc");
+    CHECK(list.RemoveHead() == "a" && list.GetCount() == 2);
+    list.RemoveAll();
+    CHECK(list.IsEmpty());
+
     if (g_failed == 0) std::printf("PASS cstring_test\n");
     return g_failed == 0 ? 0 : 1;
 }

@@ -15,6 +15,5 @@ static_assert(sizeof(ULONGLONG) == 8);
 static_assert(sizeof(__time64_t) == 8);
 static_assert(sizeof(HRESULT) == 4);
 static_assert(sizeof(WCHAR) == 2);
-static_assert(sizeof(wchar_t) == 2, "compile with -fshort-wchar");
 static_assert(SUCCEEDED(S_OK) && !SUCCEEDED(E_FAIL));
 int main() { return 0; }

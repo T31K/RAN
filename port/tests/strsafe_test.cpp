@@ -1,5 +1,5 @@
 // Behaviour tests for the <strsafe.h> stand-in, including the 2-byte wide variants
-// (the build uses -fshort-wchar, so libc's 4-byte wide functions must not be used).
+// (WCHAR is char16_t, so libc's 4-byte wide functions must not be used).
 #include <strsafe.h>
 #include <cstdio>
 #include <cstring>
@@ -24,7 +24,7 @@ static HRESULT VPrintfHelper(char* dst, size_t cch, const char* fmt, ...)
 
 int main()
 {
-    static_assert(sizeof(WCHAR) == 2, "build must use -fshort-wchar");
+    static_assert(sizeof(WCHAR) == 2, "WCHAR must match the Windows layout");
 
     // Narrow copy / cat / truncation.
     char buf[8];
@@ -58,10 +58,10 @@ int main()
 
     // Wide printf: %s is a wide string, %S a narrow one (MSVC W-printf rules), numbers as usual.
     const WCHAR name[] = {'R', 'A', 'N', 0};
-    CHECK(StringCchPrintfW(w, 16, L"%s:%d", name, 7) == S_OK && WEq(w, "RAN:7"));
-    CHECK(StringCchPrintfW(w, 16, L"%S/%.1f/%x", "ep", 2.5, 255) == S_OK && WEq(w, "ep/2.5/ff"));
-    CHECK(StringCchPrintfW(w, 16, L"100%%") == S_OK && WEq(w, "100%"));
-    CHECK(StringCchPrintfW(tiny, 3, L"%d", 12345) == STRSAFE_E_INSUFFICIENT_BUFFER && WEq(tiny, "12"));
+    CHECK(StringCchPrintfW(w, 16, u"%s:%d", name, 7) == S_OK && WEq(w, "RAN:7"));
+    CHECK(StringCchPrintfW(w, 16, u"%S/%.1f/%x", "ep", 2.5, 255) == S_OK && WEq(w, "ep/2.5/ff"));
+    CHECK(StringCchPrintfW(w, 16, u"100%%") == S_OK && WEq(w, "100%"));
+    CHECK(StringCchPrintfW(tiny, 3, u"%d", 12345) == STRSAFE_E_INSUFFICIENT_BUFFER && WEq(tiny, "12"));
 
     if (g_failed == 0) std::printf("PASS strsafe_test\n");
     return g_failed == 0 ? 0 : 1;

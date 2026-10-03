@@ -9,6 +9,14 @@
 #ifndef DXSDK_STDAFX_H
 #define DXSDK_STDAFX_H
 
+// Wide string literal that matches WCHAR on every platform: L"" on Windows (WCHAR = wchar_t),
+// u"" in the native macOS build (WCHAR = char16_t, 2 bytes like Windows).
+#if defined(_MSC_VER)
+#define RAN_W(s)	L##s
+#else
+#define RAN_W(s)	u##s
+#endif
+
 #ifndef STRICT
 	#define STRICT
 #endif

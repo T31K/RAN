@@ -15,6 +15,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <memory>
 #include <mutex>
 #include <strings.h>
@@ -50,6 +51,10 @@
 #endif
 
 typedef int errno_t;
+#ifndef _TIME64_T_DEFINED
+#define _TIME64_T_DEFINED
+typedef int64_t __time64_t;
+#endif
 typedef DWORD (WINAPI *LPTHREAD_START_ROUTINE)(LPVOID);
 
 namespace ran_compat {
@@ -322,6 +327,62 @@ inline int sprintf_s(char* dst, size_t size, const char* fmt, ...)
     va_end(ap);
     return n;
 }
+// MSVC's localtime_s takes (tm*, const time_t*) - the reverse of C11's Annex K order.
+inline errno_t localtime_s(struct tm* out, const time_t* t) { return ::localtime_r(t, out) ? 0 : 22; }
+inline errno_t gmtime_s(struct tm* out, const time_t* t) { return ::gmtime_r(t, out) ? 0 : 22; }
+inline errno_t _localtime64_s(struct tm* out, const __time64_t* t) { const time_t tt = (time_t)*t; return localtime_s(out, &tt); }
+inline char* strtok_s(char* s, const char* delim, char** ctx) { return ::strtok_r(s, delim, ctx); }
+// sscanf_s only differs for %s/%c/%[ (extra size argument). The game uses it with %d/%lf only
+// (tinyxml), so plain sscanf is exact; revisit if a %s caller appears.
+#define sscanf_s std::sscanf
+inline int _snprintf_s(char* dst, size_t size, size_t count, const char* fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    const size_t limit = count < size ? count + 1 : size;
+    const int n = std::vsnprintf(dst, limit, fmt, ap);
+    va_end(ap);
+    return (n < 0 || (size_t)n >= limit) ? -1 : n;
+}
+inline int lstrcmpiA(const char* a, const char* b) { return strcasecmp(a, b); }
+inline int lstrcmpA(const char* a, const char* b) { return std::strcmp(a, b); }
+#define lstrcmpi lstrcmpiA
+#define lstrcmp  lstrcmpA
+inline void* SecureZeroMemory(void* p, size_t n) { volatile unsigned char* v = (volatile unsigned char*)p; while (n--) *v++ = 0; return p; }
+
+#ifndef ERROR_SUCCESS
+#define ERROR_SUCCESS       0u
+#endif
+#ifndef ERROR_OUTOFMEMORY
+#define ERROR_OUTOFMEMORY   14u
+#endif
+#ifndef E_OUTOFMEMORY
+#define E_OUTOFMEMORY       ((HRESULT)0x8007000EL)
+#endif
+#ifndef E_INVALIDARG
+#define E_INVALIDARG        ((HRESULT)0x80070057L)
+#endif
+
+// CP949 lead-byte test (the game's only DBCS code page; see win32/codepage.h).
+inline BOOL IsDBCSLeadByteEx(UINT, BYTE b) { return (b >= 0x81 && b <= 0xFE) ? TRUE : FALSE; }
+inline BOOL IsDBCSLeadByte(BYTE b) { return IsDBCSLeadByteEx(0, b); }
+
+// Keyboard/mouse state and message boxes are owned by the SDL3 platform layer (Phase 2).
+// Until it is linked in, input reads as "nothing pressed" and message boxes go to stderr.
+namespace ran_compat {
+    inline short (*&KeyStateHook())(int) { static short (*hook)(int) = nullptr; return hook; }
+    inline int (*&MessageBoxHook())(void*, const char*, const char*, unsigned) { static int (*hook)(void*, const char*, const char*, unsigned) = nullptr; return hook; }
+}
+inline short GetKeyState(int vk) { return ran_compat::KeyStateHook() ? ran_compat::KeyStateHook()(vk) : 0; }
+inline short GetAsyncKeyState(int vk) { return GetKeyState(vk); }
+inline int MessageBoxA(HWND hwnd, const char* text, const char* caption, UINT type)
+{
+    if (ran_compat::MessageBoxHook()) return ran_compat::MessageBoxHook()(hwnd, text, caption, type);
+    std::fprintf(stderr, "[MessageBox] %s: %s\n", caption ? caption : "", text ? text : "");
+    return 1;   // IDOK
+}
+#define MessageBox MessageBoxA
+
 // MSVC's array overloads (size deduced from the destination array).
 template <size_t N> inline errno_t strcpy_s(char (&dst)[N], const char* src) { return strcpy_s(dst, N, src); }
 template <size_t N> inline errno_t strcat_s(char (&dst)[N], const char* src) { return strcat_s(dst, N, src); }

@@ -93,7 +93,7 @@ void DXUTSetCallbackMsgProc( LPDXUTCALLBACKMSGPROC pCallbackMsgProc, void* pUser
 HRESULT DXUTInit( bool bParseCommandLine = true, bool bHandleDefaultHotkeys = true, bool bShowMsgBoxOnError = true );
 
 // Choose either DXUTCreateWindow or DXUTSetWindow.  If using DXUTSetWindow, consider using DXUTStaticWndProc
-HRESULT DXUTCreateWindow( const WCHAR* strWindowTitle = L"Direct3D Window", 
+HRESULT DXUTCreateWindow( const WCHAR* strWindowTitle = RAN_W("Direct3D Window"),
                           HINSTANCE hInstance = NULL, HICON hIcon = NULL, HMENU hMenu = NULL,
                           int x = CW_USEDEFAULT, int y = CW_USEDEFAULT );
 HRESULT DXUTSetWindow( HWND hWndFocus, HWND hWndDeviceFullScreen, HWND hWndDeviceWindowed, bool bHandleMessages = true );

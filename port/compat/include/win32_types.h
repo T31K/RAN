@@ -15,7 +15,7 @@ typedef int64_t   LONGLONG;
 typedef uint64_t  ULONGLONG;
 typedef int64_t   __time64_t;
 typedef int32_t   HRESULT;
-typedef wchar_t   WCHAR;   // 2 bytes: the build uses -fshort-wchar
+typedef char16_t  WCHAR;   // 2 bytes like Windows; matches DXVK's native windows_base.h on Apple
 
 #ifndef TRUE
 #define TRUE 1

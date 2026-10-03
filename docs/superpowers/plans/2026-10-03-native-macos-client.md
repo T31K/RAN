@@ -15,7 +15,8 @@
 ## Global Constraints
 
 - **No Wine at runtime in the native build.** Not winelib, not CrossOver, not Game Porting Toolkit / D3DMetal (all are Wine; GPTK's D3DMetal also only covers D3D11/12, not our D3D9).
-- **Target: macOS 14+ on arm64 only.** No Intel, no universal binary. Dev/test machine is the M3 Mac on macOS 26.
+- **Target: macOS 14+ on arm64 only, every Apple Silicon generation (M1, M2, M3, M4 and later, incl. Pro/Max/Ultra).** No Intel, no universal binary. Dev machine is the M3 on macOS 26; before Phase 5 sign-off the build must also be run by someone on an M1 and an M2 (Phase 4 gate G4.4).
+- **Vulkan driver: KosmicKrisp (LunarG/Mesa), not MoltenVK.** Spike finding 2026-10-03: MoltenVK lacks `VK_EXT_robustness2` `nullDescriptor`, which DXVK requires; KosmicKrisp (Homebrew `mesa`, `libvulkan_kosmickrisp.dylib`) has it and is Vulkan 1.3 conformant on Apple Silicon. The shipped app bundles KosmicKrisp + the Vulkan loader inside the `.app` (players install nothing).
 - **The Windows Win32 build must stay green on every commit** (`.github/workflows/build.yml`, `msbuild RanOnline.sln -p:Configuration=Release -p:Platform=Win32`). The Wine-shipped client stays the release path until Phase 5 sign-off.
 - **The server is not touched.** The native client must put the exact same bytes on the wire as the 32-bit Windows client (all packet structs are `#pragma pack(1)`, 19 pack sites).
 - **Source encoding is CP949** (Korean comments/literals). Never let an editor re-encode a file. Edit flow: `iconv -f CP949 -t UTF-8` → Edit tool → `iconv -f UTF-8 -t CP949`, then confirm `git diff --stat` only shows the intended lines. Use `grep -a` on sources (Korean bytes trip binary detection).
@@ -69,7 +70,7 @@ Client code (excluding servers/tools): ~580k lines.
 1. **Keep the D3D9 call sites; replace D3D9 underneath.** Rewriting ~600 files of fixed-function rendering against a new API is the slowest, riskiest option. A D3D9 implementation on Metal lets the game code mostly stay as is.
 2. **Path A first, Path B as fallback, decided by the Phase 0 spike.** DXVK's D3D9 front end already emulates fixed-function, state blocks and asm shaders, and is battle-tested on thousands of D3D9 games. Its risk is macOS: DXVK-native targets Linux and needs Vulkan features MoltenVK may lack. Path B (own Metal shim over the ~70 methods we use, fixed-function done with an uber-shader) is certain to work but adds an estimated 6–8 weeks.
 3. **SDL3 for platform.** Window, fullscreen (desktop/Spaces), focus, keyboard, mouse, IME text events, message boxes. It is also the window system DXVK-native supports.
-4. **Fixed-size Win32 types.** `DWORD`=`uint32_t`, `LONG`=`int32_t`, `BOOL`=`int32_t`, and compile with `-fshort-wchar` so `wchar_t`/`WCHAR` stay 2 bytes like Windows (keeps file and packet layouts identical). The compat layer provides its own 2-byte `wcs*` functions because libc's assume 4-byte `wchar_t`.
+4. **Fixed-size Win32 types.** `DWORD`=`uint32_t`, `LONG`=`int32_t`, `BOOL`=`int32_t`, and **`WCHAR`=`char16_t`** (2 bytes like Windows, so file and packet layouts stay identical), patched into DXVK's native `windows_base.h` for Apple. *Revised 2026-10-03:* the original idea of `-fshort-wchar` was dropped after a test showed it silently breaks libc++ on macOS (`std::u16string::find` misses every character ≥ U+8000, i.e. all Korean). With `char16_t`, any code mixing 4-byte `wchar_t`/`L"..."` with `WCHAR` fails to compile instead of corrupting text; those sites (mostly DXUT) switch to `u"..."`. Wide `strsafe`/`CStringW` helpers are our own 2-byte implementations.
 5. **Keep CP949 bytes in memory, as on Windows.** Strings are converted to Unicode only at the edges: CoreText for drawing, SDL text input → CP949 for the IME.
 6. **Shaders and effects are precompiled on Windows CI** (`D3DXAssembleShader`/`D3DXCreateEffect` → bytecode blobs), so the Mac build never needs D3DX's shader compiler.
 
@@ -1090,6 +1091,7 @@ Each phase gets its own step-by-step plan file (`docs/superpowers/plans/<date>-n
 - **G4.1 (Review Focus #1)** Cmd+Tab ×10, minimize/restore, fullscreen↔windowed toggle, display sleep/wake, unplug/plug external monitor: no frame drift, clicks hit, keyboard works, no device-lost black screen.
 - **G4.2** Checklist: create char, move, combat, skills (incl. `maxskills`), items (`getitem`), trade, party, chat (Korean IME), area move, pets, quests, shop, upgrade (`maxupgrade`), death/revive, logout/login, exit (no monitor blackout).
 - **G4.3** 2-hour soak: no crash, memory flat.
+- **G4.4** Chip coverage: the same build passes G4.1 + a 15-minute play session on an M1 and an M2 Mac (friends), in addition to the M3. Log the chip (`sysctl -n machdep.cpu.brand_string`) and the KosmicKrisp device line in the client log.
 
 ## Phase 5 — Ship (1–2 weeks)
 

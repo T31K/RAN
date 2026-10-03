@@ -12,6 +12,8 @@
 #include "win32/gdi_types.h"
 #include "win32/user_types.h"
 #include "win32/kernel.h"
+#include "win32/fpu.h"
 #include "win32/files.h"
+#include "win32/codepage.h"
 #include "mfc/afx_string.h"
 #include "mfc/afx_types.h"

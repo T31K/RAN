@@ -64,7 +64,7 @@ public:
     HRESULT CreateMaterials( LPCWSTR strPath, IDirect3DDevice9 *pd3dDevice, ID3DXBuffer *pAdjacencyBuffer, ID3DXBuffer *pMtrlBuffer );
     HRESULT Destroy();
 
-    CDXUTMesh( LPCWSTR strName = L"CDXUTMeshFile_Mesh" );
+    CDXUTMesh( LPCWSTR strName = RAN_W("CDXUTMeshFile_Mesh") );
     virtual ~CDXUTMesh();
 };
 
@@ -103,7 +103,7 @@ public:
                     bool bDrawAlphaSubsets = true,
                     D3DXMATRIX* pmatWorldMatrix = NULL);
 
-    CDXUTMeshFrame( LPCWSTR strName = L"CDXUTMeshFile_Frame" );
+    CDXUTMeshFrame( LPCWSTR strName = RAN_W("CDXUTMeshFile_Frame") );
     virtual ~CDXUTMeshFrame();
 };
 
@@ -127,7 +127,7 @@ public:
     // specified on pure devices, this function will fail.
     HRESULT Render( LPDIRECT3DDEVICEQ pd3dDevice, D3DXMATRIX* pmatWorldMatrix = NULL );
 
-    CDXUTMeshFile() : CDXUTMeshFrame( L"CDXUTMeshFile_Root" ) {}
+    CDXUTMeshFile() : CDXUTMeshFrame( RAN_W("CDXUTMeshFile_Root") ) {}
 };
 
 

@@ -189,7 +189,7 @@ public:
     void EnableCaption( bool bEnable ) { m_bCaption = bEnable; }
     int GetCaptionHeight() const { return m_nCaptionHeight; }
     void SetCaptionHeight( int nHeight ) { m_nCaptionHeight = nHeight; }
-    void SetCaptionText( const wchar_t *pwszText ) { StringCchCopyW( m_wszCaption, sizeof(m_wszCaption)/sizeof(m_wszCaption[0]), pwszText); }
+    void SetCaptionText( const WCHAR *pwszText ) { StringCchCopyW( m_wszCaption, sizeof(m_wszCaption)/sizeof(m_wszCaption[0]), pwszText); }
     void GetLocation( POINT &Pt ) const { Pt.x = m_x; Pt.y = m_y; }
     void SetLocation( int x, int y ) { m_x = x; m_y = y; }
     void SetSize( int width, int height ) { m_width = width; m_height = height;  }

@@ -3,12 +3,21 @@
 // operations skip CP949 trail bytes the way MFC's _mbs* functions do, so Korean text is
 // never split or case-mapped.
 #pragma once
+#include <windows.h>
 #include <cctype>
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
+#include <iterator>
+#include <map>
 #include <string>
 #include <vector>
+
+#ifndef _POSITION_DEFINED
+#define _POSITION_DEFINED
+struct __POSITION {};
+typedef __POSITION* POSITION;   // MFC iteration cursor; NULL ends the iteration
+#endif
 
 #ifndef _TCHAR_DEFINED
 #define _TCHAR_DEFINED
@@ -252,6 +261,78 @@ private:
     std::string m_str;
 };
 
+// Wide CString. WCHAR is char16_t in the native build (2 bytes like Windows; see
+// win32_types.h), so this is a std::u16string underneath.
+class CStringW
+{
+public:
+    CStringW() = default;
+    CStringW(const char16_t* sz) { if (sz) m_str = sz; }
+    CStringW(const char16_t* sz, int len) { if (sz && len > 0) m_str.assign(sz, (size_t)len); }
+    CStringW(char16_t ch, int repeat = 1) : m_str((size_t)(repeat > 0 ? repeat : 0), ch) {}
+
+    int GetLength() const { return (int)m_str.size(); }
+    bool IsEmpty() const { return m_str.empty(); }
+    void Empty() { m_str.clear(); }
+    const char16_t* GetString() const { return m_str.c_str(); }
+    operator const char16_t*() const { return GetString(); }
+
+    char16_t GetAt(int i) const { return m_str[(size_t)i]; }
+    char16_t operator[](int i) const { return m_str[(size_t)i]; }
+    void SetAt(int i, char16_t ch) { m_str[(size_t)i] = ch; }
+
+    CStringW Mid(int first) const { return Mid(first, GetLength() - first); }
+    CStringW Mid(int first, int count) const
+    {
+        if (first < 0) first = 0;
+        if (first >= GetLength() || count <= 0) return CStringW();
+        return FromU16(m_str.substr((size_t)first, (size_t)count));
+    }
+    CStringW Left(int count) const { return count <= 0 ? CStringW() : FromU16(m_str.substr(0, (size_t)count)); }
+    CStringW Right(int count) const
+    {
+        if (count <= 0) return CStringW();
+        if (count >= GetLength()) return *this;
+        return FromU16(m_str.substr(m_str.size() - (size_t)count));
+    }
+    int Find(char16_t ch, int start = 0) const
+    {
+        const size_t pos = m_str.find(ch, (size_t)(start < 0 ? 0 : start));
+        return pos == std::u16string::npos ? -1 : (int)pos;
+    }
+    int Insert(int index, char16_t ch)
+    {
+        if (index < 0) index = 0;
+        if (index > GetLength()) index = GetLength();
+        m_str.insert((size_t)index, 1, ch);
+        return GetLength();
+    }
+    int Insert(int index, const char16_t* sz)
+    {
+        if (index < 0) index = 0;
+        if (index > GetLength()) index = GetLength();
+        m_str.insert((size_t)index, sz);
+        return GetLength();
+    }
+    int Delete(int index, int count = 1)
+    {
+        if (index >= 0 && index < GetLength() && count > 0) m_str.erase((size_t)index, (size_t)count);
+        return GetLength();
+    }
+
+    CStringW& operator+=(char16_t ch) { m_str += ch; return *this; }
+    CStringW& operator+=(const char16_t* sz) { if (sz) m_str += sz; return *this; }
+    CStringW& operator+=(const CStringW& s) { m_str += s.m_str; return *this; }
+    friend CStringW operator+(const CStringW& a, const CStringW& b) { CStringW r(a); r += b; return r; }
+    friend bool operator==(const CStringW& a, const CStringW& b) { return a.m_str == b.m_str; }
+    friend bool operator!=(const CStringW& a, const CStringW& b) { return a.m_str != b.m_str; }
+
+private:
+    static CStringW FromU16(std::u16string s) { CStringW r; r.m_str = std::move(s); return r; }
+    std::u16string m_str;
+};
+typedef CString CStringA;
+
 class CStringArray
 {
 public:
@@ -269,6 +350,69 @@ public:
     void RemoveAll() { m_items.clear(); }
     void InsertAt(int i, const CString& s, int count = 1) { m_items.insert(m_items.begin() + i, (size_t)count, s); }
     void RemoveAt(int i, int count = 1) { m_items.erase(m_items.begin() + i, m_items.begin() + i + count); }
+
+private:
+    std::vector<CString> m_items;
+};
+
+// POSITION is (index + 1) into the container's iteration order; NULL ends iteration.
+namespace ran_compat {
+    inline POSITION PosFromIndex(size_t i) { return reinterpret_cast<POSITION>(i + 1); }
+    inline size_t IndexFromPos(POSITION p) { return reinterpret_cast<size_t>(p) - 1; }
+}
+
+class CMapStringToString
+{
+public:
+    int GetCount() const { return (int)m_map.size(); }
+    int GetSize() const { return (int)m_map.size(); }
+    bool IsEmpty() const { return m_map.empty(); }
+    void SetAt(const char* key, const char* value) { m_map[key] = value; }
+    CString& operator[](const char* key) { return m_map[key]; }
+    BOOL Lookup(const char* key, CString& value) const
+    {
+        const auto it = m_map.find(key);
+        if (it == m_map.end()) return FALSE;
+        value = it->second;
+        return TRUE;
+    }
+    BOOL RemoveKey(const char* key) { return m_map.erase(key) ? TRUE : FALSE; }
+    void RemoveAll() { m_map.clear(); }
+    POSITION GetStartPosition() const { return m_map.empty() ? nullptr : ran_compat::PosFromIndex(0); }
+    void GetNextAssoc(POSITION& pos, CString& key, CString& value) const
+    {
+        const size_t i = ran_compat::IndexFromPos(pos);
+        auto it = std::next(m_map.begin(), (std::ptrdiff_t)i);
+        key = it->first;
+        value = it->second;
+        pos = (i + 1 < m_map.size()) ? ran_compat::PosFromIndex(i + 1) : nullptr;
+    }
+
+private:
+    std::map<CString, CString> m_map;
+};
+
+class CStringList
+{
+public:
+    int GetCount() const { return (int)m_items.size(); }
+    int GetSize() const { return (int)m_items.size(); }
+    bool IsEmpty() const { return m_items.empty(); }
+    POSITION AddHead(const CString& s) { m_items.insert(m_items.begin(), s); return ran_compat::PosFromIndex(0); }
+    POSITION AddTail(const CString& s) { m_items.push_back(s); return ran_compat::PosFromIndex(m_items.size() - 1); }
+    CString& GetHead() { return m_items.front(); }
+    CString& GetTail() { return m_items.back(); }
+    CString RemoveHead() { CString s = m_items.front(); m_items.erase(m_items.begin()); return s; }
+    CString RemoveTail() { CString s = m_items.back(); m_items.pop_back(); return s; }
+    void RemoveAll() { m_items.clear(); }
+    POSITION GetHeadPosition() const { return m_items.empty() ? nullptr : ran_compat::PosFromIndex(0); }
+    CString& GetNext(POSITION& pos)
+    {
+        const size_t i = ran_compat::IndexFromPos(pos);
+        pos = (i + 1 < m_items.size()) ? ran_compat::PosFromIndex(i + 1) : nullptr;
+        return m_items[i];
+    }
+    CString& GetAt(POSITION pos) { return m_items[ran_compat::IndexFromPos(pos)]; }
 
 private:
     std::vector<CString> m_items;

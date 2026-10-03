@@ -8,6 +8,11 @@ typedef uint64_t    DWORD64;
 typedef int64_t     LONG64;
 typedef uint64_t    ULONG64;
 typedef uint8_t     BOOLEAN;
+typedef char*       PSTR;
+typedef char        CCHAR;
+typedef char*       PCHAR;
+typedef WORD*       PWORD;
+typedef uint64_t    QWORD;
 typedef INT*        PINT;
 typedef INT*        LPINT;
 typedef UINT*       PUINT;
@@ -109,6 +114,22 @@ typedef struct _GLYPHMETRICSFLOAT {
 #endif
 #ifndef MAX_PATH
 #define MAX_PATH 260
+#endif
+// MSVC <stdlib.h> path component limits.
+#define _MAX_PATH  260
+#define _MAX_DRIVE 3
+#define _MAX_DIR   256
+#define _MAX_FNAME 256
+#define _MAX_EXT   256
+
+#ifdef __cplusplus
+#include <type_traits>
+// Windows' min/max. Functions instead of windows.h's macros: libc++ #undefs min/max macros
+// inside its own headers, which would make them vanish part-way through a translation unit.
+template <class A, class B>
+constexpr std::common_type_t<A, B> min(A a, B b) { return (b < a) ? b : a; }
+template <class A, class B>
+constexpr std::common_type_t<A, B> max(A a, B b) { return (a < b) ? b : a; }
 #endif
 
 // Language identifiers.
