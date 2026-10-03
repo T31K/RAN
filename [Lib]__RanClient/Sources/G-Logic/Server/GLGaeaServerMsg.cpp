@@ -209,14 +209,28 @@ BOOL GLGaeaServer::ChatMsgProc ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD d
 					}
 				}
 
+				//	Also raise Pow/Dex/Int to at least 500 ( never lowers a higher stat ).
+				//	No packet carries absolute stats to the client, so the stat window updates on relog.
+				const WORD wAllStatMin = 500;
+				if ( pChar->m_sStats.wPow < wAllStatMin )	pChar->m_sStats.wPow = wAllStatMin;
+				if ( pChar->m_sStats.wDex < wAllStatMin )	pChar->m_sStats.wDex = wAllStatMin;
+				if ( pChar->m_sStats.wInt < wAllStatMin )	pChar->m_sStats.wInt = wAllStatMin;
+
 				//	Recompute passive-skill sums so newly-maxed passives apply, then sync to viewers.
 				pChar->INIT_DATA ( FALSE, FALSE );
+				pChar->MsgSendUpdateState ();
 				GLMSG::SNETPC_UPDATE_PASSIVE_BRD NetMsgAllPassive;
 				NetMsgAllPassive.dwGaeaID = pChar->m_dwGaeaID;
 				NetMsgAllPassive.sSKILL_DATA = pChar->m_sSUM_PASSIVE;
 				pChar->SendMsgViewAround ( (NET_MSG_GENERIC*) &NetMsgAllPassive );
 
-				CDebugSet::ToLogFile ( "[ALLSKILLS] maxed %d skills for char=%d class=%d", nAllCount, (int)pChar->m_dwCharID, (int)pChar->m_emClass );
+				NET_CHAT_FB NetAllFB;
+				NetAllFB.emType = CHAT_TYPE_NORMAL;
+				StringCchCopy ( NetAllFB.szName, CHR_ID_LENGTH+1, "System" );
+				StringCchCopy ( NetAllFB.szChatMsg, CHAT_MSG_SIZE+1, "maxskills done - Pow/Dex/Int set to 500 (relog to see stats)" );
+				SENDTOCLIENT ( pChar->m_dwClientID, &NetAllFB );
+
+				CDebugSet::ToLogFile ( "[ALLSKILLS] maxed %d skills for char=%d class=%d pow=%d dex=%d int=%d", nAllCount, (int)pChar->m_dwCharID, (int)pChar->m_emClass, (int)pChar->m_sStats.wPow, (int)pChar->m_sStats.wDex, (int)pChar->m_sStats.wInt );
 
 				//	Do not broadcast the cheat command as normal chat.
 				return TRUE;
