@@ -52,8 +52,13 @@ jobs:
           $dirs = ([regex]::Match($vcx, '<AdditionalIncludeDirectories>([^<]*)')).Groups[1].Value -split ';' |
                   Where-Object { $_ -and $_ -notmatch '%\(' }
           $incs = $dirs | ForEach-Object { "/I$_" }
+          # Headers pull libraries in with #pragma comment(lib) (lzo2, ggsrvlib, ...): link with
+          # the game exe's library directories (same depth as [Lib]__RanClient).
+          $game = Get-Content -Raw -LiteralPath '..\[Client]__Game\[Client]__Game.vcxproj'
+          $libdirs = ([regex]::Match($game, '<AdditionalLibraryDirectories>([^<]*)')).Groups[1].Value -split ';' |
+                     Where-Object { $_ -and $_ -notmatch '%\(' } | ForEach-Object { "/LIBPATH:$_" }
           cl /nologo /EHsc /MD /O2 /DWIN32 /DNDEBUG /D_LIB /D_AFXDLL /D_MBCS $incs `
-             ..\port\tests\golden\struct_sizes.cpp /Fe:struct_sizes.exe /Fo:struct_sizes.obj
+             ..\port\tests\golden\struct_sizes.cpp /Fe:struct_sizes.exe /Fo:struct_sizes.obj /link $libdirs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           New-Item -ItemType Directory -Force -Path $env:GITHUB_WORKSPACE\msg-sizes | Out-Null
           .\struct_sizes.exe | Out-File -Encoding ascii $env:GITHUB_WORKSPACE\msg-sizes\msg_sizes_win32.txt
