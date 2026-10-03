@@ -22,3 +22,11 @@ endforeach()
 # The file test uses std::filesystem to set up fixtures (C++17); every other test keeps the
 # compat headers honest in C++14.
 set_target_properties(win32_files_test PROPERTIES CXX_STANDARD 17)
+
+# Platform layer (Phase 2): SDL3 scancode -> DirectInput DIK table, checked against the SDK header.
+find_path(SDL3_INCLUDE_DIR SDL3/SDL_scancode.h HINTS /opt/homebrew/include /usr/local/include)
+if(SDL3_INCLUDE_DIR)
+  add_executable(input_map_test input_map_test.cpp)
+  target_include_directories(input_map_test PRIVATE ${SDL3_INCLUDE_DIR} ${PORT_DIR}/../Dependency/directx)
+  add_test(NAME input_map_test COMMAND input_map_test)
+endif()
