@@ -7,6 +7,7 @@
 // handful of places (sound/network threads), so one lock keeps the Windows semantics exact
 // (auto/manual-reset events, wait-any/wait-all) at no practical cost.
 #pragma once
+#include <windows.h>
 #include <chrono>
 #include <condition_variable>
 #include <cstdarg>

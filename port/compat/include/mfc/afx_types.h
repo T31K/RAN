@@ -1,6 +1,7 @@
 // MFC CTime/CTimeSpan/CPoint/CSize/CRect stand-ins for the native macOS build.
 // Expects the Win32 base types (POINT/RECT/SIZE/LONG/LPRECT) from DXVK's native <windows.h>.
 #pragma once
+#include <windows.h>
 #include <cstdint>
 #include <ctime>
 #include "mfc/afx_string.h"

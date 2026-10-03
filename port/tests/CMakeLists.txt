@@ -12,7 +12,7 @@ set(DXVK_INCLUDE "${PORT_DIR}/third_party/dxvk-install/include/dxvk" CACHE PATH 
 add_compile_options(-fshort-wchar -Wall)
 include_directories(${PORT_DIR}/compat/include ${DXVK_INCLUDE})
 
-foreach(t compat_types_test cstring_test afx_types_test win32_kernel_test)
+foreach(t compat_types_test cstring_test afx_types_test win32_kernel_test win32_files_test)
   add_executable(${t} ${t}.cpp)
   add_test(NAME ${t} COMMAND ${t})
 endforeach()
