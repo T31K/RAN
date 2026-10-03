@@ -1590,7 +1590,7 @@ bool SCROWACTION::SAVE ( CSerialFile &SFile )
 	SFile << m_fMobLinkScale;
 	SFile << m_fMobLinkDelay;
 
-	SFile << m_vecPatternList.size();
+	SFile << (DWORD)m_vecPatternList.size();
 	if ( m_vecPatternList.size() > 0 )
 	{
 		SFile.WriteBuffer ( &(m_vecPatternList[0]), DWORD( sizeof( SCROWPATTERN ) * m_vecPatternList.size() ) );

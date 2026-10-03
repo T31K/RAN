@@ -146,7 +146,8 @@ void CreateMeshNORMAL( IDirect3DDevice9 *pd3dDevice, const LPD3DXSKININFO pSkinI
     // If the device can only do 2 matrix blends, ConvertToBlendedMesh cannot approximate all meshes to it
     // Thus we split the mesh in two parts: The part that uses at most 2 matrices and the rest. The first is
     // drawn using the device's HW vertex processing and the rest is drawn using SW vertex processing.
-    LPD3DXBONECOMBINATION rgBoneCombinations  = reinterpret_cast<LPD3DXBONECOMBINATION>(pBoneCombinationBuf->GetBufferPointer());
+    LPD3DXBONECOMBINATION rgBoneCombinations;
+    rgBoneCombinations = reinterpret_cast<LPD3DXBONECOMBINATION>(pBoneCombinationBuf->GetBufferPointer());
 
     // look for any set of bone combinations that do not fit the caps
     for (iAttributeSW = 0; iAttributeSW < NumAttributeGroups; iAttributeSW++)
@@ -223,7 +224,8 @@ void CreateMeshHLSL( IDirect3DDevice9 *pd3dDevice, const LPD3DXSKININFO pSkinInf
 
 
     // FVF has to match our declarator. Vertex shaders are not as forgiving as FF pipeline
-    DWORD NewFVF = (pMeshOUT->GetFVF() & D3DFVF_POSITION_MASK) | D3DFVF_NORMAL | D3DFVF_TEX1 | D3DFVF_LASTBETA_UBYTE4;
+    DWORD NewFVF;
+    NewFVF = (pMeshOUT->GetFVF() & D3DFVF_POSITION_MASK) | D3DFVF_NORMAL | D3DFVF_TEX1 | D3DFVF_LASTBETA_UBYTE4;
     if (NewFVF != pMeshOUT->GetFVF())
     {
         LPD3DXMESH pMeshAA;

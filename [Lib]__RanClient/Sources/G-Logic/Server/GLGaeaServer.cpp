@@ -727,7 +727,8 @@ PGLCHAR GLGaeaServer::CreatePC ( PCHARDATA2 pCharData, DWORD _dwClientID, DWORD 
 	pPChar->m_dwGaeaID = _dwGaeaID;
 	pPChar->SetPartyID ( m_cPartyFieldMan.GetPartyID ( _dwGaeaID ) );
 	
-	BOOL bOk = DropPC ( pLandMan->GetMapID(), vStartPos, pPChar );
+	BOOL bOk;
+	bOk = DropPC ( pLandMan->GetMapID(), vStartPos, pPChar );
 	if ( !bOk )
 	{
 		CDebugSet::ToLogFile ( "[JOINDBG] Gaea::CreatePC bad-DropPC-FAILED name=%s gaeaID=%d", pCharData->m_szName, (int)_dwGaeaID );

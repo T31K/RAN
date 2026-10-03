@@ -197,6 +197,7 @@ HRESULT DxEffectRainPoint::SEPERATEOBJ::RenderRain ( LPDIRECT3DDEVICEQ pd3dDevic
 
 	if ( !m_pVB || !m_pIB )		goto	_RETURN;
 
+	{	//	Scope so the gotos above jump over these locals (required by standard C++).
 	// Note : 비율을 맞춘다.
 	//
 	float fFaceRate = GetLengthRate ( vFromPt );
@@ -354,6 +355,7 @@ HRESULT DxEffectRainPoint::SEPERATEOBJ::RenderRain ( LPDIRECT3DDEVICEQ pd3dDevic
 
 	// Note : StateBlock Apply
 	m_pSB_Effect_SAVE->Apply();
+	}
 
 _RETURN:
 	PROFILE_END("DxEffectRain");
@@ -398,6 +400,7 @@ HRESULT DxEffectRainPoint::SEPERATEOBJ::RenderSnow ( LPDIRECT3DDEVICEQ pd3dDevic
 
 	if ( !m_pVB || !m_pIB )		goto	_RETURN;
 
+	{	//	Scope so the gotos jump over these locals (required by standard C++).
 	D3DXVECTOR3 &vFromPt = DxViewPort::GetInstance().GetFromPt ();
 	D3DXVECTOR3 &vLookat = DxViewPort::GetInstance().GetLookatPt ();
 
@@ -458,6 +461,7 @@ HRESULT DxEffectRainPoint::SEPERATEOBJ::RenderSnow ( LPDIRECT3DDEVICEQ pd3dDevic
 
 	// Note : StateBlock Apply
 	m_pSB_Snow_SAVE->Apply();
+	}
 
 _RETURN:
 	PROFILE_END("DxEffectSnow");
@@ -522,6 +526,7 @@ HRESULT DxEffectRainPoint::SEPERATEOBJ::RenderLeaves ( LPDIRECT3DDEVICEQ pd3dDev
 
 	if ( !m_pLeavesVB || !m_pIB )		goto	_RETURN;
 
+	{	//	Scope so the gotos jump over these locals (required by standard C++).
 	D3DXVECTOR3 &vFromPt = DxViewPort::GetInstance().GetFromPt ();
 	D3DXVECTOR3 &vLookat = DxViewPort::GetInstance().GetLookatPt ();
 
@@ -621,6 +626,7 @@ HRESULT DxEffectRainPoint::SEPERATEOBJ::RenderLeaves ( LPDIRECT3DDEVICEQ pd3dDev
 
 	// Note : StateBlock Apply
 	m_pSB_Leaves_SAVE->Apply();
+	}
 
 _RETURN:
 	PROFILE_END("DxEffectLeaves");

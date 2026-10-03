@@ -574,8 +574,9 @@ HRESULT	DxEffectDecal::Render ( LPDIRECT3DDEVICEQ pd3dDevice, D3DXMATRIX &matCom
 	if ( m_fSize <= 0.f || m_fAlpha <= 0.f)	goto _RETURN;
 
 
-	float fOneOverX = 1.0f / vAreaXYZ.x;
-	float fOneOverZ = 1.0f / vAreaXYZ.z;
+	float fOneOverX, fOneOverZ;
+	fOneOverX = 1.0f / vAreaXYZ.x;
+	fOneOverZ = 1.0f / vAreaXYZ.z;
 
 	//	Note : 색 변화
 	//			초기 값 ( vTangent, vBiNormal 이 값에 의해 회전이 가능하다. )
@@ -640,8 +641,9 @@ HRESULT	DxEffectDecal::Render ( LPDIRECT3DDEVICEQ pd3dDevice, D3DXMATRIX &matCom
 	}
 
 	// Note : Lock을 하기 위한 D3DLOCK_DISCARD or D3DLOCK_NOOVERWRITE
-	DWORD dwVertexSizeFULL = m_dwVerts*sizeof(DECALVERTEX);
-	DWORD dwFlag = D3DLOCK_NOOVERWRITE; 
+	DWORD dwVertexSizeFULL, dwFlag;
+	dwVertexSizeFULL = m_dwVerts*sizeof(DECALVERTEX);
+	dwFlag = D3DLOCK_NOOVERWRITE;
 	if( DxDynamicVB::m_sVB_PDT.nOffsetToLock + dwVertexSizeFULL > DxDynamicVB::m_sVB_PDT.nFullByte )
 	{
 		dwFlag = D3DLOCK_DISCARD; 

@@ -765,7 +765,8 @@ HRESULT SAnimContainer::CreateAnimationData ( SANIMCONINFO &sAnimInfo, LPDIRECT3
 		goto e_Exit;
     
 
-	TCHAR szPath[MAX_PATH] = "";
+	TCHAR szPath[MAX_PATH];
+	ZeroMemory( szPath, sizeof(szPath) );
 	StringCchCopy( szPath, MAX_PATH, DxSkinAniMan::GetInstance().GetPath () );
 	StringCchCat( szPath, MAX_PATH, m_szName );
 

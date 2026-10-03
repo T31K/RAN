@@ -622,7 +622,8 @@ HRESULT DxEffectWave::Render ( LPDIRECT3DDEVICEQ pd3dDevice, D3DXMATRIX &matComb
 	fLength = fLength/80.f;
 	fLength = (fLength<1.f) ? 1.f : fLength;
 
-	float fBumpWave = m_fBumpWave * fLength;
+	float fBumpWave;
+	fBumpWave = m_fBumpWave * fLength;
 
 	fSize = m_fSize;
 

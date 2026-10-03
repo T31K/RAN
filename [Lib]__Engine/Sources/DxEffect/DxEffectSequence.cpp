@@ -813,7 +813,8 @@ HRESULT DxEffectSequence::Render ( LPDIRECT3DDEVICEQ pd3dDevice, D3DXMATRIX &mat
 	if( !m_pTexture )	goto _RETURN;
 
 	// Note : OptimizeSequence를 사용하기 위한 초기 작업.
-	OPTMSingleSequence::DATA* pData = OPTMManager::GetInstance().m_sSingleSequence.GetData();
+	OPTMSingleSequence::DATA* pData;
+	pData = OPTMManager::GetInstance().m_sSingleSequence.GetData();
 
 	//	Note : 물체에서 카메라로
 	//
@@ -1048,8 +1049,9 @@ HRESULT DxEffectSequence::Render ( LPDIRECT3DDEVICEQ pd3dDevice, D3DXMATRIX &mat
 	}
 
 	// Note : Lock을 하기 위한 D3DLOCK_DISCARD or D3DLOCK_NOOVERWRITE
-	DWORD dwFlag = D3DLOCK_NOOVERWRITE; 
-	DWORD dwVertexSizeFULL = 4*sizeof(VERTEXCOLORTEX2);
+	DWORD dwFlag, dwVertexSizeFULL;
+	dwFlag = D3DLOCK_NOOVERWRITE;
+	dwVertexSizeFULL = 4*sizeof(VERTEXCOLORTEX2);
 	if( DxDynamicVB::m_sVB.nOffsetToLock + dwVertexSizeFULL > DxDynamicVB::m_sVB.nFullByte )
 	{
 		//CDebugSet::ToLogFile( "DxDynamicVB - Limit - Over" );

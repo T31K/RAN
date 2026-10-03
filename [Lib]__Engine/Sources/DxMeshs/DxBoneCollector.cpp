@@ -268,7 +268,8 @@ HRESULT DxSkeleton::LoadFile ( const char *szFile, LPDIRECT3DDEVICEQ pd3dDevice 
 	}
 
 	SAFE_DELETE_ARRAY(szXFileName);
-	int nStrLen = cchFileName+1;
+	int nStrLen;
+	nStrLen = cchFileName+1;
 	szXFileName = new char[nStrLen];
 	StringCchCopy( szXFileName, nStrLen, szFile );
 
@@ -285,7 +286,8 @@ HRESULT DxSkeleton::LoadFile ( const char *szFile, LPDIRECT3DDEVICEQ pd3dDevice 
 
 	//	Note : Path xFile °æ·Î.
 	//
-	char szPathName[MAX_PATH] = "";
+	char szPathName[MAX_PATH];
+	ZeroMemory( szPathName, sizeof(szPathName) );
 	StringCchCopy( szPathName, MAX_PATH, DxBoneCollector::GetInstance().GetPath() );
 	StringCchCat( szPathName, MAX_PATH, szXFileName );
 

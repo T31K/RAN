@@ -288,7 +288,8 @@ HRESULT DxMeshTexMan::MakeTexture ( LPDIRECT3DDEVICEQ pd3dDevice, LPDIRECT3DTEXT
 	pd3dDevice->GetDeviceCaps ( &d3dCaps );
 
 	D3DSURFACE_DESC   d3dsdBackBuffer;
-	LPDIRECT3DSURFACEQ pBackBuffer=NULL;
+	LPDIRECT3DSURFACEQ pBackBuffer;
+	pBackBuffer=NULL;
 	hr = pd3dDevice->GetBackBuffer ( 0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer );
 	if ( FAILED(hr) )	goto RETERN_GOTO;
 

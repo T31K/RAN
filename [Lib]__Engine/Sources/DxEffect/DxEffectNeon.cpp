@@ -498,12 +498,12 @@ HRESULT	DxEffectNeon::ChangeObject ( LPDIRECT3DDEVICEQ pd3dDevice, float fScale 
 void DxEffectNeon::SaveBuffer ( CSerialFile &SFile )
 {
 	//	읽지 않고 스킵용으로 사용됨.
-	SFile << sizeof(DWORD)+sizeof(OBJECT)*m_dwVertices
+	SFile << (DWORD)( sizeof(DWORD)+sizeof(OBJECT)*m_dwVertices
 			+sizeof(OBJECTNORMAL)*m_dwVertices
 			+sizeof(DWORD)+sizeof(WORD)*m_dwFaces*3
 			+sizeof(D3DXVECTOR2)*m_dwVertices
 			+sizeof(DWORD)+sizeof(D3DXATTRIBUTERANGE)*m_dwAttribTable
-			+sizeof(DWORD)+sizeof(DXMATERIAL_NEON)*m_dwMaterials;
+			+sizeof(DWORD)+sizeof(DXMATERIAL_NEON)*m_dwMaterials );
 
 	//	버텍스 버퍼
 	SFile << m_dwVertices;

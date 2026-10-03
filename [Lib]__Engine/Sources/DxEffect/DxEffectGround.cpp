@@ -704,7 +704,8 @@ HRESULT	DxEffectGround::Render ( LPDIRECT3DDEVICEQ pd3dDevice, D3DXMATRIX &matCo
 	if( !m_pTexture )	goto _RETURN;
 
 	// Note : OptimizeSequence를 사용하기 위한 초기 작업.
-	OPTMSingleGround::DATA* pData = OPTMManager::GetInstance().m_sSingleGround.GetData();
+	OPTMSingleGround::DATA* pData;
+	pData = OPTMManager::GetInstance().m_sSingleGround.GetData();
 
 	pData->matWorld = matChild;
 

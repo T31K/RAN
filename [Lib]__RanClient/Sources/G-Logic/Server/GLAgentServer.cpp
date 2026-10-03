@@ -474,7 +474,8 @@ PGLCHARAG GLAgentServer::CreatePC ( GLCHARAG_DATA *pchar_data, DWORD dwClientID,
 	//
 	if ( m_FreePCGIDs.empty() )		CDebugSet::ToLogFile ( "[JOINDBG] Agent::CreatePC bad-FreePCGIDs-empty name=%s clientID=%d", pchar_data->m_szName, (int)dwClientID );
 	if ( m_FreePCGIDs.empty() )		goto _ERROR;
-	DWORD dwGaeaID = m_FreePCGIDs.front();
+	DWORD dwGaeaID;
+	dwGaeaID = m_FreePCGIDs.front();
 	m_FreePCGIDs.pop_front ();
 
 	//	Note : 캐릭터 초기화.
@@ -546,7 +547,8 @@ PGLCHARAG GLAgentServer::CreatePC ( GLCHARAG_DATA *pchar_data, DWORD dwClientID,
 	m_mapCharID[pPChar->m_dwCharID] = pPChar->m_dwGaeaID;
 
 	//	Note : LAND 리스트에서 제거.
-	GLAGLandMan* pNEW_LAND = GLAgentServer::GetInstance().GetByMapID ( pPChar->m_sCurMapID );
+	GLAGLandMan* pNEW_LAND;
+	pNEW_LAND = GLAgentServer::GetInstance().GetByMapID ( pPChar->m_sCurMapID );
 	if ( pNEW_LAND )	pNEW_LAND->DropPC ( pPChar->m_dwGaeaID );
 
 	//	Note : 케릭터 필드 서버에 잔존 점검 메세지.

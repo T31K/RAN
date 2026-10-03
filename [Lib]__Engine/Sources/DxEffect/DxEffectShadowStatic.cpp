@@ -1055,7 +1055,8 @@ HRESULT DxEffectShadow::RenderObjP ( LPDIRECT3DDEVICEQ pd3dDevice, DxFrame* pfra
 		if ( pframeCur->pEffectNext->GetTypeID() == DEF_EFFECT_SHADOW )	goto _RETURN;//return S_OK;
 	}
 
-	DWORD TexFactor = D3DCOLOR_COLORVALUE(m_fShadowP,m_fShadowP,m_fShadowP,m_fShadowP);;
+	DWORD TexFactor;
+	TexFactor = D3DCOLOR_COLORVALUE(m_fShadowP,m_fShadowP,m_fShadowP,m_fShadowP);
 	pd3dDevice->SetRenderState ( D3DRS_TEXTUREFACTOR, TexFactor );
 
 	DWORD dwZWriteEnable, dwFogEnable, dwLighting, dwCullMode;

@@ -388,8 +388,8 @@ HRESULT DxEffectSpecular2::DxAnalysis ( LPDIRECT3DDEVICEQ pd3dDevice, DxMeshes *
 void DxEffectSpecular2::SaveBuffer ( CSerialFile &SFile )
 {
 	//	읽지 않고 스킵용으로 사용됨.
-	SFile << sizeof(DWORD)+sizeof(DXMATERIAL_SPEC2)*m_dwTempMaterials
-			+sizeof(DWORD)+sizeof(DXMATERIAL_SPEC2)*m_dwMaterials;
+	SFile << (DWORD)( sizeof(DWORD)+sizeof(DXMATERIAL_SPEC2)*m_dwTempMaterials
+			+sizeof(DWORD)+sizeof(DXMATERIAL_SPEC2)*m_dwMaterials );
 
 	// Material 저장
 	SFile << m_dwTempMaterials;

@@ -13,6 +13,10 @@ void SMeshContainer::CreateLOD_SMeshNON( IDirect3DDevice9* pd3dDevice, LPD3DXMES
 
 	ID3DXPMesh**	ppPMeshes = NULL;
 	DWORD			cPMeshes = 0;
+	LPD3DXPMESH		pPMesh = NULL;		//	declared before the first goto: End: releases it
+	LPD3DXMESH*		ppMeshs = NULL;		//	and reads it
+	DWORD			cVerticesMin, cVerticesMax, cVerticesPerMesh;
+	int				iPMeshCur;
 
 	//// 인접한 면 찾기.
 	//DWORD* pAdjacencySRC = new DWORD[ 3 * pMesh->GetNumFaces() ];
@@ -47,16 +51,15 @@ void SMeshContainer::CreateLOD_SMeshNON( IDirect3DDevice9* pd3dDevice, LPD3DXMES
 
     // Generate progressive meshes
 
-	LPD3DXPMESH  pPMesh = NULL;
     hr = D3DXGeneratePMesh( pMesh, pAdjacencySRC,
                             NULL, NULL, 1, D3DXMESHSIMP_VERTEX, &pPMesh );
     if( FAILED(hr) )
         goto End;
 
-    DWORD cVerticesMin = pPMesh->GetMinVertices();
-    DWORD cVerticesMax = pPMesh->GetMaxVertices();
+    cVerticesMin = pPMesh->GetMinVertices();
+    cVerticesMax = pPMesh->GetMaxVertices();
 
-    DWORD cVerticesPerMesh = ( cVerticesMax - cVerticesMin + 10 ) / 10;
+    cVerticesPerMesh = ( cVerticesMax - cVerticesMin + 10 ) / 10;
 
     cPMeshes = max( 1, (DWORD)ceil( (cVerticesMax - cVerticesMin + 1) / (float)cVerticesPerMesh ) );
 	cPMeshes = 2;		// 2로 강제 셋팅.
@@ -66,7 +69,7 @@ void SMeshContainer::CreateLOD_SMeshNON( IDirect3DDevice9* pd3dDevice, LPD3DXMES
         hr = E_OUTOFMEMORY;
         goto End;
     }
-	LPD3DXMESH* ppMeshs = new LPD3DXMESH[cPMeshes];
+	ppMeshs = new LPD3DXMESH[cPMeshes];
     SecureZeroMemory( ppPMeshes, sizeof(LPD3DXPMESH) * cPMeshes );
 	SecureZeroMemory( ppMeshs, sizeof(LPD3DXMESH) * cPMeshes );
 
@@ -104,7 +107,7 @@ void SMeshContainer::CreateLOD_SMeshNON( IDirect3DDevice9* pd3dDevice, LPD3DXMES
     }
 
     // Set current to be maximum number of vertices
-    int iPMeshCur = cPMeshes - 1;
+    iPMeshCur = cPMeshes - 1;
     hr = ppPMeshes[iPMeshCur]->SetNumVertices( cVerticesMax );
     if( FAILED(hr) )
         goto End;
@@ -123,8 +126,11 @@ End:
 	SAFE_DELETE_ARRAY( pAdjacencySRC );
 
 	// Note : 2차 작업 시작.~!
-	pLOD_LOW = ppMeshs[0];
-	pLOD_HIGH = ppMeshs[1];
+	if ( ppMeshs )		//	an early goto End leaves no meshes
+	{
+		pLOD_LOW = ppMeshs[0];
+		pLOD_HIGH = ppMeshs[1];
+	}
 
 
 	//for( UINT i = 0; i < cPMeshes; i++ )
@@ -145,6 +151,9 @@ void SMeshContainer::CreateLOD_SMeshCPU( IDirect3DDevice9* pd3dDevice, LPD3DXMES
 	ID3DXPMesh**	ppPMeshes = NULL;
 	DWORD			cPMeshes = 0;
 	LPD3DXPMESH		pPMesh = NULL;
+	LPD3DXMESH*		ppMeshs = NULL;		//	declared before the first goto: End: reads it
+	DWORD			cVerticesMin, cVerticesMax, cVerticesPerMesh;
+	int				iPMeshCur;
 
 	// 인접한 면 찾기.
 	DWORD* pAdjacencySRC = new DWORD[ 3 * _pMesh->GetNumFaces() ];
@@ -187,11 +196,11 @@ void SMeshContainer::CreateLOD_SMeshCPU( IDirect3DDevice9* pd3dDevice, LPD3DXMES
     if( FAILED(hr) )
         goto End;
 
-    DWORD cVerticesMin = pPMesh->GetMinVertices();
-    DWORD cVerticesMax = pPMesh->GetMaxVertices();
+    cVerticesMin = pPMesh->GetMinVertices();
+    cVerticesMax = pPMesh->GetMaxVertices();
 	cVerticesMin = cVerticesMin + (DWORD)( (cVerticesMax-cVerticesMin)*0.3f );
 
-    DWORD cVerticesPerMesh = ( cVerticesMax - cVerticesMin + 10 ) / 10;
+    cVerticesPerMesh = ( cVerticesMax - cVerticesMin + 10 ) / 10;
 
     cPMeshes = max( 1, (DWORD)ceil( (cVerticesMax - cVerticesMin + 1) / (float)cVerticesPerMesh ) );
 	cPMeshes = 2;		// 2로 강제 셋팅.
@@ -201,7 +210,7 @@ void SMeshContainer::CreateLOD_SMeshCPU( IDirect3DDevice9* pd3dDevice, LPD3DXMES
         hr = E_OUTOFMEMORY;
         goto End;
     }
-	LPD3DXMESH* ppMeshs = new LPD3DXMESH[cPMeshes];
+	ppMeshs = new LPD3DXMESH[cPMeshes];
     SecureZeroMemory( ppPMeshes, sizeof(LPD3DXPMESH) * cPMeshes );
 	SecureZeroMemory( ppMeshs, sizeof(LPD3DXMESH) * cPMeshes );
 
@@ -239,7 +248,7 @@ void SMeshContainer::CreateLOD_SMeshCPU( IDirect3DDevice9* pd3dDevice, LPD3DXMES
     }
 
     // Set current to be maximum number of vertices
-    int iPMeshCur = cPMeshes - 1;
+    iPMeshCur = cPMeshes - 1;
     hr = ppPMeshes[iPMeshCur]->SetNumVertices( cVerticesMax );
     if( FAILED(hr) )
         goto End;
@@ -258,8 +267,11 @@ End:
 	SAFE_DELETE_ARRAY( pAdjacencySRC );
 
 	// Note : 2차 작업 시작.~!
-	pLOD_LOW = ppMeshs[0];
-	pLOD_HIGH = ppMeshs[1];
+	if ( ppMeshs )		//	an early goto End leaves no meshes
+	{
+		pLOD_LOW = ppMeshs[0];
+		pLOD_HIGH = ppMeshs[1];
+	}
 
 	SAFE_DELETE_ARRAY( ppMeshs );
 

@@ -392,8 +392,8 @@ HRESULT DxEffectGlow::DxAnalysis ( LPDIRECT3DDEVICEQ pd3dDevice, DxMeshes *pmsMe
 void DxEffectGlow::SaveBuffer ( CSerialFile &SFile )
 {
 	//	읽지 않고 스킵용으로 사용됨.
-	SFile << sizeof(DWORD)+sizeof(DXUSERMATERIAL)*m_dwFrameMaterials
-			+sizeof(DWORD)+sizeof(DXUSERMATERIAL)*m_dwMaterials;
+	SFile << (DWORD)( sizeof(DWORD)+sizeof(DXUSERMATERIAL)*m_dwFrameMaterials
+			+sizeof(DWORD)+sizeof(DXUSERMATERIAL)*m_dwMaterials );
 
 	// Material 저장
 	SFile << m_dwFrameMaterials;

@@ -714,7 +714,8 @@ HRESULT DxEffectParticleSys::FrameMove ( float fTime, float fElapsedTime )
 
 	//	Note : 파티클 업데이트.
 	m_uParticlesAlive = 0;
-	D3DXVECTOR3 *pAttractLoc = NULL;
+	D3DXVECTOR3 *pAttractLoc;
+	pAttractLoc = NULL;
 	if (IsAttractive() )
 	{
 		if ( m_dwFlag&USEPARENTMOVE )		pAttractLoc = &D3DXVECTOR3 ( 0.f, 0.f, 0.f );
@@ -735,7 +736,9 @@ HRESULT DxEffectParticleSys::FrameMove ( float fTime, float fElapsedTime )
 		TARGET_POS	= D3DXVECTOR3(0.f,0.f,0.f);
 	}
 
-	LPPARTICLE pParticleNode = m_pParticleHead, pParticlePrev = NULL;
+	LPPARTICLE pParticleNode, pParticlePrev;
+	pParticleNode = m_pParticleHead;
+	pParticlePrev = NULL;
 	while ( pParticleNode )
 	{
 		if ( pParticleNode->FrameMove ( m_fElapsedTime, pAttractLoc, &vLocal, bFromTo, m_dwFlag ) )
@@ -770,7 +773,8 @@ HRESULT DxEffectParticleSys::FrameMove ( float fTime, float fElapsedTime )
 		}
 	}
 
-	float fParticlesNeeded = m_uParticlesPerSec * m_fElapsedTime + m_fEmissionResidue;
+	float fParticlesNeeded;
+	fParticlesNeeded = m_uParticlesPerSec * m_fElapsedTime + m_fEmissionResidue;
 	m_uParticlesCreated = (DWORD) fParticlesNeeded;
 
 	if ( m_uParticlesCreated >= m_uParticlesPerSec )

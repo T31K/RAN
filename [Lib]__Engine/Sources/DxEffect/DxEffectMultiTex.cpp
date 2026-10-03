@@ -851,12 +851,12 @@ HRESULT	DxEffectMultiTex::ChangeObject ( VERTEX* pSrcVert, VERTEXCOLORTEX2* pDes
 void DxEffectMultiTex::SaveBuffer ( CSerialFile &SFile )
 {
 	//	읽지 않고 스킵용으로 사용됨.
-	SFile << sizeof(DWORD)+sizeof(VERTEX)*m_dwVertices
+	SFile << (DWORD)( sizeof(DWORD)+sizeof(VERTEX)*m_dwVertices
 			+sizeof(VERTEXCOLORTEX2)*m_dwVertices
 			+sizeof(DWORD)+sizeof(WORD)*m_dwFaces*3
 			+sizeof(D3DXVECTOR2)*m_dwVertices
 			+sizeof(DWORD)+sizeof(D3DXATTRIBUTERANGE)*m_dwAttribTableSize
-			+sizeof(DWORD)+sizeof(DXMATERIAL_MULTITEX)*m_cMaterials;
+			+sizeof(DWORD)+sizeof(DXMATERIAL_MULTITEX)*m_cMaterials );
 
 	//	버텍스 버퍼
 	SFile << m_dwVertices;

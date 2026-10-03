@@ -261,8 +261,9 @@ HRESULT DxEffectCamera::FrameMove ( float fTime, float fElapsedTime )
 	if ( m_dwRunFlag&EFF_PLY_RENDPASS )		goto _RETURN;	// 흔들리지 않도록
 
 	float		AddY;
-	D3DXVECTOR3	*pFromPt = &DxViewPort::GetInstance().GetFromPt();
-	D3DXVECTOR3	*pLookatPt = &DxViewPort::GetInstance().GetLookatPt();
+	D3DXVECTOR3	*pFromPt, *pLookatPt;
+	pFromPt = &DxViewPort::GetInstance().GetFromPt();
+	pLookatPt = &DxViewPort::GetInstance().GetLookatPt();
 
 	switch ( m_iCameraSet )
 	{

@@ -1766,13 +1766,16 @@ HRESULT GLChar::MsgReqReGenGate ( NET_MSG_GENERIC* nmg )
 	if ( !pCrow )										goto _REQ_FAIL;
 	if ( pCrow->GETCROW() != CROW_NPC )					goto _REQ_FAIL;
 
-	GLMobSchedule* pMOBSCH = pCrow->GetMobSchedule();
+	GLMobSchedule* pMOBSCH;
+	pMOBSCH = pCrow->GetMobSchedule();
 	if ( !pMOBSCH )										goto _REQ_FAIL;
 
 	if ( pMOBSCH->m_dwPC_REGEN_GATEID == UINT_MAX )		goto _REQ_FAIL;
 
-	DxLandGateMan* pLandGateMan = &m_pLandMan->GetLandGateMan();
-	PDXLANDGATE pLandGate = pLandGateMan->FindLandGate ( pMOBSCH->m_dwPC_REGEN_GATEID );
+	DxLandGateMan* pLandGateMan;
+	PDXLANDGATE pLandGate;
+	pLandGateMan = &m_pLandMan->GetLandGateMan();
+	pLandGate = pLandGateMan->FindLandGate ( pMOBSCH->m_dwPC_REGEN_GATEID );
 	if ( !pLandGate )									goto _REQ_FAIL;
 
 	if ( !(pLandGate->GetFlags()&DxLandGate::GATE_IN) )	goto _REQ_FAIL;
@@ -1813,14 +1816,17 @@ HRESULT GLChar::MsgReqCure ( NET_MSG_GENERIC* nmg )
 	//	Note : 치료가능한 NPC인지 검사 필요.
 	//
 
-	bool bCURE = pCrow->m_pCrowData->m_sNpcTalkDlg.IsCURE();
+	bool bCURE;
+	bCURE = pCrow->m_pCrowData->m_sNpcTalkDlg.IsCURE();
 	if ( !bCURE )										goto _REQ_FAIL;
 
 	// 치료가능한 상태인지 체크
-	SNpcTalk* pTalk = pCrow->m_pCrowData->m_sNpcTalkDlg.GetTalk( pNetMsg->dwGlobalID );
+	SNpcTalk* pTalk;
+	pTalk = pCrow->m_pCrowData->m_sNpcTalkDlg.GetTalk( pNetMsg->dwGlobalID );
 	if ( !pTalk )										goto _REQ_FAIL;
 
-    GLCHARLOGIC* pCharLogic = dynamic_cast<GLCHARLOGIC*>(this);
+    GLCHARLOGIC* pCharLogic;
+	pCharLogic = dynamic_cast<GLCHARLOGIC*>(this);
 	if ( pCharLogic )
 	{
 		if ( !(pTalk->DoTEST ( pCharLogic )) )
@@ -1830,9 +1836,13 @@ HRESULT GLChar::MsgReqCure ( NET_MSG_GENERIC* nmg )
 	}
 
 	// 거리 제한 테스트
-	float fDist = D3DXVec3Length ( &D3DXVECTOR3(m_vPos-pCrow->GetPosition()) );
-	float fTalkRange = (float) (pCrow->GetBodyRadius() + GETBODYRADIUS() + 30);
-	float fTalkableDis = fTalkRange + 20;
+	float fDist, fTalkRange, fTalkableDis;
+	{
+		D3DXVECTOR3 vDist = m_vPos-pCrow->GetPosition();	//	no address-of-temporary (MSVC-only)
+		fDist = D3DXVec3Length ( &vDist );
+	}
+	fTalkRange = (float) (pCrow->GetBodyRadius() + GETBODYRADIUS() + 30);
+	fTalkableDis = fTalkRange + 20;
 
 	if ( fDist>fTalkableDis )							goto _REQ_FAIL;
 
@@ -1874,13 +1884,17 @@ HRESULT GLChar::MsgReqCharReset ( NET_MSG_GENERIC* nmg )
 
 	//	Note : 치료가능한 NPC인지 검사 필요.
 	//
-	bool bRESET = pCrow->m_pCrowData->m_sNpcTalkDlg.IsCHARRESET();
+	bool bRESET;
+	bRESET = pCrow->m_pCrowData->m_sNpcTalkDlg.IsCHARRESET();
 	if ( !bRESET )										goto _REQ_FAIL;
 
 	//	Note : char reset 아이텡 수.
 	//
-	WORD wPosX(0), wPosY(0);
-	bool bITEM = m_cInventory.GetCharResetItem ( wPosX, wPosY );
+	WORD wPosX, wPosY;
+	wPosX = 0;
+	wPosY = 0;
+	bool bITEM;
+	bITEM = m_cInventory.GetCharResetItem ( wPosX, wPosY );
 	if ( !bITEM )
 	{
 		MsgFB.emFB = EMREGEN_CHARRESET_ITEM_FAIL;
@@ -2227,7 +2241,8 @@ HRESULT GLChar::MsgReqNpcItemTrade ( NET_MSG_GENERIC* nmg )
 	if ( !pCrow )										goto _REQ_FAIL;
 	if ( pCrow->GETCROW() != CROW_NPC )					goto _REQ_FAIL;
 
-	SNpcTalk* pTalk = pCrow->m_pCrowData->m_sNpcTalkDlg.GetTalk( pNetMsg->dwGlobalID );
+	SNpcTalk* pTalk;
+	pTalk = pCrow->m_pCrowData->m_sNpcTalkDlg.GetTalk( pNetMsg->dwGlobalID );
 
 	if ( !pTalk )										goto _REQ_FAIL;
 
@@ -2314,7 +2329,8 @@ HRESULT GLChar::MsgReqNpcItemTrade ( NET_MSG_GENERIC* nmg )
 	}
 
 	m_cInventory.InsertItem ( sITEM_NEW, wInsertX, wInsertY );
-	SINVENITEM *pINVENITEM = m_cInventory.GetItem ( wInsertX, wInsertY );
+	SINVENITEM *pINVENITEM;
+	pINVENITEM = m_cInventory.GetItem ( wInsertX, wInsertY );
 	if ( !pINVENITEM ) return E_FAIL;
 
 	//	Note :아이템의 소유 이전 경로 기록.
