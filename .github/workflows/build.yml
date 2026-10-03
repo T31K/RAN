@@ -48,7 +48,7 @@ jobs:
         shell: pwsh
         working-directory: '[Lib]__RanClient'
         run: |
-          $vcx = Get-Content -Raw '[Lib]__RanClient.vcxproj'
+          $vcx = Get-Content -Raw -LiteralPath '[Lib]__RanClient.vcxproj'   # [..] is a wildcard otherwise
           $dirs = ([regex]::Match($vcx, '<AdditionalIncludeDirectories>([^<]*)')).Groups[1].Value -split ';' |
                   Where-Object { $_ -and $_ -notmatch '%\(' }
           $incs = $dirs | ForEach-Object { "/I$_" }
