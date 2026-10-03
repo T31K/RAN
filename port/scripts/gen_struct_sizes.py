@@ -16,6 +16,8 @@ HEADERS = sorted((ROOT / "[Lib]__RanClient/Sources/G-Logic/GLMsg").glob("*.h")) 
     ROOT / "Dependency/NetGlobal/s_NetGlobal.h",
 ]
 OUT = ROOT / "port/tests/golden/struct_list.inc"
+# File-format structs read/written as raw bytes (headers included by struct_sizes.cpp).
+EXTRA = ["FILECONTEXT"]
 
 TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|//[^\n]*|/\*.*?\*/|#[^\n]*|[A-Za-z_]\w*|::|[{};<>()]|\S', re.S)
 
@@ -63,7 +65,7 @@ def main():
             m = re.match(r"// dropped: (\S+)", line)
             if m:
                 drops.add(m.group(1))
-    names = []
+    names = list(EXTRA)
     for h in HEADERS:
         for n in structs_in(h):
             if n not in names:

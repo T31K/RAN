@@ -12,9 +12,9 @@
 #define FC_OFFSET_TYPE			 (0)
 #define FC_OFFSET_NAME			 (sizeof(int))
 #define FC_OFFSET_COMPRESSSIZE	 (sizeof(int)+_MAX_FNAME)
-#define FC_OFFSET_UNCOMPRESSSIZE (sizeof(int)+_MAX_FNAME+sizeof(long))
-#define FC_OFFSET_SUB			 (sizeof(int)+_MAX_FNAME+sizeof(long)*2)
-#define FC_OFFSET_NEXT			 (sizeof(int)+_MAX_FNAME+sizeof(long)*3)
+#define FC_OFFSET_UNCOMPRESSSIZE (sizeof(int)+_MAX_FNAME+sizeof(LONG))
+#define FC_OFFSET_SUB			 (sizeof(int)+_MAX_FNAME+sizeof(LONG)*2)
+#define FC_OFFSET_NEXT			 (sizeof(int)+_MAX_FNAME+sizeof(LONG)*3)
 
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -25,10 +25,10 @@ typedef struct _tagFILECONTEXT
 {
 	int		iType;
 	TCHAR	strName[_MAX_FNAME];
-	long	lCompressSize;
-	long	lUncompressSize;
-	long	lSub;
-	long	lNext;
+	LONG	lCompressSize;
+	LONG	lUncompressSize;
+	LONG	lSub;
+	LONG	lNext;
 
 }FILECONTEXT;
 
@@ -39,12 +39,12 @@ class SFileHandle
 {
 private:
 	FILECONTEXT	m_FileContext;
-	long		m_lSrtPos;
+	LONG		m_lSrtPos;
 
 private:
 	BYTE*		m_pData;
-	long		m_lSize;
-	long		m_lCurPos;
+	LONG		m_lSize;
+	LONG		m_lCurPos;
 
 public:
 	SFileHandle();
@@ -54,8 +54,8 @@ public:
 	inline FILECONTEXT* GetFileContext() { return &m_FileContext; }
 
 public:
-	int Read(void* pBuff,long lSize);
-	int Seek(long lOffset,int iOrigin);
+	int Read(void* pBuff,LONG lSize);
+	int Seek(LONG lOffset,int iOrigin);
 
 	friend class SFileSystem;
 };
@@ -103,8 +103,8 @@ public:
 	SFileHandle* OpenFileForOptimize(const char* strPath);
 	BOOL AddDir(const char* strName);
 	BOOL AddFile(const char* strPath);
-	BOOL AddFile(const char* strName,BYTE* pData,long lSize);
-	BOOL AddFileForOptimize(const char* strName,BYTE* pData,long lCompressSize,long lUncompressSize);
+	BOOL AddFile(const char* strName,BYTE* pData,LONG lSize);
+	BOOL AddFileForOptimize(const char* strName,BYTE* pData,LONG lCompressSize,LONG lUncompressSize);
 	BOOL Remove(const char* strName);
 	BOOL Rename(const char* strName,const char* strRename);
 

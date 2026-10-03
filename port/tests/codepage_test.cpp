@@ -62,6 +62,25 @@ int main()
     CStringW lit(u"abc");
     CHECK(lit.GetLength() == 3 && lit[1] == 'b');
 
+    // Invalid CP949 (real game data has some): replaced, conversion carries on - nothing after
+    // the bad bytes may be lost. "A" + C9 21 (lead byte + ASCII trail) + "B" + FF + "\xC7\xD1" (한).
+    {
+        const char bad[] = "A\xC9!B\xFF\xC7\xD1";
+        WCHAR w[16] = {};
+        const int n = MultiByteToWideChar(CP_ACP, 0, bad, -1, w, 16);
+        CHECK(n == 7);   // A, U+30FB, !, B, U+30FB, 한, NUL
+        CHECK(w[0] == 'A' && w[1] == 0x30FB && w[2] == '!' && w[3] == 'B' && w[4] == 0x30FB && w[5] == 0xD55C && w[6] == 0);
+        // Strict mode reports the error instead.
+        CHECK(MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, bad, -1, w, 16) == 0);
+        CHECK(GetLastError() == ERROR_NO_UNICODE_TRANSLATION);
+        // A character CP949 cannot encode becomes '?' and reports the default char.
+        const WCHAR emoji[] = { 'x', 0xD83D, 0xDE00, 'y', 0 };
+        char mb[16] = {};
+        BOOL usedDefault = FALSE;
+        CHECK(WideCharToMultiByte(CP_ACP, 0, emoji, -1, mb, 16, nullptr, &usedDefault) == 4);
+        CHECK(std::string(mb) == "x?y" && usedDefault == TRUE);
+    }
+
     if (g_failed == 0) std::printf("PASS codepage_test\n");
     return g_failed == 0 ? 0 : 1;
 }

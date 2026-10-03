@@ -30,7 +30,7 @@ SFileHandle::~SFileHandle()
 	if(m_pData) delete[] m_pData;
 }
 
-int SFileHandle::Read(void* pBuff,long lSize)
+int SFileHandle::Read(void* pBuff,LONG lSize)
 {
 	if(!m_pData) return 0;
 
@@ -43,11 +43,11 @@ int SFileHandle::Read(void* pBuff,long lSize)
 	return lSize;
 }
 
-int SFileHandle::Seek(long lOffset,int iOrigin)
+int SFileHandle::Seek(LONG lOffset,int iOrigin)
 {
 	if(!m_pData) return -1;
 
-	long lPos;
+	LONG lPos;
 	switch(iOrigin)
 	{
 	case SEEK_SET: lPos = lOffset;			 break;
@@ -237,7 +237,7 @@ BOOL SFileSystem::NewFileSystem(const char* strPath)
 	StringCchCopy(FileContext.strName,_MAX_FNAME,".");
 	FileContext.lCompressSize = 0;
 	FileContext.lUncompressSize = 0;
-	FileContext.lSub = (long)strlen(FS_HEADER_STR)+1; // 미결 - 분석요망
+	FileContext.lSub = (LONG)strlen(FS_HEADER_STR)+1; // 미결 - 분석요망
 	FileContext.lNext = 0;
 
 	fwrite(FS_HEADER_STR,strlen(FS_HEADER_STR)+1,1,fp);
@@ -362,11 +362,11 @@ SFileHandle* SFileSystem::OpenFile(const char* strPath)
 
 	fseek(m_pFile,(*it)->m_lSrtPos+sizeof(FILECONTEXT),SEEK_SET);
 
-	long lSrcSize = (*it)->m_FileContext.lCompressSize;
+	LONG lSrcSize = (*it)->m_FileContext.lCompressSize;
 	BYTE* pSrcData = new BYTE[lSrcSize];
 	fread(pSrcData,lSrcSize,1,m_pFile);
 
-	long lDstSize = (*it)->m_FileContext.lUncompressSize;
+	LONG lDstSize = (*it)->m_FileContext.lUncompressSize;
 	BYTE* pDstData = new BYTE[lDstSize];
 	if(uncompress(pDstData,(uLongf*)&lDstSize,pSrcData,lSrcSize) != Z_OK)
 	{
@@ -440,7 +440,7 @@ SFileHandle* SFileSystem::OpenFileForOptimize(const char* strPath)
 
 	fseek(m_pFile,(*it)->m_lSrtPos+sizeof(FILECONTEXT),SEEK_SET);
 
-	long lSize = (*it)->m_FileContext.lCompressSize;
+	LONG lSize = (*it)->m_FileContext.lCompressSize;
 	BYTE* pData = new BYTE[lSize];
 	fread(pData,lSize,1,m_pFile);
 
@@ -481,7 +481,7 @@ BOOL SFileSystem::AddDir(const char* strName)
 	if(CheckNameExist(FileContext.strName)) return FALSE;
 
 	fseek(m_pFile,0,SEEK_END);
-	long lNext = ftell(m_pFile);
+	LONG lNext = ftell(m_pFile);
 
 	FileContext.lSub = ftell(m_pFile)+sizeof(FILECONTEXT);
 	fwrite(&FileContext,sizeof(FILECONTEXT),1,m_pFile);
@@ -501,7 +501,7 @@ BOOL SFileSystem::AddDir(const char* strName)
 	SFileHandle* pBFH = m_FileHandleList.back();
 	fseek(m_pFile,pBFH->m_lSrtPos,SEEK_SET);
 	fseek(m_pFile,FC_OFFSET_NEXT,SEEK_CUR);
-	fwrite(&lNext,sizeof(long),1,m_pFile);
+	fwrite(&lNext,sizeof(LONG),1,m_pFile);
 
 	if(!ChangeDir(".")) return FALSE;
 
@@ -517,7 +517,7 @@ BOOL SFileSystem::AddFile(const char* strPath)
 	if(!fp) return FALSE;
 
 	fseek(fp,0,SEEK_END);
-	long lSize = ftell(fp);
+	LONG lSize = ftell(fp);
 	if(!lSize)
 	{
 		fclose(fp);
@@ -543,13 +543,13 @@ BOOL SFileSystem::AddFile(const char* strPath)
 	return TRUE;
 }
 
-BOOL SFileSystem::AddFile(const char* strName,BYTE* pData,long lSize)
+BOOL SFileSystem::AddFile(const char* strName,BYTE* pData,LONG lSize)
 {
 	if(!m_pFile) return FALSE;
 
 	if(lSize <= 0) return TRUE;
 
-	long lDstSize = lSize+12+max(1,(lSize+12)/1000);
+	LONG lDstSize = lSize+12+max(1,(lSize+12)/1000);
 	BYTE* pDstData = new BYTE[lDstSize];
 	if(compress(pDstData,(uLongf*)&lDstSize,pData,lSize) != Z_OK)
 	{
@@ -572,7 +572,7 @@ BOOL SFileSystem::AddFile(const char* strName,BYTE* pData,long lSize)
 	FileContext.lUncompressSize = lSize;
 
 	fseek(m_pFile,0,SEEK_END);
-	long lNext = ftell(m_pFile);
+	LONG lNext = ftell(m_pFile);
 
 	fwrite(&FileContext,sizeof(FILECONTEXT),1,m_pFile);
 	fwrite(pDstData,lDstSize,1,m_pFile);
@@ -594,7 +594,7 @@ BOOL SFileSystem::AddFile(const char* strName,BYTE* pData,long lSize)
 	return TRUE;
 }
 
-BOOL SFileSystem::AddFileForOptimize(const char* strName,BYTE* pData,long lCompressSize,long lUncompressSize)
+BOOL SFileSystem::AddFileForOptimize(const char* strName,BYTE* pData,LONG lCompressSize,LONG lUncompressSize)
 {
 	if(!m_pFile) return FALSE;
 
@@ -611,7 +611,7 @@ BOOL SFileSystem::AddFileForOptimize(const char* strName,BYTE* pData,long lCompr
 	FileContext.lUncompressSize = lUncompressSize;
 
 	fseek(m_pFile,0,SEEK_END);
-	long lNext = ftell(m_pFile);
+	LONG lNext = ftell(m_pFile);
 
 	fwrite(&FileContext,sizeof(FILECONTEXT),1,m_pFile);
 	fwrite(pData,lCompressSize,1,m_pFile);
@@ -641,13 +641,13 @@ BOOL SFileSystem::Remove(const char* strName)
 	{
 		if(!_stricmp(strName,(*it)->m_FileContext.strName))
 		{
-			long lNext = (*it)->m_FileContext.lNext;
+			LONG lNext = (*it)->m_FileContext.lNext;
 
 			--it;
 			(*it)->m_FileContext.lNext = lNext;
 			fseek(m_pFile,(*it)->m_lSrtPos,SEEK_SET);
 			fseek(m_pFile,FC_OFFSET_NEXT,SEEK_CUR);
-			fwrite(&lNext,sizeof(long),1,m_pFile);
+			fwrite(&lNext,sizeof(LONG),1,m_pFile);
 
 			++it;
 			delete (*it);
@@ -673,7 +673,7 @@ BOOL SFileSystem::Rename(const char* strName,const char* strRename)
 		{
 			GetSafeName((*it)->m_FileContext.strName,strRename);
 
-			long lPos = ftell(m_pFile);
+			LONG lPos = ftell(m_pFile);
 			fseek(m_pFile,(*it)->m_lSrtPos+FC_OFFSET_NAME,SEEK_SET);
 			fwrite((*it)->m_FileContext.strName,_MAX_FNAME,1,m_pFile);
 			fseek(m_pFile,lPos,SEEK_SET);
@@ -691,7 +691,7 @@ BOOL SFileSystem::ChangeDir(const char* strPath)
 
 	if(!strPath || !strlen(strPath)) return TRUE;
 
-	long lPos = ftell(m_pFile);
+	LONG lPos = ftell(m_pFile);
 
 	if(m_FileHandleList.size())
 	{
@@ -704,7 +704,7 @@ BOOL SFileSystem::ChangeDir(const char* strPath)
 
 	if(strTemp[0] == '/')
 	{
-		fseek(m_pFile,(long)strlen(FS_HEADER_STR)+1,SEEK_SET);
+		fseek(m_pFile,(LONG)strlen(FS_HEADER_STR)+1,SEEK_SET);
 		StringCchCopy(m_strCurDir,_MAX_PATH,"/");
 	}
 
@@ -729,7 +729,7 @@ BOOL SFileSystem::ChangeDir(const char* strPath)
 	lPos = ftell(m_pFile);
 
 	SFileHandle* pFH;
-	for(long lSrtPos=lPos;lSrtPos;lSrtPos=pFH->m_FileContext.lNext)
+	for(LONG lSrtPos=lPos;lSrtPos;lSrtPos=pFH->m_FileContext.lNext)
 	{
 		pFH = new SFileHandle;
 		fread(&pFH->m_FileContext,sizeof(FILECONTEXT),1,m_pFile);

@@ -6,6 +6,7 @@
 #include "../../../[Lib]__RanClient/framework.h"
 #include "../../../Dependency/NetGlobal/s_NetGlobal.h"
 #include "../../../[Lib]__RanClient/Sources/G-Logic/GLMsg/GLContrlMsg.h"
+#include "../../../[Lib]__Engine/Sources/Common/SFileSystem.h"
 #include <cstdio>
 
 #define RAN_SIZE(T) std::printf("%s %u\n", #T, (unsigned)sizeof(T));
