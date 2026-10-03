@@ -94,9 +94,18 @@ int main()
     CHECK(fs::equivalent(now, root / "Data"));
     SetCurrentDirectory(cwd);
 
-    // GetModuleFileName returns this executable's absolute path.
+    // GetModuleFileName returns this executable's absolute path with Windows separators: the
+    // game finds its folder with ReverseFind('\\') (CBasicApp::SetAppPath). ResolvePath maps it back.
     char exe[1024];
-    CHECK(GetModuleFileName(nullptr, exe, sizeof(exe)) > 0 && exe[0] == '/');
+    CHECK(GetModuleFileName(nullptr, exe, sizeof(exe)) > 0 && exe[0] == '\\');
+    CHECK(std::strchr(exe, '/') == nullptr);
+    CHECK(ran_compat::PathExists(ran_compat::ResolvePath(exe)));
+    // RAN_GAME_DIR points the game at a client data folder: the module is "<dir>\Game.exe".
+    setenv("RAN_GAME_DIR", root.c_str(), 1);
+    CHECK(GetModuleFileName(nullptr, exe, sizeof(exe)) > 0);
+    const std::string expectExe = ran_compat::ResolvePath(exe);
+    CHECK(expectExe == root.string() + "/Game.exe");
+    unsetenv("RAN_GAME_DIR");
 
     // CFileFind over a directory with backslash pattern (screenshot-name probing in DxGrapUtils).
     WriteText(root / "Data" / "shot001.jpg", "a");

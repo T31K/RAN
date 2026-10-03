@@ -73,6 +73,9 @@ typedef struct linger    LINGER;
 #define WSA_WAIT_FAILED     WAIT_FAILED
 #define WSA_INFINITE        INFINITE
 #define WSA_INVALID_EVENT   ((WSAEVENT)nullptr)
+#define WSA_INVALID_HANDLE      6
+#define WSA_NOT_ENOUGH_MEMORY   8
+#define WSA_INVALID_PARAMETER   87
 #define WSADESCRIPTION_LEN  256
 #define WSASYS_STATUS_LEN   128
 

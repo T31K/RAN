@@ -21,11 +21,6 @@
 [Lib]__MfcEx/Sources/ExLibs/Separator.cpp
 [Lib]__MfcEx/Sources/ExLibs/StColor.cpp
 [Lib]__MfcEx/Sources/ExLibs/ToolBarEx.cpp
-# The Windows app shell (MFC CWinApp/CWnd main window, message pump, D3D window glue). The
-# native build replaces it with an SDL3 main that drives the same engine frame loop (Phase 2).
-[Client]__Game/Sources/Basic.cpp
-[Client]__Game/Sources/BasicWnd.cpp
-[Client]__Game/Sources/BasicWndD3d.cpp
 # Anti-cheat / anti-debug (GameGuard-era Protection). Compiled out on macOS per the plan.
 [Client]__Game/Sources/Protection.cpp
 # BugTrap/SEH crash-handler hookup and minidump writer. Native crash reporting is a signal
@@ -45,6 +40,8 @@
 [Lib]__EngineUI/Sources/RanXML.cpp
 [Lib]__NetClient/Sources/minUuid.cpp
 [Lib]__NetClient/Sources/s_CPatch.cpp
+# minizip's Win32 file backend; the native build uses minizip's portable ioapi.c.
+[Lib]__ZLib/Sources/iowin32.c
 # Microsoft's DXUT sample framework (device enumeration, sample GUI, sample mesh/camera helpers).
 # The game runs its own CD3DApplication loop and only calls two DXUT functions:
 # DXUTGetD3DDevice (DxSkinMesh9.cpp) and DXUTGetHWNDDeviceFullScreen (d3dapp.cpp). The Phase 2

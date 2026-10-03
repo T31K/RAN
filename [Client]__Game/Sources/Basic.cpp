@@ -378,14 +378,16 @@ int CBasicApp::Run()
 
 	PeekMessage( &msg, NULL, 0, 0, PM_NOREMOVE );
 
+#ifdef _WIN32	// anti-debug protection is Windows-only (not part of the native macOS build)
 	CProtection& cProtection = CProtection::GetInstance();
 
 	cProtection.Init();
+#endif
 
 	while( WM_QUIT != msg.message )
 	{
 
-#if defined(NDEBUG)	
+#if defined(NDEBUG) && defined(_WIN32)
 		// software breakpoint check
 		if (cProtection.Pesudo_IsDebuggerPresent())	
 		{

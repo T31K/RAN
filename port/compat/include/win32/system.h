@@ -268,7 +268,18 @@ inline LRESULT SendMessageTimeout(HWND h, UINT m, WPARAM w, LPARAM l, UINT f, UI
 }
 #define PM_NOREMOVE 0x0000
 #define PM_REMOVE   0x0001
-inline BOOL PeekMessage(MSG*, HWND, UINT, UINT, UINT) { return FALSE; }   // Phase 2: SDL event loop
+namespace ran_compat {
+    // Installed by the platform layer: pumps SDL events into the game and reports at most one
+    // Win32-style message back (WM_QUIT when the app should exit). wait = block for an event
+    // (GetMessage while the game is inactive), remove = PM_REMOVE.
+    inline BOOL (*&MessageHook())(MSG* msg, BOOL wait, BOOL remove) { static BOOL (*hook)(MSG*, BOOL, BOOL) = nullptr; return hook; }
+}
+inline BOOL PeekMessage(MSG* msg, HWND, UINT, UINT, UINT flags)
+{
+    if (ran_compat::MessageHook()) return ran_compat::MessageHook()(msg, FALSE, (flags & PM_REMOVE) != 0);
+    if (msg) std::memset(msg, 0, sizeof(*msg));
+    return FALSE;
+}
 #define PeekMessageA PeekMessage
 // Clipboard: Phase 2 maps it onto SDL_GetClipboardText / SDL_SetClipboardText.
 #define CF_TEXT 1
@@ -298,6 +309,18 @@ inline UINT WinExec(const char*, UINT) { return 2; }   // ERROR_FILE_NOT_FOUND: 
 inline int SetBkMode(HDC, int) { return 0; }
 inline BOOL MoveWindow(HWND, int, int, int, int, BOOL) { return FALSE; }
 inline BOOL ClipCursor(const RECT*) { return TRUE; }   // Phase 2: SDL mouse grab
+inline BOOL GetClipCursor(RECT* r) { if (r) SetRectEmpty(r); return TRUE; }
+inline BOOL IsIconic(HWND) { return FALSE; }
+inline BOOL IsZoomed(HWND) { return FALSE; }
+typedef void* HTASK;
+#define CS_VREDRAW  0x0001
+#define CS_HREDRAW  0x0002
+#define CS_DBLCLKS  0x0008
+#define CS_OWNDC    0x0020
+inline BOOL UnregisterClass(const char*, HINSTANCE) { return TRUE; }
+#define UnregisterClassA UnregisterClass
+inline HWND FindWindow(const char*, const char*) { return nullptr; }   // no other game windows to find
+#define FindWindowA FindWindow
 #define EM_SETSEL       0x00B1
 #define EM_LIMITTEXT    0x00C5
 #define CB_GETITEMDATA  0x0150
@@ -495,7 +518,15 @@ inline BOOL DestroyWindow(HWND) { return TRUE; }
 inline HMENU GetMenu(HWND) { return nullptr; }
 inline BOOL DestroyMenu(HMENU) { return TRUE; }
 inline BOOL SetMenu(HWND, HMENU) { return FALSE; }
-inline BOOL GetMessage(MSG* msg, HWND, UINT, UINT) { if (msg) { std::memset(msg, 0, sizeof(*msg)); msg->message = WM_QUIT; } return FALSE; }
+inline BOOL GetMessage(MSG* msg, HWND, UINT, UINT)
+{
+    if (ran_compat::MessageHook()) {
+        ran_compat::MessageHook()(msg, TRUE, TRUE);
+        return msg && msg->message != WM_QUIT;
+    }
+    if (msg) { std::memset(msg, 0, sizeof(*msg)); msg->message = WM_QUIT; }
+    return FALSE;
+}
 #define GetMessageA GetMessage
 inline BOOL TranslateMessage(const MSG*) { return FALSE; }
 inline LRESULT DispatchMessage(const MSG*) { return 0; }

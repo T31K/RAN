@@ -234,7 +234,7 @@ void GLCrow::SetPosition ( D3DXVECTOR3 &vPos )
 	return;
 }
 
-inline HRESULT GLCrow::MoveTo ( const D3DXVECTOR3 &vTarPos )
+HRESULT GLCrow::MoveTo ( const D3DXVECTOR3 &vTarPos )
 {
 	if ( m_pCrowData->IsPosHold() )		return S_FALSE;
 

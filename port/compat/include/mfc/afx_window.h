@@ -19,7 +19,12 @@ public:
     virtual ~CObject() = default;
 };
 
-class CCmdTarget : public CObject {};
+// Message-map hook (see BEGIN_MESSAGE_MAP in afx_all.h): FALSE = not handled.
+class CCmdTarget : public CObject
+{
+public:
+    virtual BOOL ran_OnMsg(UINT, WPARAM, LPARAM, LRESULT*) { return FALSE; }
+};
 
 class CFont;
 class CDC;
@@ -34,8 +39,29 @@ public:
     operator HWND() const { return m_hWnd; }
 
     virtual BOOL Create(const char*, const char*, DWORD, const RECT&, CWnd*, UINT, void* = nullptr) { return FALSE; }
+    // The game's main window: created by the platform layer (an SDL3 window; with DXVK-native
+    // the SDL_Window* is the HWND D3D9 presents to). Without a hook there is no window.
+    static HWND (*&CreateMainWindowHook())(const char* title, int x, int y, int w, int h, DWORD style)
+    {
+        static HWND (*hook)(const char*, int, int, int, int, DWORD) = nullptr;
+        return hook;
+    }
+    BOOL CreateEx(DWORD, const char*, const char* title, DWORD style, int x, int y, int w, int h, HWND, HMENU, void* = nullptr)
+    {
+        if (!CreateMainWindowHook()) return FALSE;
+        m_hWnd = CreateMainWindowHook()(title, x, y, w, h, style);
+        if (m_hWnd) MainWindow() = this;
+        return m_hWnd != nullptr;
+    }
+    // The CWnd that owns the platform window (receives the translated SDL events).
+    static CWnd*& MainWindow() { static CWnd* wnd = nullptr; return wnd; }
     virtual BOOL DestroyWindow() { m_hWnd = nullptr; return TRUE; }
-    virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam) { return DefWindowProc(message, wParam, lParam); }
+    virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
+    {
+        LRESULT result = 0;
+        if (OnWndMsg(message, wParam, lParam, &result)) return result;
+        return DefWindowProc(message, wParam, lParam);
+    }
     virtual LRESULT DefWindowProc(UINT, WPARAM, LPARAM) { return 0; }
     virtual BOOL PreTranslateMessage(MSG*) { return FALSE; }
 
@@ -105,6 +131,26 @@ protected:
     afx_msg int OnCreate(void*) { return 0; }
     afx_msg void OnDestroy() {}
     afx_msg void OnTimer(UINT_PTR) {}
+    // Window-shell handlers the game's CBasicWnd chains to; the platform layer calls the game's
+    // overrides directly from SDL window events.
+    afx_msg void OnSize(UINT, int, int) {}
+    afx_msg void OnSysCommand(UINT, LPARAM) {}
+    afx_msg void OnActivate(UINT, CWnd*, BOOL) {}
+    afx_msg BOOL OnNcActivate(BOOL) { return TRUE; }
+    afx_msg void OnGetMinMaxInfo(MINMAXINFO*) {}
+    afx_msg void OnMouseMove(UINT, CPoint) {}
+    afx_msg void OnActivateApp(BOOL, DWORD) {}
+    afx_msg void OnActivateApp(BOOL, HTASK) {}
+    afx_msg BOOL OnSetCursor(CWnd*, UINT, UINT) { return FALSE; }
+    // MFC: OnWndMsg dispatches through the message map (games override it and chain here).
+    virtual BOOL OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT* result)
+    {
+        LRESULT r = 0;
+        const BOOL handled = ran_OnMsg(message, wParam, lParam, &r);
+        if (result) *result = r;
+        return handled;
+    }
+    virtual void PostNcDestroy() {}
 
     CString m_strText;
 };
@@ -118,13 +164,38 @@ public:
     virtual BOOL PumpMessage() { return ran_PumpMessageHook() ? ran_PumpMessageHook()() : TRUE; }
     static BOOL (*&ran_PumpMessageHook())() { static BOOL (*hook)() = nullptr; return hook; }
 };
+// As in MFC, the one global application object registers itself on construction and
+// AfxGetApp() returns it (the game's `CBasicApp theApp`). The platform main calls
+// InitInstance / OnIdle / ExitInstance on it.
+class CWinApp;
+namespace ran_compat { inline CWinApp*& CurrentApp() { static CWinApp* app = nullptr; return app; } }
 class CWinApp : public CWinThread
 {
 public:
+    CWinApp() { ran_compat::CurrentApp() = this; }
+    virtual ~CWinApp() { if (ran_compat::CurrentApp() == this) ran_compat::CurrentApp() = nullptr; }
     const char* m_pszAppName = "RanOnline";
     HINSTANCE m_hInstance = nullptr;
+    char* m_lpCmdLine = const_cast<char*>("");
+    virtual BOOL InitInstance() { return TRUE; }
+    virtual int ExitInstance() { return 0; }
+    virtual BOOL OnIdle(LONG) { return FALSE; }
+    virtual int Run() { return 0; }
+    afx_msg void OnHelp() {}
+    HICON LoadIcon(UINT) const { return nullptr; }
+    HICON LoadIcon(const char*) const { return nullptr; }
 };
-inline CWinApp* AfxGetApp() { static CWinApp app; return &app; }
+inline CWinApp* AfxGetApp()
+{
+    if (!ran_compat::CurrentApp()) { static CWinApp fallback; }   // registers itself
+    return ran_compat::CurrentApp();
+}
+inline void AfxEnableControlContainer() {}
+inline const char* AfxGetAppName() { return AfxGetApp()->m_pszAppName; }
+inline const char* AfxRegisterWndClass(UINT, HCURSOR = nullptr, HBRUSH = nullptr, HICON = nullptr) { return "RanOnlineWnd"; }
+#ifndef ID_HELP
+#define ID_HELP 0xE146
+#endif
 inline CWnd* AfxGetMainWnd() { return AfxGetApp()->m_pMainWnd; }
 
 class CEdit : public CWnd

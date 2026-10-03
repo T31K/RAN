@@ -61,28 +61,44 @@ inline HINSTANCE AfxGetResourceHandle() { return AfxGetInstanceHandle(); }
 #define ASSERT_VALID(p) ((void)0)
 #define DEBUG_NEW new
 
-// MFC runtime-class and message-map macros. They wire MFC window/dialog classes into MFC's
-// message routing, which the SDL3 platform layer replaces (Phase 2); here they expand to nothing.
 #define DECLARE_DYNAMIC(c)
 #define DECLARE_DYNCREATE(c)
 #define DECLARE_SERIAL(c)
 #define IMPLEMENT_DYNAMIC(c, b)
 #define IMPLEMENT_DYNCREATE(c, b)
 #define IMPLEMENT_SERIAL(c, b, s)
-#define DECLARE_MESSAGE_MAP()
-#define BEGIN_MESSAGE_MAP(c, b)
-#define END_MESSAGE_MAP()
-// Message-map entries: the native build routes input through the Phase 2 platform layer.
-#define ON_WM_PAINT()
-#define ON_WM_CHAR()
-#define ON_WM_SETFOCUS()
-#define ON_WM_KILLFOCUS()
-#define ON_WM_KEYDOWN()
-#define ON_WM_KEYUP()
+
+// MFC message maps, as a switch: BEGIN_MESSAGE_MAP defines Class::ran_OnMsg, each entry is a
+// case that calls the class's handler (MFC's argument cracking), and unhandled messages chain
+// to the base class. CWnd::WindowProc / SendMessage route through it, so the platform layer
+// delivers WM_ACTIVATEAPP, WM_SIZE, WM_KEYDOWN, WM_CHAR... to the game's own handlers.
+// (An entry may appear once per map; ON_COMMAND is not routed - no menus/commands natively.)
+#define DECLARE_MESSAGE_MAP() \
+    public: BOOL ran_OnMsg(UINT ranMsg_, WPARAM ranW_, LPARAM ranL_, LRESULT* ranRes_) override;
+#define BEGIN_MESSAGE_MAP(theClass, baseClass) \
+    BOOL theClass::ran_OnMsg(UINT ranMsg_, WPARAM ranW_, LPARAM ranL_, LRESULT* ranRes_) \
+    { typedef baseClass ranBase_; (void)ranW_; (void)ranL_; *ranRes_ = 0; switch (ranMsg_) { default: break;
+#define END_MESSAGE_MAP() \
+    } return ranBase_::ran_OnMsg(ranMsg_, ranW_, ranL_, ranRes_); }
+#define ON_WM_PAINT()       case WM_PAINT:      OnPaint(); return TRUE;
+#define ON_WM_CHAR()        case WM_CHAR:       OnChar((UINT)ranW_, (UINT)(ranL_ & 0xFFFF), (UINT)(ranL_ >> 16)); return TRUE;
+#define ON_WM_KEYDOWN()     case WM_KEYDOWN:    OnKeyDown((UINT)ranW_, (UINT)(ranL_ & 0xFFFF), (UINT)(ranL_ >> 16)); return TRUE;
+#define ON_WM_KEYUP()       case WM_KEYUP:      OnKeyUp((UINT)ranW_, (UINT)(ranL_ & 0xFFFF), (UINT)(ranL_ >> 16)); return TRUE;
+#define ON_WM_SETFOCUS()    case WM_SETFOCUS:   OnSetFocus(nullptr); return TRUE;
+#define ON_WM_KILLFOCUS()   case WM_KILLFOCUS:  OnKillFocus(nullptr); return TRUE;
+#define ON_WM_SIZE()        case WM_SIZE:       OnSize((UINT)ranW_, (int)(short)(ranL_ & 0xFFFF), (int)(short)((ranL_ >> 16) & 0xFFFF)); return TRUE;
+#define ON_WM_TIMER()       case WM_TIMER:      OnTimer((UINT)ranW_); return TRUE;
+#define ON_WM_ACTIVATEAPP() case WM_ACTIVATEAPP: OnActivateApp((BOOL)ranW_, 0); return TRUE;
+#define ON_WM_ACTIVATE()    case WM_ACTIVATE:   OnActivate((UINT)(ranW_ & 0xFFFF), nullptr, (BOOL)((ranW_ >> 16) & 0xFFFF)); return TRUE;
+#define ON_WM_SETCURSOR()   case WM_SETCURSOR:  *ranRes_ = OnSetCursor(nullptr, (UINT)(ranL_ & 0xFFFF), (UINT)(ranL_ >> 16)); return TRUE;
+#define ON_WM_MOUSEMOVE()   case WM_MOUSEMOVE:  OnMouseMove((UINT)ranW_, CPoint((int)(short)(ranL_ & 0xFFFF), (int)(short)((ranL_ >> 16) & 0xFFFF))); return TRUE;
+#define ON_WM_GETMINMAXINFO() case WM_GETMINMAXINFO: OnGetMinMaxInfo((MINMAXINFO*)ranL_); return TRUE;
+#define ON_WM_NCACTIVATE()  case WM_NCACTIVATE: *ranRes_ = OnNcActivate((BOOL)ranW_); return TRUE;
+#define ON_WM_SYSCOMMAND()  case WM_SYSCOMMAND: OnSysCommand((UINT)ranW_, ranL_); return TRUE;
 #define ON_WM_CREATE()
-#define ON_WM_DESTROY()
-#define ON_WM_SIZE()
-#define ON_WM_TIMER()
+#define ON_WM_DESTROY()     case WM_DESTROY:    OnDestroy(); return TRUE;
+#define ON_MESSAGE(msg, fn) case msg:           *ranRes_ = fn(ranW_, ranL_); return TRUE;
+#define ON_COMMAND(id, fn)
 #define RUNTIME_CLASS(c) nullptr
 #define DECLARE_EVENTSINK_MAP()
 #define BEGIN_EVENTSINK_MAP(c, b)

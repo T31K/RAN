@@ -28,6 +28,9 @@ while IFS= read -r d; do INCS+=("-I$d"); done < "$CACHE"
 # (Homebrew unixODBC; headers only - the client never opens a database). Searched last.
 ODBC_INC="$(brew --prefix unixodbc 2>/dev/null)/include"
 [ -d "$ODBC_INC" ] && INCS+=("-idirafter" "$ODBC_INC")
+# SDL3 for the platform layer (port/platform); searched last so it never shadows game headers.
+SDL_INC="$(brew --prefix sdl3 2>/dev/null)/include"
+[ -d "$SDL_INC" ] && INCS+=("-idirafter" "$SDL_INC")
 LANG_FLAG=()
 case "$FILE" in *.h) LANG_FLAG=(-x c++-header) ;; esac
 # No -fms-compatibility: it hides __GNUC__ and breaks Apple's SDK headers. MSVC-only C++ in the
@@ -36,6 +39,10 @@ case "$FILE" in *.h) LANG_FLAG=(-x c++-header) ;; esac
 # WCHAR is char16_t instead (2 bytes, same layout as Windows).
 # C++14 like the Windows build (VS2022 v143 default; no LanguageStandard in the .vcxproj files).
 # That also keeps std::auto_ptr/random_shuffle and avoids std::byte clashing with the game's byte.
-clang++ ${LANG_FLAG[@]+"${LANG_FLAG[@]}"} -std=c++14 -fsyntax-only -fms-extensions -fdeclspec \
+# RAN_OBJ_OUT=<file.o>: build object code instead (port/scripts/build_native.sh), with the
+# Release defines of the shipped Win32 build.
+MODE=(-fsyntax-only)
+[ -n "${RAN_OBJ_OUT:-}" ] && MODE=(-c -o "$RAN_OBJ_OUT" -O1 -g0 -DNDEBUG -D_LIB)
+clang++ ${LANG_FLAG[@]+"${LANG_FLAG[@]}"} -std=c++14 "${MODE[@]}" -fms-extensions -fdeclspec \
   -Wno-everything -ferror-limit="$LIMIT" \
   "${INCS[@]}" "$FILE"

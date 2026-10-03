@@ -12,7 +12,7 @@ namespace BUG_TRAP
 	//! bUseEmail : e-mail 리포팅을 받을 것인가?
 	//! bUserScreenCapture : Screen Capture 를 첨부해서 받을 것인가?
 	void BugTrapInstall(
-			std::string& strAppName,
+			const std::string& strAppName,
 			bool bUseEmail = true,
 			bool bUseScreenCapture = true );
 

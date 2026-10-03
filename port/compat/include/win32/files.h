@@ -219,17 +219,27 @@ inline DWORD GetCurrentDirectory(DWORD size, char* buf)
 inline BOOL SetCurrentDirectory(const char* path) { return ::chdir(ran_compat::ResolvePath(path).c_str()) == 0 ? TRUE : FALSE; }
 #define SetCurrentDirectoryA SetCurrentDirectory
 
+// The executable's path, spelled with Windows separators: the game locates its folder with
+// ReverseFind('\\') and appends "\\data\\..." (ResolvePath turns it back into a POSIX path).
+// RAN_GAME_DIR=<client folder> makes the module "<dir>\Game.exe", so the native binary can run
+// against a client data folder that is not next to it.
 inline DWORD GetModuleFileName(HMODULE, char* buf, DWORD size)
 {
-    char tmp[4096];
-    uint32_t len = sizeof(tmp);
-    if (_NSGetExecutablePath(tmp, &len) != 0) return 0;
-    char real[4096];
-    const char* path = ::realpath(tmp, real) ? real : tmp;
-    const size_t n = std::strlen(path);
+    std::string path;
+    if (const char* dir = std::getenv("RAN_GAME_DIR")) {
+        path = std::string(dir) + "/Game.exe";
+    } else {
+        char tmp[4096];
+        uint32_t len = sizeof(tmp);
+        if (_NSGetExecutablePath(tmp, &len) != 0) return 0;
+        char real[4096];
+        path = ::realpath(tmp, real) ? real : tmp;
+    }
+    for (char& c : path) if (c == '/') c = '\\';
+    const size_t n = path.size();
     if (!buf || size == 0) return 0;
     const size_t copy = n < size - 1 ? n : size - 1;
-    std::memcpy(buf, path, copy);
+    std::memcpy(buf, path.data(), copy);
     buf[copy] = 0;
     return (DWORD)copy;
 }

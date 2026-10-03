@@ -11,7 +11,7 @@
 using namespace BUG_TRAP;
 
 void BUG_TRAP::BugTrapInstall(
-	std::string& strAppName,
+	const std::string& strAppName,
 	bool bUseEmail,
 	bool bUseScreenCapture )
 {
