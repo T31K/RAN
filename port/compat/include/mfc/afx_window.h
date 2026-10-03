@@ -65,12 +65,25 @@ public:
     void MoveWindow(const RECT*, BOOL = TRUE) {}
     BOOL SetWindowPos(const CWnd*, int, int, int, int, UINT) { return FALSE; }
     void GetClientRect(RECT* r) const { if (r) SetRectEmpty(r); }
+    void ScreenToClient(POINT*) const {}
+    void ScreenToClient(RECT*) const {}
+    void ClientToScreen(POINT*) const {}
+    void ClientToScreen(RECT*) const {}
     void GetWindowRect(RECT* r) const { if (r) SetRectEmpty(r); }
     void Invalidate(BOOL = TRUE) {}
     void UpdateWindow() {}
     CWnd* GetDlgItem(int) const { return nullptr; }
     DWORD GetStyle() const { return 0; }
     BOOL ModifyStyle(DWORD, DWORD, UINT = 0) { return FALSE; }
+    // ActiveX hosting (the embedded IE browser in Engine Common/CommonWeb). No control is ever
+    // created natively, so in-game web pages stay blank until a WKWebView replacement exists.
+    BOOL CreateControl(REFCLSID, const char*, DWORD, const RECT&, CWnd*, UINT, void* = nullptr, BOOL = FALSE, BSTR = nullptr) { return FALSE; }
+    void InvokeHelper(LONG /*dispid*/, WORD /*flags*/, WORD /*vtRet*/, void* ret, const BYTE* /*params*/, ...)
+    {
+        (void)ret;   // results keep their caller-initialised values
+    }
+    void GetProperty(LONG, WORD, void*) const {}
+    void SetProperty(LONG, WORD, ...) {}
     UINT_PTR SetTimer(UINT_PTR id, UINT, void*) { return id; }
     BOOL KillTimer(UINT_PTR) { return TRUE; }
     CDC* GetDC() { return nullptr; }
@@ -93,6 +106,10 @@ protected:
 class CEdit : public CWnd
 {
 public:
+    // MFC CEdit::Create(style, rect, parent, id). Reports success: the game's CIMEEdit must
+    // initialise, and the Phase 2 platform layer feeds it input instead of a Win32 edit box.
+    BOOL Create(DWORD, const RECT&, CWnd*, UINT) { return TRUE; }
+    using CWnd::Create;
     void SetSel(int, int, BOOL = FALSE) {}
     void GetSel(int& start, int& end) const { start = end = 0; }
     void ReplaceSel(const char*, BOOL = FALSE) {}

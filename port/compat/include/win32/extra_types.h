@@ -55,6 +55,42 @@ typedef GUID*       LPGUID;
 typedef IUnknown*   LPUNKNOWN;
 typedef GUID        CLSID;
 typedef CLSID*      LPCLSID;
+typedef WCHAR*      BSTR;
+
+// OLE automation interface (declared by the web-browser and Daum crypt paths).
+#ifndef __IDispatch_INTERFACE_DEFINED__
+#define __IDispatch_INTERFACE_DEFINED__
+struct IDispatch : public IUnknown
+{
+    virtual HRESULT STDMETHODCALLTYPE GetTypeInfoCount(UINT* count) = 0;
+    virtual HRESULT STDMETHODCALLTYPE GetTypeInfo(UINT index, LCID lcid, void** info) = 0;
+    virtual HRESULT STDMETHODCALLTYPE GetIDsOfNames(REFIID riid, WCHAR** names, UINT count, LCID lcid, LONG* ids) = 0;
+    virtual HRESULT STDMETHODCALLTYPE Invoke(LONG id, REFIID riid, LCID lcid, WORD flags, void* params,
+                                             void* result, void* excepInfo, UINT* argErr) = 0;
+};
+#endif
+typedef IDispatch* LPDISPATCH;
+
+// Structured exception handling records (the crash handler's signature types).
+typedef struct _EXCEPTION_RECORD {
+    DWORD ExceptionCode, ExceptionFlags;
+    struct _EXCEPTION_RECORD* ExceptionRecord;
+    void* ExceptionAddress;
+    DWORD NumberParameters;
+    ULONG_PTR ExceptionInformation[15];
+} EXCEPTION_RECORD, *PEXCEPTION_RECORD;
+typedef struct _CONTEXT { DWORD ContextFlags; } CONTEXT, *PCONTEXT;
+typedef struct _EXCEPTION_POINTERS { PEXCEPTION_RECORD ExceptionRecord; PCONTEXT ContextRecord; } EXCEPTION_POINTERS, *PEXCEPTION_POINTERS, *LPEXCEPTION_POINTERS;
+
+// OLE VARIANT (only declared by the game's web-browser/COM paths).
+typedef struct tagVARIANT {
+    WORD vt;
+    WORD wReserved1, wReserved2, wReserved3;
+    union { LONG lVal; BYTE bVal; SHORT iVal; FLOAT fltVal; DOUBLE dblVal; BSTR bstrVal; void* byref; LONGLONG llVal; };
+} VARIANT, *LPVARIANT;
+#define VT_EMPTY 0
+#define VT_I4    3
+#define VT_BSTR  8
 
 typedef struct _FILETIME { DWORD dwLowDateTime; DWORD dwHighDateTime; } FILETIME, *PFILETIME, *LPFILETIME;
 typedef struct _SYSTEMTIME {

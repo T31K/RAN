@@ -21,6 +21,12 @@
 [Lib]__MfcEx/Sources/ExLibs/Separator.cpp
 [Lib]__MfcEx/Sources/ExLibs/StColor.cpp
 [Lib]__MfcEx/Sources/ExLibs/ToolBarEx.cpp
-# Embedded Internet Explorer control (ActiveX). Its one user, Engine Common/CommonWeb.h
-# (in-game web pages), needs a native replacement (WKWebView) or to be switched off - Phase 3/4.
-[Lib]__MfcEx/Sources/ExLibs/webbrowser2.cpp
+# The Windows app shell (MFC CWinApp/CWnd main window, message pump, D3D window glue). The
+# native build replaces it with an SDL3 main that drives the same engine frame loop (Phase 2).
+[Client]__Game/Sources/Basic.cpp
+[Client]__Game/Sources/BasicWnd.cpp
+[Client]__Game/Sources/BasicWndD3d.cpp
+# Anti-cheat / anti-debug (GameGuard-era Protection). Compiled out on macOS per the plan.
+[Client]__Game/Sources/Protection.cpp
+# BugTrap/SEH crash-handler hookup. Native crash reporting is a signal handler (plan Phase 4).
+[Client]__Game/Sources/ExceptionAttacher.cpp

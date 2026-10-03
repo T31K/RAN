@@ -45,8 +45,6 @@ public:
     // `return NULL;` from a CString function: NULL is a long-sized __null here, and MSVC treats it
     // as a null LPCTSTR (empty string). Only a null value is meaningful.
     CString(long nullValue) { assert(nullValue == 0); (void)nullValue; }
-    // MSVC lets a CString initialize a std::string through its LPCTSTR conversion.
-    operator std::string() const { return m_str; }
 
     int GetLength() const { return (int)m_str.size(); }
     bool IsEmpty() const { return m_str.empty(); }
@@ -240,6 +238,7 @@ public:
     friend bool operator==(const char* a, const CString& b) { return b.m_str == a; }
     friend bool operator!=(const CString& a, const CString& b) { return a.m_str != b.m_str; }
     friend bool operator!=(const CString& a, const char* b) { return a.m_str != b; }
+    friend bool operator!=(const char* a, const CString& b) { return b.m_str != a; }
     friend bool operator<(const CString& a, const CString& b) { return a.m_str < b.m_str; }
     friend bool operator>(const CString& a, const CString& b) { return a.m_str > b.m_str; }
 

@@ -5,22 +5,8 @@
 #pragma once
 #include "ran_compat.h"
 
-typedef WCHAR* BSTR;
-
 #ifndef MIDL_INTERFACE
 #define MIDL_INTERFACE(uuid) struct
-#endif
-
-#ifndef __IDispatch_INTERFACE_DEFINED__
-#define __IDispatch_INTERFACE_DEFINED__
-struct IDispatch : public IUnknown
-{
-    virtual HRESULT STDMETHODCALLTYPE GetTypeInfoCount(UINT* count) = 0;
-    virtual HRESULT STDMETHODCALLTYPE GetTypeInfo(UINT index, LCID lcid, void** info) = 0;
-    virtual HRESULT STDMETHODCALLTYPE GetIDsOfNames(REFIID riid, WCHAR** names, UINT count, LCID lcid, LONG* ids) = 0;
-    virtual HRESULT STDMETHODCALLTYPE Invoke(LONG id, REFIID riid, LCID lcid, WORD flags, void* params,
-                                             void* result, void* excepInfo, UINT* argErr) = 0;
-};
 #endif
 
 const IID IID_IEncrypt =    {0x40E692F5,0xCC5D,0x4609,{0x94,0x8D,0x09,0x88,0x12,0x5F,0xF8,0xB4}};

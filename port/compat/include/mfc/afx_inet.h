@@ -107,6 +107,15 @@ public:
     void Close() {}
 };
 
+class CFtpConnection : public CObject
+{
+public:
+    BOOL GetFile(const char*, const char*, BOOL = TRUE, DWORD = 0, DWORD = 0, DWORD_PTR = 1) { return FALSE; }
+    BOOL PutFile(const char*, const char*, DWORD = 0, DWORD_PTR = 1) { return FALSE; }
+    BOOL SetCurrentDirectory(const char*) { return FALSE; }
+    void Close() {}
+};
+
 // Splits "http://host[:port]/path" like MFC's AfxParseURL.
 inline BOOL AfxParseURL(const char* url, DWORD& serviceType, CString& server, CString& object, INTERNET_PORT& port)
 {
@@ -140,6 +149,10 @@ public:
     }
     CHttpConnection* GetHttpConnection(const char* server, int port) { return GetHttpConnection(server, 0, port); }
     CObject* OpenURL(const char*, DWORD_PTR = 1, DWORD = 0, const char* = nullptr, DWORD = 0)
+    {
+        throw new CInternetException(ERROR_INTERNET_CANNOT_CONNECT);
+    }
+    CFtpConnection* GetFtpConnection(const char*, const char* = nullptr, const char* = nullptr, INTERNET_PORT = 21, BOOL = FALSE)
     {
         throw new CInternetException(ERROR_INTERNET_CANNOT_CONNECT);
     }
