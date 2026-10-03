@@ -1,0 +1,18 @@
+name: Port probe (Windows reference)
+on:
+  workflow_dispatch:
+  push:
+    paths: ["port/probes/d3d9ff/**"]
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure (Win32)
+        run: cmake -S port/probes/d3d9ff -B build -A Win32
+      - name: Build
+        run: cmake --build build --config Release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: d3d9ff-probe-win32
+          path: build/Release/d3d9ff_probe.exe

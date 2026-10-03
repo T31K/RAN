@@ -1,3 +1,20 @@
+diff --git a/src/d3d9/d3d9_device.cpp b/src/d3d9/d3d9_device.cpp
+index 42b51a9..b4f4cb1 100644
+--- a/src/d3d9/d3d9_device.cpp
++++ b/src/d3d9/d3d9_device.cpp
+@@ -7185,7 +7185,11 @@ namespace dxvk {
+     state.setCullMode(DecodeCullMode(D3DCULL(rs[D3DRS_CULLMODE])));
+     state.setDepthClip(true);
+     state.setFrontFace(VK_FRONT_FACE_CLOCKWISE);
+-    state.setPolygonMode(DecodeFillMode(D3DFILLMODE(rs[D3DRS_FILLMODE])));
++    // Drivers without fillModeNonSolid (e.g. KosmicKrisp on Apple) draw wireframe/point fill as solid.
++    VkPolygonMode polygonMode = DecodeFillMode(D3DFILLMODE(rs[D3DRS_FILLMODE]));
++    if (!m_dxvkDevice->features().core.features.fillModeNonSolid)
++      polygonMode = VK_POLYGON_MODE_FILL;
++    state.setPolygonMode(polygonMode);
+     state.setFlatShading(m_state.renderStates[D3DRS_SHADEMODE] == D3DSHADE_FLAT);
+ 
+     EmitCs([
 diff --git a/src/d3d9/meson.build b/src/d3d9/meson.build
 index 2f45946..c79ffb1 100644
 --- a/src/d3d9/meson.build
@@ -11,6 +28,108 @@ index 2f45946..c79ffb1 100644
    d3d9_ld_args      += [ '-Wl,--version-script', join_paths(meson.current_source_dir(), 'd3d9.sym') ]
    d3d9_link_depends += files('d3d9.sym')
  endif
+diff --git a/src/dxvk/dxvk_device_info.cpp b/src/dxvk/dxvk_device_info.cpp
+index 9a45f10..c3f2f00 100644
+--- a/src/dxvk/dxvk_device_info.cpp
++++ b/src/dxvk/dxvk_device_info.cpp
+@@ -636,17 +636,21 @@ namespace dxvk {
+     if (m_queueMapping.graphics.family == VK_QUEUE_FAMILY_IGNORED)
+       return std::string("Device does not have a graphics queue");
+ 
++    // Report every missing required feature at once, not just the first.
++    std::string missing;
++
+     for (const auto& f : getFeatureList()) {
+       if (f.featureRequired && !(*f.featureEnabled)) {
+-        std::string message = str::format("Device does not support required feature '", f.readableName, "'");
++        missing += str::format(missing.empty() ? "" : ", ", "'", f.readableName, "'");
+ 
+         if (f.extensionEnabled)
+-          message += str::format(" (extension: ", f.extensionEnabled->extensionName, ")");
+-
+-        return message;
++          missing += str::format(" (extension: ", f.extensionEnabled->extensionName, ")");
+       }
+     }
+ 
++    if (!missing.empty())
++      return str::format("Device does not support required features: ", missing);
++
+     if (m_properties.core.properties.limits.maxPushConstantsSize < MaxTotalPushDataSize)
+       return str::format("Device does not support ", MaxTotalPushDataSize, " of push data");
+ 
+@@ -711,10 +715,20 @@ namespace dxvk {
+       ENABLE_FEATURE(core.features, depthClamp, true),
+       ENABLE_FEATURE(core.features, drawIndirectFirstInstance, false),
+       ENABLE_FEATURE(core.features, dualSrcBlend, true),
++#ifdef __APPLE__
++      // KosmicKrisp lacks it; the D3D9 rasterizer falls back to solid fill.
++      ENABLE_FEATURE(core.features, fillModeNonSolid, false),
++#else
+       ENABLE_FEATURE(core.features, fillModeNonSolid, true),
++#endif
+       ENABLE_FEATURE(core.features, fragmentStoresAndAtomics, false),
+       ENABLE_FEATURE(core.features, fullDrawIndexUint32, true),
++#ifdef __APPLE__
++      // Apple GPUs have no geometry shaders; D3D9 only needs them for ProcessVertices emulation.
++      ENABLE_FEATURE(core.features, geometryShader, false),
++#else
+       ENABLE_FEATURE(core.features, geometryShader, true),
++#endif
+       ENABLE_FEATURE(core.features, imageCubeArray, true),
+       ENABLE_FEATURE(core.features, independentBlend, true),
+       ENABLE_FEATURE(core.features, logicOp, false),
+@@ -726,7 +740,12 @@ namespace dxvk {
+       ENABLE_FEATURE(core.features, sampleRateShading, true),
+       ENABLE_FEATURE(core.features, samplerAnisotropy, false),
+       ENABLE_FEATURE(core.features, shaderClipDistance, true),
++#ifdef __APPLE__
++      // Metal has no cull distances; D3D9 never uses them.
++      ENABLE_FEATURE(core.features, shaderCullDistance, false),
++#else
+       ENABLE_FEATURE(core.features, shaderCullDistance, true),
++#endif
+       ENABLE_FEATURE(core.features, shaderFloat64, false),
+       ENABLE_FEATURE(core.features, shaderImageGatherExtended, true),
+       ENABLE_FEATURE(core.features, shaderInt16, false),
+@@ -875,7 +894,11 @@ namespace dxvk {
+       ENABLE_EXT_FEATURE(khrMaintenance7, maintenance7, false),
+ 
+       /* Dependency for graphics pipeline library */
++#ifdef __APPLE__
++      ENABLE_EXT(khrPipelineLibrary, false),
++#else
+       ENABLE_EXT(khrPipelineLibrary, true),
++#endif
+ 
+       /* Present wait, used for frame pacing and statistics */
+       ENABLE_EXT_FEATURE(khrPresentId, presentId, false),
+diff --git a/src/dxvk/dxvk_instance.cpp b/src/dxvk/dxvk_instance.cpp
+index 541caaf..3f94743 100644
+--- a/src/dxvk/dxvk_instance.cpp
++++ b/src/dxvk/dxvk_instance.cpp
+@@ -231,6 +231,11 @@ namespace dxvk {
+       for (const auto& ext : extensionsEnabled)
+         extensionNames.push_back(ext.extensionName);
+ 
++#ifdef __APPLE__
++      // MoltenVK is a portability driver; the loader hides it unless we opt in.
++      extensionNames.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
++#endif
++
+       VkApplicationInfo appInfo = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
+       appInfo.pApplicationName      = appName.c_str();
+       appInfo.applicationVersion    = flags.raw();
+@@ -244,6 +249,9 @@ namespace dxvk {
+       info.ppEnabledLayerNames      = layerNames.data();
+       info.enabledExtensionCount    = extensionNames.size();
+       info.ppEnabledExtensionNames  = extensionNames.data();
++#ifdef __APPLE__
++      info.flags                   |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
++#endif
+ 
+       VkResult status = m_vkl->vkCreateInstance(&info, nullptr, &instance);
+ 
 diff --git a/src/util/util_env.cpp b/src/util/util_env.cpp
 index c86c3ab..7394ec9 100644
 --- a/src/util/util_env.cpp
@@ -87,3 +206,17 @@ index 5b156c6..c9b8ac1 100644
  
  #include <windows.h>
  #include <dlfcn.h>
+diff --git a/src/vulkan/vulkan_loader.cpp b/src/vulkan/vulkan_loader.cpp
+index f9d1e98..c9fad42 100644
+--- a/src/vulkan/vulkan_loader.cpp
++++ b/src/vulkan/vulkan_loader.cpp
+@@ -14,6 +14,9 @@ namespace dxvk::vk {
+ #ifdef _WIN32
+       "winevulkan.dll",
+       "vulkan-1.dll",
++#elif defined(__APPLE__)
++      "libvulkan.1.dylib",
++      "libvulkan.dylib",
+ #else
+       "libvulkan.so",
+       "libvulkan.so.1",
