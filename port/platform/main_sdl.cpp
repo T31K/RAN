@@ -9,6 +9,8 @@
 // Environment: RAN_GAME_DIR=<client folder with data/> (see GetModuleFileName in win32/files.h).
 #include "ran_compat.h"
 #include "mfc/afx_all.h"
+#include "input_map.h"
+#include "input_queue.h"
 #include <SDL3/SDL.h>
 #include <cstdio>
 #include <cstdlib>
@@ -44,6 +46,7 @@ bool Dispatch(const SDL_Event& e)
     case SDL_EVENT_WINDOW_FOCUS_GAINED:
     case SDL_EVENT_WINDOW_FOCUS_LOST: {
         const BOOL active = e.type == SDL_EVENT_WINDOW_FOCUS_GAINED;
+        if (!active) ran_platform::InputReleaseAll();   // no stuck keys after Cmd+Tab
         Send(WM_ACTIVATEAPP, active, 0);
         Send(WM_NCACTIVATE, active, 0);
         Send(WM_ACTIVATE, active ? 1 /*WA_ACTIVE*/ : 0 /*WA_INACTIVE*/, 0);
@@ -55,9 +58,26 @@ bool Dispatch(const SDL_Event& e)
     case SDL_EVENT_WINDOW_MINIMIZED:
         Send(WM_SIZE, 1 /*SIZE_MINIMIZED*/, 0);
         break;
+    // Keyboard and mouse go to DxInputDevice through the DirectInput stand-in (dinput_sdl.cpp).
+    case SDL_EVENT_KEY_DOWN:
+    case SDL_EVENT_KEY_UP:
+        ran_platform::InputKey(ran_platform::SdlScancodeToDik(e.key.scancode), e.type == SDL_EVENT_KEY_DOWN);
+        break;
     case SDL_EVENT_MOUSE_MOTION:
+        ran_platform::InputMouseMove((int)e.motion.xrel, (int)e.motion.yrel);
         Send(WM_MOUSEMOVE, 0, MakeLParam((int)e.motion.x, (int)e.motion.y));
         break;
+    case SDL_EVENT_MOUSE_WHEEL:
+        ran_platform::InputMouseWheel((int)(e.wheel.y * 120.0f));   // WHEEL_DELTA per notch
+        break;
+    case SDL_EVENT_MOUSE_BUTTON_DOWN:
+    case SDL_EVENT_MOUSE_BUTTON_UP: {
+        // SDL: 1 left, 2 middle, 3 right, 4/5 side -> DirectInput: 0 left, 1 right, 2 middle, 3/4 side.
+        static const int kMap[] = { -1, 0, 2, 1, 3, 4 };
+        const int b = e.button.button < 6 ? kMap[e.button.button] : -1;
+        if (b >= 0) ran_platform::InputMouseButton(b, e.type == SDL_EVENT_MOUSE_BUTTON_DOWN);
+        break;
+    }
     default:
         break;
     }

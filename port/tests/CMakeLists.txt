@@ -34,3 +34,9 @@ if(SDL3_INCLUDE_DIR)
   target_include_directories(input_map_test PRIVATE ${SDL3_INCLUDE_DIR} ${PORT_DIR}/../Dependency/directx)
   add_test(NAME input_map_test COMMAND input_map_test)
 endif()
+
+# DirectInput 8 stand-in fed by the SDL event pump.
+add_executable(dinput_sdl_test dinput_sdl_test.cpp ${PORT_DIR}/platform/dinput_sdl.cpp)
+target_include_directories(dinput_sdl_test PRIVATE ${PORT_DIR}/../Dependency/directx)
+target_compile_definitions(dinput_sdl_test PRIVATE INITGUID)   # GUID_SysKeyboard etc. (dxguid.lib on Windows)
+add_test(NAME dinput_sdl_test COMMAND dinput_sdl_test)
