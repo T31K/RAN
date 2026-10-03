@@ -405,6 +405,15 @@ inline int MessageBoxA(HWND hwnd, const char* text, const char* caption, UINT ty
 template <size_t N> inline errno_t strcpy_s(char (&dst)[N], const char* src) { return strcpy_s(dst, N, src); }
 template <size_t N> inline errno_t strcat_s(char (&dst)[N], const char* src) { return strcat_s(dst, N, src); }
 template <size_t N> inline errno_t strncpy_s(char (&dst)[N], const char* src, size_t count) { return strncpy_s(dst, N, src, count); }
+template <size_t N> inline int _snprintf_s(char (&dst)[N], size_t count, const char* fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    const size_t limit = count < N ? count + 1 : N;
+    const int n = std::vsnprintf(dst, limit, fmt, ap);
+    va_end(ap);
+    return (n < 0 || (size_t)n >= limit) ? -1 : n;
+}
 template <size_t N> inline int sprintf_s(char (&dst)[N], const char* fmt, ...)
 {
     va_list ap;

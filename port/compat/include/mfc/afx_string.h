@@ -4,6 +4,7 @@
 // never split or case-mapped.
 #pragma once
 #include <windows.h>
+#include <cassert>
 #include <cctype>
 #include <cstdarg>
 #include <cstdio>
@@ -41,6 +42,11 @@ public:
     CString(const char* sz, int len) : m_str(sz ? sz : "", sz ? (size_t)len : 0) {}
     CString(char ch, int repeat = 1) : m_str((size_t)(repeat > 0 ? repeat : 0), ch) {}
     CString(const std::string& s) : m_str(s) {}
+    // `return NULL;` from a CString function: NULL is a long-sized __null here, and MSVC treats it
+    // as a null LPCTSTR (empty string). Only a null value is meaningful.
+    CString(long nullValue) { assert(nullValue == 0); (void)nullValue; }
+    // MSVC lets a CString initialize a std::string through its LPCTSTR conversion.
+    operator std::string() const { return m_str; }
 
     int GetLength() const { return (int)m_str.size(); }
     bool IsEmpty() const { return m_str.empty(); }
@@ -446,6 +452,12 @@ public:
     void RemoveAll() { m_items.clear(); }
     POSITION GetHeadPosition() const { return m_items.empty() ? nullptr : ran_compat::PosFromIndex(0); }
     CString& GetNext(POSITION& pos)
+    {
+        const size_t i = ran_compat::IndexFromPos(pos);
+        pos = (i + 1 < m_items.size()) ? ran_compat::PosFromIndex(i + 1) : nullptr;
+        return m_items[i];
+    }
+    const CString& GetNext(POSITION& pos) const
     {
         const size_t i = ran_compat::IndexFromPos(pos);
         pos = (i + 1 < m_items.size()) ? ran_compat::PosFromIndex(i + 1) : nullptr;

@@ -4,8 +4,17 @@
 #pragma once
 #include "ran_compat.h"
 #include "mfc/afx_window.h"
+#include "mfc/afx_file.h"
+
+inline int AfxMessageBox(const char* text, UINT type = MB_OK, UINT = 0) { return MessageBoxA(nullptr, text, "RanOnline", type); }
+inline HINSTANCE AfxGetInstanceHandle() { return (HINSTANCE)GetModuleHandle(nullptr); }
+inline HINSTANCE AfxGetResourceHandle() { return AfxGetInstanceHandle(); }
 
 // MFC diagnostics. TRACE/ASSERT/VERIFY follow MFC: active only in debug builds.
+#undef TRACE
+#undef ASSERT
+#undef VERIFY
+#undef ASSERT_VALID
 #ifdef _DEBUG
 #define TRACE(...)      std::fprintf(stderr, __VA_ARGS__)
 #define ASSERT(e)       assert(e)
