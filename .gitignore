@@ -267,3 +267,4 @@ port/third_party/
 port/build/
 port/**/build/
 __pycache__/
+compile_commands.json
