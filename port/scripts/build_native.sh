@@ -37,10 +37,11 @@ for d in "$BUILD"/obj/*/; do
   rm -f "$lib"; ar rcs "$lib" "$d"*.o 2>/dev/null && LIBS+=("$lib")
 done
 
-# Platform layer (SDL3 main + hooks): linked as objects so main() pulls the game in.
+# Platform layer (SDL3 main + hooks) and the D3DX replacement: linked as objects so main()
+# pulls the game in.
 PLATFORM_OBJS=()
-for f in port/platform/*.cpp; do
-  o="$BUILD/platform_$(basename "$f" .cpp).o"
+for f in port/platform/*.cpp port/d3dx/*.cpp; do
+  o="$BUILD/port_$(basename "$(dirname "$f")")_$(basename "$f" .cpp).o"
   if [ ! "$o" -nt "$f" ]; then
     RAN_OBJ_OUT="$o" port/scripts/compile_one.sh "$f" 5 || { echo "FAIL platform $f"; exit 1; }
   fi

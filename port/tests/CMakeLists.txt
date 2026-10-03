@@ -23,6 +23,10 @@ endforeach()
 # compat headers honest in C++14.
 set_target_properties(win32_files_test PROPERTIES CXX_STANDARD 17)
 
+# D3DX replacement (Phase 3): math library.
+add_executable(d3dx_math_test d3dx_math_test.cpp ${PORT_DIR}/d3dx/d3dx9_math.cpp)
+add_test(NAME d3dx_math_test COMMAND d3dx_math_test)
+
 # Platform layer (Phase 2): SDL3 scancode -> DirectInput DIK table, checked against the SDK header.
 find_path(SDL3_INCLUDE_DIR SDL3/SDL_scancode.h HINTS /opt/homebrew/include /usr/local/include)
 if(SDL3_INCLUDE_DIR)
