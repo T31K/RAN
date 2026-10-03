@@ -262,3 +262,8 @@ __pycache__/
 
 # Client
 game-client/
+# native macOS port
+port/third_party/
+port/build/
+port/**/build/
+__pycache__/
