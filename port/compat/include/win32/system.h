@@ -607,6 +607,9 @@ inline DWORD SizeofResource(HMODULE, HRSRC) { return 0; }
 #ifndef REGDB_E_CLASSNOTREG
 #define REGDB_E_CLASSNOTREG ((HRESULT)0x80040154L)
 #endif
+#ifndef CLASS_E_NOAGGREGATION
+#define CLASS_E_NOAGGREGATION ((HRESULT)0x80040110L)
+#endif
 #ifndef IsEqualGUID
 inline bool ran_IsEqualGUID(const GUID& a, const GUID& b) { return std::memcmp(&a, &b, sizeof(GUID)) == 0; }
 #define IsEqualGUID(a, b) ran_IsEqualGUID((a), (b))

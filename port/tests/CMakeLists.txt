@@ -33,6 +33,13 @@ if(SDL3_INCLUDE_DIR)
   add_executable(input_map_test input_map_test.cpp)
   target_include_directories(input_map_test PRIVATE ${SDL3_INCLUDE_DIR} ${PORT_DIR}/../Dependency/directx)
   add_test(NAME input_map_test COMMAND input_map_test)
+
+  # DirectSound 8 on the SDL3-fed software mixer (the test drives the mixer, no audio device).
+  find_library(SDL3_LIBRARY SDL3 HINTS /opt/homebrew/lib /usr/local/lib)
+  add_executable(dsound_sdl_test dsound_sdl_test.cpp ${PORT_DIR}/platform/dsound_sdl.cpp)
+  target_include_directories(dsound_sdl_test PRIVATE ${SDL3_INCLUDE_DIR} ${PORT_DIR}/../Dependency/directx)
+  target_link_libraries(dsound_sdl_test PRIVATE ${SDL3_LIBRARY})
+  add_test(NAME dsound_sdl_test COMMAND dsound_sdl_test)
 endif()
 
 # DirectInput 8 stand-in fed by the SDL event pump.
