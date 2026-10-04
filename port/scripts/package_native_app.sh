@@ -113,7 +113,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
     <key>CFBundleShortVersionString</key><string>0.1</string>
     <key>CFBundleVersion</key><string>$(git -C "$ROOT" rev-list --count HEAD)</string>
     <key>CFBundleIconFile</key><string>$ICON</string>
-    <key>LSMinimumSystemVersion</key><string>13.0</string>
+    <key>LSMinimumSystemVersion</key><string>26.0</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>LSApplicationCategoryType</key><string>public.app-category.role-playing-games</string>
 </dict>
@@ -146,7 +146,7 @@ echo "libraries:"; ls "$FW"
 if [ "$DMG" = 1 ]; then
     OUT="$ROOT/port/build/RanOdyssey-Native.dmg"
     STAGE="$(mktemp -d)"
-    cp -R "$APP" "$STAGE/"
+    cp -Rc "$APP" "$STAGE/"   # APFS clone: the 2 GB bundle takes no extra disk space
     ln -s /Applications "$STAGE/Applications"
     hdiutil create -volname "RanOdyssey Native" -srcfolder "$STAGE" -fs HFS+ -format UDZO -ov "$OUT" >/dev/null
     rm -rf "$STAGE"
