@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <mutex>
@@ -277,6 +278,11 @@ public:
         if (IsPrimary()) return DS_OK;
         std::lock_guard<std::mutex> g(g_lock);
         m_looping = (flags & DSBPLAY_LOOPING) != 0;
+        static const bool trace = std::getenv("RAN_TRACE_AUDIO") != nullptr;   // diagnostics
+        if (trace && !m_playing)
+            std::fprintf(stderr, "[dsound] play %p: %u bytes, %u Hz, %u ch%s%s\n", (void*)this, (unsigned)m_data->bytes.size(),
+                         (unsigned)m_data->fmt.nSamplesPerSec, (unsigned)m_data->fmt.nChannels, m_looping ? ", loop" : "",
+                         (m_flags & DSBCAPS_CTRL3D) ? ", 3D" : "");
         if (!m_playing) {
             m_playing = true;
             Playing().push_back(this);
@@ -538,6 +544,7 @@ void OpenOutput()
         return;
     }
     SDL_ResumeAudioStreamDevice(g_stream);
+    std::fprintf(stderr, "[dsound] output open: %s\n", SDL_GetCurrentAudioDriver());
 }
 
 } // namespace
