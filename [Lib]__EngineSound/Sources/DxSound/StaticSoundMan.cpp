@@ -116,8 +116,8 @@ BOOL	SVecSound::LoadSet ( CSerialFile &SFile, WORD VecSoundVer, WORD SoundVer )
 
 	if ( VecSoundVer == 101 )
 	{
-		long lVolume;
-		SFile.ReadBuffer ( &lVolume, sizeof ( long ) );
+		LONG lVolume;	// 4 bytes in the file (Win32 long)
+		SFile.ReadBuffer ( &lVolume, sizeof ( LONG ) );
 	}
 
 	SSound::LoadSet ( SFile, SoundVer );
@@ -249,8 +249,8 @@ void CStaticSoundMan::Clone_MouseShift( LPD3DXMATRIX& pMatrix )
 	SVecSound* pVecSound = m_pVecSoundHead;
 	while( pVecSound )
 	{
-		DWORD dwBuffer = (DWORD)&pVecSound->m_matWorld;
-		if( dwBuffer == (DWORD)pMatrix )
+		DWORD_PTR dwBuffer = (DWORD_PTR)&pVecSound->m_matWorld;
+		if( dwBuffer == (DWORD_PTR)pMatrix )
 		{
 			//// Note : 새로 만들어 준다.
 			//DXLIGHT* pNewLight = new DXLIGHT;

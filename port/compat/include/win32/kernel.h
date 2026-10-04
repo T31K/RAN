@@ -155,12 +155,20 @@ typedef struct _MEMORYSTATUSEX {   // MEMORYSTATUS itself comes from DXVK's wind
 // ---- Critical sections (recursive, like Windows) ----
 typedef struct RAN_CRITICAL_SECTION { std::recursive_mutex* m; } CRITICAL_SECTION, *LPCRITICAL_SECTION;
 
+// The game enters sections after deleting them (DxStaticMesh::EndThread deletes the loader's
+// section while the loader thread may still be in its loop) and re-initialises live ones;
+// Windows tolerates both because the section's memory stays valid. So here a deleted section
+// keeps its mutex (never freed), and a never-initialised (zeroed) one uses a shared mutex.
+namespace ran_compat {
+inline std::recursive_mutex& FallbackSectionMutex() { static std::recursive_mutex& m = *new std::recursive_mutex; return m; }
+inline std::recursive_mutex& SectionMutex(LPCRITICAL_SECTION cs) { return cs->m ? *cs->m : FallbackSectionMutex(); }
+}
 inline void InitializeCriticalSection(LPCRITICAL_SECTION cs) { cs->m = new std::recursive_mutex(); }
 inline BOOL InitializeCriticalSectionAndSpinCount(LPCRITICAL_SECTION cs, DWORD) { InitializeCriticalSection(cs); return TRUE; }
-inline void DeleteCriticalSection(LPCRITICAL_SECTION cs) { delete cs->m; cs->m = nullptr; }
-inline void EnterCriticalSection(LPCRITICAL_SECTION cs) { cs->m->lock(); }
-inline void LeaveCriticalSection(LPCRITICAL_SECTION cs) { cs->m->unlock(); }
-inline BOOL TryEnterCriticalSection(LPCRITICAL_SECTION cs) { return cs->m->try_lock() ? TRUE : FALSE; }
+inline void DeleteCriticalSection(LPCRITICAL_SECTION) {}   // see above: the mutex stays usable
+inline void EnterCriticalSection(LPCRITICAL_SECTION cs) { ran_compat::SectionMutex(cs).lock(); }
+inline void LeaveCriticalSection(LPCRITICAL_SECTION cs) { ran_compat::SectionMutex(cs).unlock(); }
+inline BOOL TryEnterCriticalSection(LPCRITICAL_SECTION cs) { return ran_compat::SectionMutex(cs).try_lock() ? TRUE : FALSE; }
 
 // ---- Handles, events, mutexes, waits ----
 inline BOOL CloseHandle(HANDLE h)

@@ -942,8 +942,8 @@ void DxLightMan::Clone_MouseShift( LPD3DXMATRIX& pMatrix )
 	DXLIGHT* pLight = m_pLtListHead;
 	while( pLight )
 	{
-		DWORD dwBuffer = (DWORD)&pLight->m_matWorld;
-		if( dwBuffer == (DWORD)pMatrix )
+		DWORD_PTR dwBuffer = (DWORD_PTR)&pLight->m_matWorld;
+		if( dwBuffer == (DWORD_PTR)pMatrix )
 		{
 			// Note : 새로 만들어 준다.
 			DXLIGHT* pNewLight = new DXLIGHT;

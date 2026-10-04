@@ -91,7 +91,7 @@ public:
 	const static DWORD FVF;
 };
 
-typedef std::list<DWORD>			LOADINGDATALIST;
-typedef std::list<DWORD>::iterator	LOADINGDATALIST_ITER;
+typedef std::list<DWORD_PTR>			LOADINGDATALIST;		// holds object pointers
+typedef std::list<DWORD_PTR>::iterator	LOADINGDATALIST_ITER;
 
 #endif	//	__DXCUSTOMTYPES__H__
