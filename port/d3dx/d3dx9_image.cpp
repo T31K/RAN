@@ -77,6 +77,114 @@ void DecodeBlock(D3DFORMAT f, const BYTE* blk, uint32_t out[16])
     for (int i = 0; i < 16; ++i) out[i] = (out[i] & 0xFFFFFF) | (a[(bits >> (3 * i)) & 7] << 24);
 }
 
+// --- DXTn encoding: endpoints from the block's colour bounding box (inset a little), indices
+// by nearest palette entry. Not as good as an offline compressor, plenty for UI/font atlases.
+uint16_t To565(uint32_t r, uint32_t g, uint32_t b) { return (uint16_t)((Round(r, 5) << 11) | (Round(g, 6) << 5) | Round(b, 5)); }
+
+int Dist2(uint32_t a, uint32_t b)
+{
+    const int dr = (int)R(a) - (int)R(b), dg = (int)G(a) - (int)G(b), db = (int)B(a) - (int)B(b);
+    return dr * dr * 3 + dg * dg * 4 + db * db * 2;
+}
+
+// 8-byte colour block. `punch`: DXT1 with transparent texels (alpha < 128) -> 3-colour mode.
+void EncodeColorBlock(const uint32_t px[16], bool dxt1, BYTE* out)
+{
+    bool transparent[16] = {};
+    bool anyTransparent = false;
+    uint32_t lo[3] = { 255, 255, 255 }, hi[3] = { 0, 0, 0 };
+    int opaque = 0;
+    for (int i = 0; i < 16; ++i) {
+        if (dxt1 && A(px[i]) < 128) { transparent[i] = anyTransparent = true; continue; }
+        const uint32_t c[3] = { R(px[i]), G(px[i]), B(px[i]) };
+        for (int k = 0; k < 3; ++k) { lo[k] = std::min(lo[k], c[k]); hi[k] = std::max(hi[k], c[k]); }
+        ++opaque;
+    }
+    if (!opaque) { lo[0] = lo[1] = lo[2] = hi[0] = hi[1] = hi[2] = 0; }
+    for (int k = 0; k < 3; ++k) {   // inset by 1/16 of the range, like common fast encoders
+        const uint32_t inset = (hi[k] - lo[k]) / 16;
+        lo[k] += inset;
+        hi[k] -= inset;
+    }
+    uint16_t c0 = To565(hi[0], hi[1], hi[2]), c1 = To565(lo[0], lo[1], lo[2]);
+    const bool three = dxt1 && anyTransparent;
+    if (three ? c0 > c1 : c0 < c1) std::swap(c0, c1);   // 3-colour mode needs c0 <= c1, 4-colour c0 > c1
+    if (!three && c0 == c1) {
+        // A flat block: every texel uses index 0 (= c0 in either block mode).
+        Wr16(out, c0);
+        Wr16(out + 2, c1);
+        Wr32(out + 4, 0);
+        return;
+    }
+    uint32_t pal[4];
+    pal[0] = From565(c0);
+    pal[1] = From565(c1);
+    if (!three) {
+        pal[2] = Argb(0xFF, (2 * R(pal[0]) + R(pal[1]) + 1) / 3, (2 * G(pal[0]) + G(pal[1]) + 1) / 3, (2 * B(pal[0]) + B(pal[1]) + 1) / 3);
+        pal[3] = Argb(0xFF, (R(pal[0]) + 2 * R(pal[1]) + 1) / 3, (G(pal[0]) + 2 * G(pal[1]) + 1) / 3, (B(pal[0]) + 2 * B(pal[1]) + 1) / 3);
+    } else {
+        pal[2] = Argb(0xFF, (R(pal[0]) + R(pal[1])) / 2, (G(pal[0]) + G(pal[1])) / 2, (B(pal[0]) + B(pal[1])) / 2);
+        pal[3] = 0;
+    }
+    uint32_t idx = 0;
+    for (int i = 0; i < 16; ++i) {
+        uint32_t best = 0;
+        if (transparent[i]) best = 3;
+        else {
+            int bestD = Dist2(px[i], pal[0]);
+            for (uint32_t k = 1; k < (three ? 3u : 4u); ++k) {
+                const int d = Dist2(px[i], pal[k]);
+                if (d < bestD) { bestD = d; best = k; }
+            }
+        }
+        idx |= best << (2 * i);
+    }
+    Wr16(out, c0);
+    Wr16(out + 2, c1);
+    Wr32(out + 4, idx);
+}
+
+void EncodeAlpha4(const uint32_t px[16], BYTE* out)
+{
+    for (int i = 0; i < 8; ++i) out[i] = (BYTE)(Round(A(px[2 * i]), 4) | (Round(A(px[2 * i + 1]), 4) << 4));
+}
+
+void EncodeAlpha8(const uint32_t px[16], BYTE* out)
+{
+    uint32_t lo = 255, hi = 0;
+    for (int i = 0; i < 16; ++i) { lo = std::min(lo, A(px[i])); hi = std::max(hi, A(px[i])); }
+    out[0] = (BYTE)hi;
+    out[1] = (BYTE)lo;
+    uint32_t pal[8] = { hi, lo };
+    if (hi > lo) for (int i = 1; i < 7; ++i) pal[i + 1] = ((7 - i) * hi + i * lo + 3) / 7;
+    else for (int i = 2; i < 8; ++i) pal[i] = hi;
+    uint64_t bits = 0;
+    for (int i = 0; i < 16; ++i) {
+        uint32_t best = 0, bestD = 1000;
+        for (uint32_t k = 0; k < 8; ++k) {
+            const uint32_t d = (uint32_t)std::abs((int)A(px[i]) - (int)pal[k]);
+            if (d < bestD) { bestD = d; best = k; }
+        }
+        bits |= (uint64_t)best << (3 * i);
+    }
+    for (int i = 0; i < 6; ++i) out[2 + i] = (BYTE)(bits >> (8 * i));
+}
+
+void EncodeBlock(D3DFORMAT f, uint32_t px[16], BYTE* out)
+{
+    if (f == D3DFMT_DXT2 || f == D3DFMT_DXT4)   // premultiplied-alpha formats
+        for (int i = 0; i < 16; ++i) {
+            const uint32_t a = A(px[i]);
+            px[i] = Argb(a, (R(px[i]) * a + 127) / 255, (G(px[i]) * a + 127) / 255, (B(px[i]) * a + 127) / 255);
+        }
+    switch (f) {
+    case D3DFMT_DXT1: EncodeColorBlock(px, true, out); break;
+    case D3DFMT_DXT2: case D3DFMT_DXT3: EncodeAlpha4(px, out); EncodeColorBlock(px, false, out + 8); break;
+    case D3DFMT_DXT4: case D3DFMT_DXT5: EncodeAlpha8(px, out); EncodeColorBlock(px, false, out + 8); break;
+    default: break;
+    }
+}
+
 uint32_t DecodePixel(D3DFORMAT f, const BYTE* p)
 {
     switch (f) {
@@ -226,7 +334,7 @@ UINT RowBytes(D3DFORMAT f, UINT width)
 UINT RowCount(D3DFORMAT f, UINT height) { return IsBlockCompressed(f) ? std::max<UINT>(1, (height + 3) / 4) : height; }
 
 bool CanDecode(D3DFORMAT f) { return IsBlockCompressed(f) || BytesPerPixel(f) != 0; }
-bool CanEncode(D3DFORMAT f) { return BytesPerPixel(f) != 0; }
+bool CanEncode(D3DFORMAT f) { return IsBlockCompressed(f) || BytesPerPixel(f) != 0; }
 
 bool Decode(D3DFORMAT f, const BYTE* src, UINT pitch, UINT w, UINT h, uint32_t* out)
 {
@@ -257,6 +365,18 @@ bool Decode(D3DFORMAT f, const BYTE* src, UINT pitch, UINT w, UINT h, uint32_t* 
 
 bool Encode(D3DFORMAT f, const uint32_t* in, UINT w, UINT h, BYTE* dst, UINT pitch)
 {
+    if (IsBlockCompressed(f)) {
+        const UINT blockBytes = f == D3DFMT_DXT1 ? 8 : 16;
+        uint32_t blk[16];
+        for (UINT by = 0; by < (h + 3) / 4; ++by)
+            for (UINT bx = 0; bx < (w + 3) / 4; ++bx) {
+                for (UINT y = 0; y < 4; ++y)   // edge blocks repeat the last row/column
+                    for (UINT x = 0; x < 4; ++x)
+                        blk[y * 4 + x] = in[(size_t)std::min(by * 4 + y, h - 1) * w + std::min(bx * 4 + x, w - 1)];
+                EncodeBlock(f, blk, dst + (size_t)by * pitch + (size_t)bx * blockBytes);
+            }
+        return true;
+    }
     const UINT bpp = BytesPerPixel(f);
     if (!bpp) return false;
     for (UINT y = 0; y < h; ++y) {

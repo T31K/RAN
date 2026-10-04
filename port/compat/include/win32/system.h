@@ -225,7 +225,6 @@ inline LONG SetWindowLong(HWND, int, LONG) { return 0; }
 #define GetWindowLongA GetWindowLong
 #define SetWindowLongA SetWindowLong
 inline int GetDIBits(HDC, HBITMAP, UINT, UINT, void*, void* /*BITMAPINFO*/, UINT) { return 0; }
-inline HBITMAP CreateDIBSection(HDC, const void* /*BITMAPINFO*/, UINT, void** bits, HANDLE, DWORD) { if (bits) *bits = nullptr; return nullptr; }
 inline HRESULT CoCreateInstance(REFCLSID, IUnknown*, DWORD, REFIID, void** out) { if (out) *out = nullptr; return E_NOINTERFACE; }
 typedef struct tagFILTERKEYS { UINT cbSize; DWORD dwFlags, iWaitMSec, iDelayMSec, iRepeatMSec, iBounceMSec; } FILTERKEYS, *LPFILTERKEYS;
 typedef struct _PERF_INSTANCE_DEFINITION { DWORD ByteLength, ParentObjectTitleIndex, ParentObjectInstance; LONG UniqueID; DWORD NameOffset, NameLength; } PERF_INSTANCE_DEFINITION, *PPERF_INSTANCE_DEFINITION;
@@ -306,7 +305,6 @@ typedef struct _PERF_COUNTER_BLOCK { DWORD ByteLength; } PERF_COUNTER_BLOCK, *PP
 #define DECLSPEC_IMPORT
 #endif
 inline UINT WinExec(const char*, UINT) { return 2; }   // ERROR_FILE_NOT_FOUND: no Windows programs to start
-inline int SetBkMode(HDC, int) { return 0; }
 inline BOOL MoveWindow(HWND, int, int, int, int, BOOL) { return FALSE; }
 inline BOOL ClipCursor(const RECT*) { return TRUE; }   // Phase 2: SDL mouse grab
 inline BOOL GetClipCursor(RECT* r) { if (r) SetRectEmpty(r); return TRUE; }
@@ -363,10 +361,7 @@ inline HWND GetDlgItem(HWND, int) { return nullptr; }
 inline BOOL GetWindowPlacement(HWND, WINDOWPLACEMENT* wp) { if (wp) std::memset(wp, 0, sizeof(*wp)); return FALSE; }
 inline BOOL SetWindowPlacement(HWND, const WINDOWPLACEMENT*) { return FALSE; }
 inline HBRUSH CreateSolidBrush(COLORREF) { return nullptr; }
-inline HDC CreateCompatibleDC(HDC) { return nullptr; }
-inline BOOL DeleteDC(HDC) { return TRUE; }
-inline BOOL DeleteObject(HGDIOBJ) { return TRUE; }
-inline HGDIOBJ SelectObject(HDC, HGDIOBJ) { return nullptr; }
+// CreateCompatibleDC / DeleteDC / SelectObject / DeleteObject: win32/gdi.h (real memory DCs).
 inline HCURSOR LoadCursor(HINSTANCE, const char*) { return nullptr; }
 #define LoadCursorA LoadCursor
 #define IDC_ARROW ((const char*)(uintptr_t)32512)

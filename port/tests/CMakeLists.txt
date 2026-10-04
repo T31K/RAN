@@ -53,3 +53,8 @@ add_executable(dinput_sdl_test dinput_sdl_test.cpp ${PORT_DIR}/platform/dinput_s
 target_include_directories(dinput_sdl_test PRIVATE ${PORT_DIR}/../Dependency/directx)
 target_compile_definitions(dinput_sdl_test PRIVATE INITGUID)   # GUID_SysKeyboard etc. (dxguid.lib on Windows)
 add_test(NAME dinput_sdl_test COMMAND dinput_sdl_test)
+
+# GDI memory DCs, DIB sections and text on CoreText (the game's glyph-atlas baking).
+add_executable(gdi_text_test gdi_text_test.cpp ${PORT_DIR}/platform/gdi_coretext.cpp)
+target_link_libraries(gdi_text_test PRIVATE "-framework CoreText" "-framework CoreGraphics" "-framework CoreFoundation")
+add_test(NAME gdi_text_test COMMAND gdi_text_test)

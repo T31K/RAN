@@ -29,6 +29,7 @@
 #include "win32/registry.h"
 #include "win32/shell.h"
 #include "win32/system.h"
+#include "win32/gdi.h"
 #include "win32/crypt.h"
 #include "mfc/afx_string.h"
 #include "mfc/afx_types.h"

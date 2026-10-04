@@ -56,7 +56,8 @@ clang++ -o "$BUILD/ran_client" "${PLATFORM_OBJS[@]}" "${LIBS[@]}" \
   "$(brew --prefix lzo)/lib/liblzo2.a" \
   "$(brew --prefix libvorbis)/lib/libvorbisfile.a" "$(brew --prefix libvorbis)/lib/libvorbis.a" \
   "$(brew --prefix libogg)/lib/libogg.a" \
-  -framework CoreFoundation -framework CoreServices -framework Security 2> "$TMP/link.err"
+  -framework CoreFoundation -framework CoreServices -framework Security \
+  -framework CoreText -framework CoreGraphics 2> "$TMP/link.err"
 if [ $? -eq 0 ]; then echo "LINKED $BUILD/ran_client"; exit 0; fi
 
 grep -aE '^  "' "$TMP/link.err" | sed -E 's/^  "(.*)", referenced from:.*/\1/; s/^  "(.*)"$/\1/' | sort -u > "$TMP/undef"

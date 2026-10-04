@@ -2,6 +2,7 @@
 // (levels, cube maps), pixel-format round trips, resizing/mips, colour keys, stb-decoded files.
 #include "../d3dx/d3dx9_image.h"
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <vector>
 
@@ -85,8 +86,41 @@ int main()
         BYTE b24[12];
         CHECK(Encode(D3DFMT_R8G8B8, in, 4, 1, b24, 12) && Decode(D3DFMT_R8G8B8, b24, 12, 4, 1, out));
         CHECK(out[1] == 0xFF00FF00);
-        CHECK(!CanEncode(D3DFMT_DXT1) && CanDecode(D3DFMT_DXT5));
+        CHECK(CanEncode(D3DFMT_DXT1) && CanDecode(D3DFMT_DXT5));
         CHECK(RowBytes(D3DFMT_DXT1, 6) == 16 && RowCount(D3DFMT_DXT5, 5) == 2 && RowBytes(D3DFMT_R5G6B5, 3) == 6);
+    }
+
+    // DXTn encoding round trips (font atlases are converted A4R4G4B4 -> DXT2 by the game).
+    {
+        auto near = [](uint32_t a, uint32_t b, int tol) {
+            for (int s = 0; s < 32; s += 8)
+                if (std::abs((int)((a >> s) & 0xFF) - (int)((b >> s) & 0xFF)) > tol) return false;
+            return true;
+        };
+        uint32_t px[16], out[16];
+        BYTE blk[16];
+        for (int i = 0; i < 16; ++i) px[i] = (i & 1) ? 0xFFFFFFFF : 0xFF000000;   // black/white
+        CHECK(Encode(D3DFMT_DXT1, px, 4, 4, blk, 8) && Decode(D3DFMT_DXT1, blk, 8, 4, 4, out));
+        bool ok = true;
+        for (int i = 0; i < 16; ++i) ok &= near(out[i], px[i], 24);
+        CHECK(ok);
+        for (int i = 0; i < 16; ++i) px[i] = i < 8 ? 0x00000000 : 0xFFFF0000;      // punch-through alpha
+        CHECK(Encode(D3DFMT_DXT1, px, 4, 4, blk, 8) && Decode(D3DFMT_DXT1, blk, 8, 4, 4, out));
+        CHECK(out[0] == 0 && near(out[15], 0xFFFF0000, 16));
+        for (int i = 0; i < 16; ++i) px[i] = ((uint32_t)(i * 17) << 24) | 0x00FFFFFF;  // alpha ramp
+        CHECK(Encode(D3DFMT_DXT5, px, 4, 4, blk, 16) && Decode(D3DFMT_DXT5, blk, 16, 4, 4, out));
+        ok = true;
+        for (int i = 0; i < 16; ++i) ok &= std::abs((int)(out[i] >> 24) - i * 17) <= 20 && (out[i] & 0xFFFFFF) == 0xFFFFFF;
+        CHECK(ok);
+        for (int i = 0; i < 16; ++i) px[i] = 0x80FFFFFF;                           // DXT2 premultiplies
+        CHECK(Encode(D3DFMT_DXT2, px, 4, 4, blk, 16) && Decode(D3DFMT_DXT2, blk, 16, 4, 4, out));
+        CHECK(near(out[0], 0x88808080, 12));
+        // A 6x5 surface: partial edge blocks repeat the last texels, nothing written out of range.
+        std::vector<uint32_t> img(30, 0xFF00FF00);
+        std::vector<BYTE> dst(2 * 2 * 16 + 1, 0xCD);
+        CHECK(Encode(D3DFMT_DXT3, img.data(), 6, 5, dst.data(), 32) && dst.back() == 0xCD);
+        std::vector<uint32_t> back(30);
+        CHECK(Decode(D3DFMT_DXT3, dst.data(), 32, 6, 5, back.data()) && near(back[29], 0xFF00FF00, 8));
     }
 
     // Resize and mips.
