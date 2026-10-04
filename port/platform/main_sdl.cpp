@@ -17,8 +17,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <execinfo.h>
+#include <algorithm>
 #include <string>
 #include <unistd.h>
+#include <vector>
 
 namespace ran_platform { void InstallCursorHooks(); }   // cursor_sdl.cpp
 
@@ -100,8 +102,82 @@ bool Dispatch(const SDL_Event& e)
     return false;
 }
 
+// RAN_INPUT_SCRIPT="2:click 488 373; 4:text T31K; 5:key TAB; ..." - scripted input for
+// unattended test runs: at each time (seconds after the first message pump) the action goes
+// through the same path as real input (click = move the cursor there, press, release the left
+// button; text = committed text input; key = press and release an SDL key name).
+struct ScriptStep { double at; SDL_Event event; std::string text; bool warp; float x, y; };
+std::vector<ScriptStep>& Script() { static std::vector<ScriptStep> s; return s; }
+
+void LoadInputScript()
+{
+    const char* env = std::getenv("RAN_INPUT_SCRIPT");
+    if (!env) return;
+    std::string all(env);
+    size_t pos = 0;
+    while (pos < all.size()) {
+        size_t end = all.find(';', pos);
+        if (end == std::string::npos) end = all.size();
+        std::string item = all.substr(pos, end - pos);
+        pos = end + 1;
+        const size_t colon = item.find(':');
+        if (colon == std::string::npos) continue;
+        const double t = std::atof(item.substr(0, colon).c_str());
+        std::string cmd = item.substr(colon + 1);
+        while (!cmd.empty() && cmd[0] == ' ') cmd.erase(0, 1);
+        const size_t sp = cmd.find(' ');
+        const std::string op = cmd.substr(0, sp), arg = sp == std::string::npos ? "" : cmd.substr(sp + 1);
+        ScriptStep s = {};
+        s.at = t;
+        if (op == "click") {
+            float x = 0, y = 0;
+            std::sscanf(arg.c_str(), "%f %f", &x, &y);
+            s.warp = true; s.x = x; s.y = y;
+            Script().push_back(s);
+            ScriptStep down = {}, up = {};
+            down.at = t + 0.15; down.event.type = SDL_EVENT_MOUSE_BUTTON_DOWN; down.event.button.button = SDL_BUTTON_LEFT;
+            down.event.button.x = x; down.event.button.y = y;
+            up = down; up.at = t + 0.3; up.event.type = SDL_EVENT_MOUSE_BUTTON_UP;
+            Script().push_back(down);
+            Script().push_back(up);
+        } else if (op == "text") {
+            s.event.type = SDL_EVENT_TEXT_INPUT;
+            s.text = arg;
+            Script().push_back(s);
+        } else if (op == "key") {
+            const SDL_Keycode k = SDL_GetKeyFromName(arg.c_str());
+            s.event.type = SDL_EVENT_KEY_DOWN;
+            s.event.key.key = k;
+            s.event.key.scancode = SDL_GetScancodeFromKey(k, nullptr);
+            s.event.key.down = true;
+            Script().push_back(s);
+            ScriptStep up = s;
+            up.at = t + 0.1;
+            up.event.type = SDL_EVENT_KEY_UP;
+            up.event.key.down = false;
+            Script().push_back(up);
+        }
+    }
+    std::stable_sort(Script().begin(), Script().end(), [](const ScriptStep& a, const ScriptStep& b) { return a.at < b.at; });
+    std::fprintf(stderr, "[platform] input script: %zu steps\n", Script().size());
+}
+
+void RunInputScript()
+{
+    static const Uint64 start = SDL_GetTicks();
+    static size_t next = 0;
+    const double now = (double)(SDL_GetTicks() - start) / 1000.0;
+    while (next < Script().size() && Script()[next].at <= now) {
+        ScriptStep& s = Script()[next++];
+        if (s.warp) { if (g_window) SDL_WarpMouseInWindow(g_window, s.x, s.y); continue; }
+        if (s.event.type == SDL_EVENT_TEXT_INPUT) s.event.text.text = s.text.c_str();
+        Dispatch(s.event);
+    }
+}
+
 BOOL PumpMessages(MSG* msg, BOOL wait, BOOL remove)
 {
+    if (!Script().empty()) RunInputScript();
     if (msg) std::memset(msg, 0, sizeof(*msg));
     if (!remove) return SDL_HasEvents(SDL_EVENT_FIRST, SDL_EVENT_LAST) ? TRUE : FALSE;
     if (ran_compat::Ime().cancelRequested) {   // the game cancelled/completed the composition
@@ -157,6 +233,7 @@ void OnFatalSignal(int sig)
 int main(int argc, char** argv)
 {
     for (int sig : { SIGSEGV, SIGBUS, SIGILL, SIGTRAP, SIGABRT, SIGFPE }) signal(sig, OnFatalSignal);
+    signal(SIGTERM, [](int) { _exit(0); });   // kill/quit from outside: no static teardown either
     setenv("DXVK_WSI_DRIVER", "SDL3", 0);
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
         std::fprintf(stderr, "[platform] SDL_Init failed: %s\n", SDL_GetError());
@@ -167,6 +244,7 @@ int main(int argc, char** argv)
     ran_compat::CursorPosHook() = CursorPos;
     ran_compat::ClientSizeHook() = ClientSize;
     ran_platform::InstallCursorHooks();
+    LoadInputScript();
 
     CWinApp* app = AfxGetApp();   // the game's theApp (CBasicApp)
     static std::string cmdLine;
@@ -178,5 +256,9 @@ int main(int argc, char** argv)
     else std::fprintf(stderr, "[platform] InitInstance failed (is RAN_GAME_DIR set to the client folder?)\n");
     if (g_window) SDL_DestroyWindow(g_window);
     SDL_Quit();
-    return rc;
+    // The game has saved and shut down in ExitInstance (inside Run). Static destructors across
+    // its files run in a different order than on Windows (DxGlobalStage's network client uses
+    // a mutex that is already gone), so end the process here without them.
+    std::fflush(nullptr);
+    _exit(rc);
 }
