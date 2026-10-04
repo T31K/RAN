@@ -3,53 +3,59 @@
 Plan: `docs/superpowers/plans/2026-10-03-native-macos-client.md`. Developer guide:
 `docs/port/README.md`. Branch: `port/macos-spike`. Last updated 2026-10-04.
 
-Overall: about half of the plan. Phase 1 complete, Phase 2 most of the way, Phase 3 well along.
+**The native client plays.** It logs in, enters the world, walks, chats, plays sound and
+survives app switching - DXVK-native d3d9 -> KosmicKrisp (Vulkan) -> Metal on Apple Silicon,
+no Wine. Screenshots: `docs/port/images/` (server select, character select, in world, chat,
+after an app switch).
 
-## Phase 1 - portable codebase, Windows still builds: COMPLETE
+| Phase | Status |
+|---|---|
+| 1 - portable codebase, Windows still builds | **Complete** (gates P1.1-P1.6 pass) |
+| 2 - platform layer | **Complete** (P2.1 login passes; window, input, text/IME, sound, cursors, files) |
+| 3 - graphics | **Complete for this client** (D3DX textures/fonts/meshes/skinning/.x; no .fx files ship) |
+| 4 - gameplay parity | In progress: movement, chat, UI, sound, app switching verified; combat/skills/effects and long sessions still to exercise |
+| 5 - ship | Started: self-contained `RanOdyssey Native.app` (34 MB, ad-hoc signed); Developer ID signing, notarisation and DMG still to do |
+
+## Phase 1 - portable codebase, Windows still builds
 
 | Gate | Status | How to check |
 |---|---|---|
-| P1.1 every client source compiles natively | **Done** - 799/799 (the game's own shell files included) | `port/scripts/compile_probe.sh` -> `docs/port/compile-probe.md` |
-| P1.2 Windows CI green | **Done** - every pushed checkpoint builds (Release Win32) | GitHub Actions `Build` on `port/macos-spike` |
-| P1.3 network-message struct sizes == Win32 | **Done** - all 995 wire structs (+ package `FILECONTEXT`) identical to MSVC x86 | `port/scripts/check-struct-sizes.sh` |
+| P1.1 every client source compiles natively | **Done** - 799/799 | `port/scripts/compile_probe.sh` |
+| P1.2 Windows CI green | **Done** | GitHub Actions `Build` on `port/macos-spike` |
+| P1.3 network-message struct sizes == Win32 | **Done** - 995/995 | `port/scripts/check-struct-sizes.sh` |
 | P1.4 CP949 text round trip | **Done** | `port/scripts/check-cp949.sh` |
-| P1.5 Windows paths resolve to data files | **Done** - also on a case-sensitive volume | `port/scripts/check-paths.sh` |
+| P1.5 Windows paths resolve to data files | **Done** | `port/scripts/check-paths.sh` |
+| P1.6 on-disk struct images == Win32 | **Done** - 291/291 (16 excluded with reasons) | `port/scripts/check-file-struct-sizes.sh` (golden from CI artifact `file-sizes-win32`) |
 
-Unit tests: 20+ suites, all passing (`port/scripts/run-tests.sh`).
-
-Clang turns two MSVC-tolerated constructs into run-time traps; both are now build errors
-(`-Werror=non-pod-varargs -Werror=return-type` in `compile_one.sh`) and every site is fixed:
-CString passed through `...` (compat `Format` templates + forwarding templates on the game's
-own printf-style functions) and functions that fell off the end without a return.
+Clang turns some MSVC-tolerated constructs into run-time traps; these are build errors now
+(`compile_one.sh`): CString through `...`, functions without a return, deleting an abstract class
+through a non-virtual destructor. 64-bit bug classes found and fixed while getting in-game:
+- structs read from files with 4-byte pointer slots / MSVC `std::string` / vtable images
+  (`port/compat/include/win32/file_image.h`, one declaration next to each struct),
+- `D3DXMATRIXA16` is 16-byte aligned on Windows (changes struct layouts),
+- `size_t`/`long` fields in file formats,
+- object pointers kept in `DWORD`s (`DWORD_PTR` now),
+- Windows tolerating use of deleted critical sections, static destruction order.
 
 ## Phase 2 - platform layer
 
-- Window + game loop: SDL3 `main` -> the game's own `theApp.InitInstance()/Run()`; SDL events
-  become the game's window messages.
-- Input: **done** - DirectInput 8 on SDL3 events; focus loss releases held keys (no Cmd+Tab
-  input loss).
-- Text input: **done** - keyboard text and the macOS input method (Korean composition) reach the
-  game's edit control (`CIMEEdit`) as `WM_CHAR` / `WM_IME_*`, with `ImmGetCompositionString`
-  serving the strings (`port/platform/text_input.h`, `port/compat/include/imm.h`).
-- Sound: **done** - DirectSound 8 on an SDL3 software mixer (buffers, duplicates, looping,
-  streaming Lock, 3D listener/buffers) (`port/platform/dsound_sdl.cpp`).
-- Files from C sources (minizip opening `glogic.rcc`) resolve Windows paths too.
-- Run it: `port/scripts/run_native.sh` (client folder defaults to `~/Projects/RAN/client`);
-  after a crash `port/scripts/last_crash.py` prints the backtrace from the macOS crash report.
-- Next: gate P2.1 (log in against the VPS server) once models load.
+- Window + loop: SDL3 `main` -> the game's own `theApp`; client rect in points (Retina-safe).
+- Input: DirectInput 8 on SDL3; keyboard text + macOS input method (Korean) to the game's edit
+  control (`WM_CHAR` / `WM_IME_*`); game cursors (`.cur`/`.ani`).
+- Sound: DirectSound 8 on an SDL3 mixer (BGM streaming, 3D effects).
+- Gate P2.1: scripted login (`RAN_INPUT_SCRIPT`) -> character select -> world.
 
 ## Phase 3 - graphics
 
-- D3DX math: **done**.
-- Textures: **done** - DDS (DXT1-5 uploaded as is, 16/24/32-bit), TGA/BMP/JPG/PNG (stb), cube
-  maps, D3DX size/mip/format rules, DXTn encoder, surface copy/convert, save to DDS/BMP/PNG/JPG.
-- Text: **done** - GDI memory DCs, DIB sections, fonts and `ExtTextOut` on CoreText, which the
-  game's font atlas (`d3dfont.cpp`) is baked with; Korean faces map to Apple SD Gothic Neo.
-- `.x` files: **done** - reader for text/binary .x behind `DirectXFileCreate`/`D3DXFileCreate`;
-  all 1361 client .x files parse.
-- Meshes: in progress - `ID3DXMesh`/`ID3DXPMesh`/`ID3DXSkinInfo`, mesh utilities, and the .x
-  mesh loaders (`D3DXLoadMeshFromX`, `D3DXLoadMeshHierarchyFromX`).
-- Effects: not needed by this client (it ships no `.fx` files; D3DX fails the same way on
-  Windows). Sprite / `ID3DXFont`: only used by the optional "D3DXFONT" font mode.
-- First native runs: SDL window + D3D9 device on Apple M3 through DXVK/KosmicKrisp, textures
-  and logic data load, the lobby stage starts loading its map.
+D3DX math, textures (DDS/DXTn, TGA/BMP/JPG/PNG, DXTn encoder), GDI text on CoreText (the game's
+font atlas), `.x` reader (all 1361 files), meshes / progressive meshes / skin info / blended
+meshes, mesh loaders and hierarchy loading. Effects are not needed (no `.fx` in the client).
+Sprite / `ID3DXFont` only matter for the optional "D3DXFONT" font mode.
+
+## Running and testing
+
+- `port/scripts/build_native.sh` then `port/scripts/run_native.sh` (game folder defaults to
+  `~/Projects/RAN/client`); `port/scripts/package_native_app.sh` builds the app bundle.
+- Unattended runs: `RAN_INPUT_SCRIPT="22:click 488 373; 31:text T31K; 49:key Return; 86:raise"`.
+- Diagnostics: `RAN_TRACE_INPUT`, `RAN_TRACE_AUDIO`, `DXVK_HUD=fps`; crashes print a backtrace.
+- Measured: ~30 FPS in town on an M3 (frame times 29-37 ms - the game's own frame cap).

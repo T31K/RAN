@@ -106,10 +106,22 @@ Actions minutes are free.
 - `NET_UPDATE_TRACINGCHAR` carries a `std::string` over the wire (also on Windows); the client only reads `updateNum`, which is safe.
 - Shipped `SkillStrTable.txt` has 55 lines of invalid CP949; that is data damage, not a conversion bug.
 
+## Running, testing, packaging
+
+| Command | What it does |
+|---|---|
+| `port/scripts/run_native.sh [client-dir]` | runs the native client with DXVK on KosmicKrisp |
+| `RAN_INPUT_SCRIPT="22:click 488 373; 31:text T31K; 49:key Return; 86:raise"` | scripted input for unattended runs (seconds: action) |
+| `RAN_TRACE_INPUT=1`, `RAN_TRACE_AUDIO=1`, `DXVK_HUD=fps` | diagnostics |
+| `port/scripts/last_crash.py` | backtrace from the newest macOS crash report (crashes also print one to stderr) |
+| `port/scripts/package_native_app.sh [--with-game dir]` | self-contained `port/build/RanOdyssey Native.app` (libraries relinked into the bundle) |
+| `port/scripts/check-file-struct-sizes.sh` | gate P1.6: on-disk struct images vs MSVC x86 |
+
 ## Next steps
 
-1. DirectSound on miniaudio (`DirectSoundCreate8`, `DirectSoundEnumerateA`) - the sound engine (`DxSoundMan`, `dsutil.cpp`) keeps its API; mmio WAV loading is already native.
-2. D3DX loaders: textures (DDS/TGA/BMP/JPG via stb), `.x` meshes and frames (`D3DXLoadMesh*`, `DirectXFileCreate`), sprite, font, mesh utilities (`docs/port/link-gaps.md` has the exact list).
-3. First run: `RAN_GAME_DIR=~/Projects/RAN/client port/build/native/ran_client`, log in against the VPS server (gate P2.1).
-4. Effects (`D3DXCreateEffectFromFile`): compile the shaders on Windows CI to bytecode, small native effect runtime.
-5. Text rendering with CoreText in `d3dfont.cpp` / `D3DFontX.cpp` (the GDI calls are stubs today).
+1. Phase 4: exercise combat, skills, effects, inventory/NPC shops, map changes and long sessions;
+   fix what differs from the Windows client.
+2. Phase 5: Developer ID signing + notarisation + DMG for the native app (reuse the
+   `package-app.command` flow), OTA updates as for the Wine app, then retire the Wine bundle.
+3. Optional: a native `ID3DXFont`/`ID3DXSprite` (only the "D3DXFONT" font mode uses them),
+   Developer ID-signed builds in CI.
