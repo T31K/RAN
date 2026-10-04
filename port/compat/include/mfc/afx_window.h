@@ -34,7 +34,11 @@ class CWnd : public CCmdTarget
 public:
     HWND m_hWnd = nullptr;
 
-    virtual ~CWnd() = default;
+    virtual ~CWnd()
+    {
+        if (FocusWindow() == this) FocusWindow() = nullptr;
+        if (MainWindow() == this) MainWindow() = nullptr;
+    }
     HWND GetSafeHwnd() const { return m_hWnd; }
     operator HWND() const { return m_hWnd; }
 
@@ -50,7 +54,10 @@ public:
     {
         if (!CreateMainWindowHook()) return FALSE;
         m_hWnd = CreateMainWindowHook()(title, x, y, w, h, style);
-        if (m_hWnd) MainWindow() = this;
+        if (m_hWnd) {
+            MainWindow() = this;
+            if (!FocusWindow()) FocusWindow() = this;   // a new top-level window is active
+        }
         return m_hWnd != nullptr;
     }
     // The CWnd that owns the platform window (receives the translated SDL events).
@@ -69,8 +76,19 @@ public:
     BOOL EnableWindow(BOOL = TRUE) { return FALSE; }
     BOOL IsWindowVisible() const { return FALSE; }
     BOOL IsWindowEnabled() const { return TRUE; }
-    CWnd* SetFocus() { return nullptr; }
-    static CWnd* GetFocus() { return nullptr; }
+    // Keyboard focus among the game's windows (the main window and its hidden edit control,
+    // CIMEEdit): the platform pump sends key, character and IME messages to FocusWindow().
+    static CWnd*& FocusWindow() { static CWnd* wnd = nullptr; return wnd; }
+    CWnd* SetFocus()
+    {
+        CWnd* old = FocusWindow();
+        if (old == this) return old;
+        FocusWindow() = this;
+        if (old) old->SendMessage(WM_KILLFOCUS, (WPARAM)m_hWnd);
+        SendMessage(WM_SETFOCUS, old ? (WPARAM)old->m_hWnd : 0);
+        return old;
+    }
+    static CWnd* GetFocus() { return FocusWindow(); }
     CWnd* GetParent() const { return nullptr; }
     BOOL PostMessage(UINT, WPARAM = 0, LPARAM = 0) { return FALSE; }
     LRESULT SendMessage(UINT message, WPARAM wParam = 0, LPARAM lParam = 0) { return WindowProc(message, wParam, lParam); }

@@ -1,8 +1,14 @@
-// Stand-in for <imm.h> (Windows IME API) in the native macOS build. Phase 2 feeds SDL3 text
-// input/composition events into the game's IME code; until then every context query reports
-// "no IME context", which the game already handles (Windows returns the same with no IME).
+// Stand-in for <imm.h> (Windows IME API) in the native macOS build. The macOS input method
+// (e.g. the Korean 2-set keyboard) composes text; SDL3 reports it as text-editing (composition)
+// and text-input (committed) events, which the platform pump stores in ran_compat::Ime() and
+// turns into WM_IME_STARTCOMPOSITION / WM_IME_COMPOSITION / WM_IME_ENDCOMPOSITION for the
+// focused window - the same sequence a Windows IME produces. CIMEEdit then reads the strings
+// with ImmGetCompositionStringW exactly as on Windows.
 #pragma once
 #include "ran_compat.h"
+#include <algorithm>
+#include <cstring>
+#include <string>
 
 typedef void* HIMCC;
 
@@ -111,26 +117,88 @@ typedef struct tagINPUTCONTEXT {
     DWORD   dwReserve[3];
 } INPUTCONTEXT, *PINPUTCONTEXT, *LPINPUTCONTEXT;
 
-inline HIMC    ImmGetContext(HWND) { return nullptr; }
+namespace ran_compat {
+// The single input context: what the input method is composing and what it last committed.
+struct ImeState
+{
+    std::u16string composition;   // GCS_COMPSTR
+    std::u16string result;        // GCS_RESULTSTR
+    bool composing = false;       // between WM_IME_STARTCOMPOSITION and WM_IME_ENDCOMPOSITION
+    bool native = false;          // last text came from a non-Latin input method (Hangul mode)
+    bool cancelRequested = false; // ImmNotifyIME(CPS_CANCEL/COMPLETE): the pump clears the IME
+};
+inline ImeState& Ime() { static ImeState s; return s; }
+
+// Copies `bytes` of `src` into a caller buffer the way ImmGetCompositionString does: with no
+// buffer (or size 0) it returns the size needed, otherwise the bytes copied.
+inline LONG ImeCopy(const void* src, size_t bytes, void* buf, DWORD size)
+{
+    if (!buf || !size) return (LONG)bytes;
+    const size_t n = std::min<size_t>(bytes, size);
+    std::memcpy(buf, src, n);
+    return (LONG)n;
+}
+} // namespace ran_compat
+
+inline HIMC    ImmGetContext(HWND) { return (HIMC)&ran_compat::Ime(); }
 inline BOOL    ImmReleaseContext(HWND, HIMC) { return TRUE; }
-inline HIMC    ImmAssociateContext(HWND, HIMC) { return nullptr; }
-inline BOOL    ImmIsIME(HKL) { return FALSE; }
-inline BOOL    ImmGetOpenStatus(HIMC) { return FALSE; }
-inline BOOL    ImmSetOpenStatus(HIMC, BOOL) { return FALSE; }
-inline BOOL    ImmGetConversionStatus(HIMC, LPDWORD conv, LPDWORD sent) { if (conv) *conv = 0; if (sent) *sent = 0; return FALSE; }
-inline BOOL    ImmSetConversionStatus(HIMC, DWORD, DWORD) { return FALSE; }
-inline LONG    ImmGetCompositionStringA(HIMC, DWORD, void*, DWORD) { return 0; }
-inline LONG    ImmGetCompositionStringW(HIMC, DWORD, void*, DWORD) { return 0; }
+inline HIMC    ImmAssociateContext(HWND, HIMC) { return (HIMC)&ran_compat::Ime(); }
+inline BOOL    ImmIsIME(HKL) { return TRUE; }
+inline BOOL    ImmGetOpenStatus(HIMC) { return TRUE; }
+inline BOOL    ImmSetOpenStatus(HIMC, BOOL) { return TRUE; }
+inline BOOL    ImmGetConversionStatus(HIMC, LPDWORD conv, LPDWORD sent)
+{
+    if (conv) *conv = ran_compat::Ime().native ? IME_CMODE_NATIVE : IME_CMODE_ALPHANUMERIC;
+    if (sent) *sent = IME_SMODE_NONE;
+    return TRUE;
+}
+// The input source belongs to macOS (the user switches it with the system shortcut).
+inline BOOL    ImmSetConversionStatus(HIMC, DWORD, DWORD) { return TRUE; }
+inline LONG    ImmGetCompositionStringW(HIMC, DWORD index, void* buf, DWORD size)
+{
+    const ran_compat::ImeState& s = ran_compat::Ime();
+    switch (index) {
+    case GCS_RESULTSTR: return ran_compat::ImeCopy(s.result.data(), s.result.size() * 2, buf, size);
+    case GCS_COMPSTR:   return ran_compat::ImeCopy(s.composition.data(), s.composition.size() * 2, buf, size);
+    case GCS_COMPATTR: {   // every composing character is ATTR_INPUT (0)
+        const std::string attrs(s.composition.size(), '\0');
+        return ran_compat::ImeCopy(attrs.data(), attrs.size(), buf, size);
+    }
+    case GCS_COMPCLAUSE: {   // one clause covering the whole composition
+        const DWORD clause[2] = { 0, (DWORD)s.composition.size() };
+        return ran_compat::ImeCopy(clause, s.composition.empty() ? 0 : sizeof(clause), buf, size);
+    }
+    case GCS_CURSORPOS: return (LONG)s.composition.size();
+    default: return IMM_ERROR_NODATA;
+    }
+}
+inline LONG    ImmGetCompositionStringA(HIMC himc, DWORD index, void* buf, DWORD size)
+{
+    if (index != GCS_RESULTSTR && index != GCS_COMPSTR) return ImmGetCompositionStringW(himc, index, buf, size);
+    const std::u16string& w = index == GCS_RESULTSTR ? ran_compat::Ime().result : ran_compat::Ime().composition;
+    if (w.empty()) return 0;
+    std::string mb(w.size() * 2 + 1, '\0');
+    const int n = WideCharToMultiByte(CP_ACP, 0, (const WCHAR*)w.data(), (int)w.size(), &mb[0], (int)mb.size(), nullptr, nullptr);
+    return ran_compat::ImeCopy(mb.data(), n > 0 ? (size_t)n : 0, buf, size);
+}
 inline BOOL    ImmSetCompositionStringA(HIMC, DWORD, const void*, DWORD, const void*, DWORD) { return FALSE; }
 inline DWORD   ImmGetCandidateListA(HIMC, DWORD, LPCANDIDATELIST, DWORD) { return 0; }
 inline DWORD   ImmGetCandidateListW(HIMC, DWORD, LPCANDIDATELIST, DWORD) { return 0; }
-inline BOOL    ImmNotifyIME(HIMC, DWORD, DWORD, DWORD) { return FALSE; }
+inline BOOL    ImmNotifyIME(HIMC, DWORD action, DWORD index, DWORD)
+{
+    if (action == NI_COMPOSITIONSTR && (index == CPS_CANCEL || index == CPS_COMPLETE)) {
+        ran_compat::Ime().composition.clear();
+        ran_compat::Ime().cancelRequested = true;
+    }
+    return TRUE;
+}
 inline BOOL    ImmSimulateHotKey(HWND, DWORD) { return FALSE; }
 inline UINT    ImmGetVirtualKey(HWND) { return 0; }
 inline HWND    ImmGetDefaultIMEWnd(HWND) { return nullptr; }
 inline UINT    ImmGetIMEFileNameA(HKL, char* buf, UINT len) { if (buf && len) buf[0] = 0; return 0; }
 inline BOOL    ImmDisableTextFrameService(DWORD) { return TRUE; }
-inline DWORD   ImmGetProperty(HKL, DWORD) { return 0; }
+// The game draws the composition inline at its caret (level-3 IME), like the Korean IME.
+inline DWORD   ImmGetProperty(HKL, DWORD index) { return index == IGP_PROPERTY ? IME_PROP_AT_CARET : 0; }
 inline BOOL    ImmSetCompositionWindow(HIMC, LPCOMPOSITIONFORM) { return FALSE; }
 inline BOOL    ImmSetCandidateWindow(HIMC, LPCANDIDATEFORM) { return FALSE; }
 inline LPINPUTCONTEXT ImmLockIMC(HIMC) { return nullptr; }

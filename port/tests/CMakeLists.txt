@@ -32,6 +32,15 @@ add_test(NAME d3dx_math_test COMMAND d3dx_math_test)
 # D3DX texture layer: image decoding (DDS/DXTn, stb formats), pixel formats, resize/mips.
 add_executable(d3dx_image_test d3dx_image_test.cpp ${PORT_DIR}/d3dx/d3dx9_image.cpp)
 add_test(NAME d3dx_image_test COMMAND d3dx_image_test)
+# .x file reader: DirectXFileCreate / D3DXFileCreate (text + binary, templates, data blobs).
+add_executable(xfile_test xfile_test.cpp ${PORT_DIR}/d3dx/xfile.cpp)
+add_test(NAME xfile_test COMMAND xfile_test)
+# Opt-in sweep over real client data (not a ctest): xfile_sweep ~/Projects/RAN/client
+add_executable(xfile_sweep xfile_sweep.cpp ${PORT_DIR}/d3dx/xfile.cpp)
+set_target_properties(xfile_sweep PROPERTIES CXX_STANDARD 17)
+foreach(t xfile_test xfile_sweep)
+  target_include_directories(${t} PRIVATE ${PORT_DIR}/../Dependency/directx)   # dxfile.h, rmxfguid.h
+endforeach()
 
 # Platform layer (Phase 2): SDL3 scancode -> DirectInput DIK table, checked against the SDK header.
 find_path(SDL3_INCLUDE_DIR SDL3/SDL_scancode.h HINTS /opt/homebrew/include /usr/local/include)
@@ -46,6 +55,11 @@ if(SDL3_INCLUDE_DIR)
   target_include_directories(dsound_sdl_test PRIVATE ${SDL3_INCLUDE_DIR} ${PORT_DIR}/../Dependency/directx)
   target_link_libraries(dsound_sdl_test PRIVATE ${SDL3_LIBRARY})
   add_test(NAME dsound_sdl_test COMMAND dsound_sdl_test)
+
+  # Keyboard text and IME composition -> the game's edit-control messages (header-only).
+  add_executable(text_input_test text_input_test.cpp)
+  target_include_directories(text_input_test PRIVATE ${SDL3_INCLUDE_DIR})
+  add_test(NAME text_input_test COMMAND text_input_test)
 endif()
 
 # DirectInput 8 stand-in fed by the SDL event pump.

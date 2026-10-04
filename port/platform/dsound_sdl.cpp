@@ -24,7 +24,9 @@
 
 namespace {
 
-std::mutex g_lock;              // guards every buffer's state and the playing list
+// Guards every buffer's state and the playing list. Never destroyed: the SDL audio thread can
+// still call the mixer while static destructors run at exit.
+std::mutex& g_lock = *new std::mutex;
 bool g_manualOutput = false;
 SDL_AudioStream* g_stream = nullptr;
 
@@ -44,7 +46,7 @@ float Len(Vec a) { return std::sqrt(Dot(a, a)); }
 
 class Device;
 class Buffer;
-std::vector<Buffer*>& Playing() { static std::vector<Buffer*> v; return v; }
+std::vector<Buffer*>& Playing() { static std::vector<Buffer*>& v = *new std::vector<Buffer*>; return v; }   // see g_lock
 
 DS3DLISTENER DefaultListener()
 {

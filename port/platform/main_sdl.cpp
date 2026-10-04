@@ -11,6 +11,7 @@
 #include "mfc/afx_all.h"
 #include "input_map.h"
 #include "input_queue.h"
+#include "text_input.h"
 #include <SDL3/SDL.h>
 #include <cstdio>
 #include <cstdlib>
@@ -26,6 +27,7 @@ HWND CreateMainWindow(const char* title, int, int, int w, int h, DWORD)
     g_window = SDL_CreateWindow(title && *title ? title : "Ran Online", w, h,
                                 SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
     if (!g_window) std::fprintf(stderr, "[platform] SDL_CreateWindow failed: %s\n", SDL_GetError());
+    else SDL_StartTextInput(g_window);   // text + input-method composition events (text_input.h)
     return (HWND)g_window;
 }
 
@@ -58,10 +60,19 @@ bool Dispatch(const SDL_Event& e)
     case SDL_EVENT_WINDOW_MINIMIZED:
         Send(WM_SIZE, 1 /*SIZE_MINIMIZED*/, 0);
         break;
-    // Keyboard and mouse go to DxInputDevice through the DirectInput stand-in (dinput_sdl.cpp).
+    // Keyboard and mouse go to DxInputDevice through the DirectInput stand-in (dinput_sdl.cpp);
+    // keys and text also go to the focused window as messages (text_input.h: chat, login).
     case SDL_EVENT_KEY_DOWN:
     case SDL_EVENT_KEY_UP:
         ran_platform::InputKey(ran_platform::SdlScancodeToDik(e.key.scancode), e.type == SDL_EVENT_KEY_DOWN);
+        if (e.type == SDL_EVENT_KEY_DOWN) ran_platform::TextKeyDown(ran_platform::SdlKeyToVk(e.key.key));
+        else ran_platform::TextKeyUp(ran_platform::SdlKeyToVk(e.key.key));
+        break;
+    case SDL_EVENT_TEXT_EDITING:
+        ran_platform::TextEditing(e.edit.text);
+        break;
+    case SDL_EVENT_TEXT_INPUT:
+        ran_platform::TextInput(e.text.text);
         break;
     case SDL_EVENT_MOUSE_MOTION:
         ran_platform::InputMouseMove((int)e.motion.xrel, (int)e.motion.yrel);
@@ -88,6 +99,10 @@ BOOL PumpMessages(MSG* msg, BOOL wait, BOOL remove)
 {
     if (msg) std::memset(msg, 0, sizeof(*msg));
     if (!remove) return SDL_HasEvents(SDL_EVENT_FIRST, SDL_EVENT_LAST) ? TRUE : FALSE;
+    if (ran_compat::Ime().cancelRequested) {   // the game cancelled/completed the composition
+        ran_compat::Ime().cancelRequested = false;
+        if (g_window) SDL_ClearComposition(g_window);
+    }
     SDL_Event e;
     bool got = wait ? SDL_WaitEventTimeout(&e, 50) : SDL_PollEvent(&e);
     while (got) {
