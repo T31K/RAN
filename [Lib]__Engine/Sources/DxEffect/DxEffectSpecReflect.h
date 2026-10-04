@@ -31,6 +31,10 @@ struct DXMATERIAL_SPECREFLECT
 	~DXMATERIAL_SPECREFLECT();
 
 };
+#ifndef _WIN32
+// Native build: the texture pointer is a 4-byte slot in map files (win32/file_image.h).
+RAN_WIN32_IMAGE_POINTERS ( DXMATERIAL_SPECREFLECT, pSpecTex, szTexture, 4, 528 )
+#endif
 struct SPECREFLECT_PROPERTY
 {
 	DWORD		m_dwColorOP;

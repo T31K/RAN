@@ -71,3 +71,41 @@ jobs:
         with:
           name: msg-sizes-win32
           path: msg-sizes/msg_sizes_win32.txt
+
+      # Golden on-disk struct sizes (port/scripts/check-file-struct-sizes.sh): every type the client
+      # reads from / writes to files as raw bytes (list: port/scripts/gen_file_struct_sizes.py).
+      # Same compiler settings as the message step; the list also includes Engine headers, so the
+      # [Lib]__Engine include dirs are added (rebased to this working directory).
+      # continue-on-error until the first green run: a failure here must not hide the build artifacts.
+      - name: Measure on-disk struct sizes (Win32)
+        if: hashFiles('port/tests/golden/file_struct_sizes.cpp') != ''
+        continue-on-error: true
+        shell: pwsh
+        working-directory: '[Lib]__RanClient'
+        run: |
+          $vcx = Get-Content -Raw -LiteralPath '[Lib]__RanClient.vcxproj'   # [..] is a wildcard otherwise
+          $dirs = ([regex]::Match($vcx, '<AdditionalIncludeDirectories>([^<]*)')).Groups[1].Value -split ';' |
+                  Where-Object { $_ -and $_ -notmatch '%\(' }
+          $eng = Get-Content -Raw -LiteralPath '..\[Lib]__Engine\[Lib]__Engine.vcxproj'
+          $engdirs = ([regex]::Match($eng, '<AdditionalIncludeDirectories>([^<]*)')).Groups[1].Value -split ';' |
+                     Where-Object { $_ -and $_ -notmatch '%\(' } |
+                     ForEach-Object { if ($_ -like '..*') { $_ } else { '..\[Lib]__Engine\' + ($_ -replace '^\./', '') } }
+          $incs = ($dirs + $engdirs) | Select-Object -Unique | ForEach-Object { "/I$_" }
+          $game = Get-Content -Raw -LiteralPath '..\[Client]__Game\[Client]__Game.vcxproj'
+          $libdirs = ([regex]::Match($game, '<AdditionalLibraryDirectories>([^<]*)')).Groups[1].Value -split ';' |
+                     Where-Object { $_ -and $_ -notmatch '%\(' } | ForEach-Object { "/LIBPATH:$_" }
+          cl /nologo /EHsc /MD /O2 /bigobj /DWIN32 /DNDEBUG /D_LIB /D_AFXDLL /D_MBCS $incs `
+             ..\port\tests\golden\file_struct_sizes.cpp /Fe:file_struct_sizes.exe /Fo:file_struct_sizes.obj /link $libdirs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force -Path $env:GITHUB_WORKSPACE\file-sizes | Out-Null
+          .\file_struct_sizes.exe | Out-File -Encoding ascii $env:GITHUB_WORKSPACE\file-sizes\file_sizes_win32.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Content $env:GITHUB_WORKSPACE\file-sizes\file_sizes_win32.txt | Measure-Object -Line
+
+      - name: Upload on-disk struct sizes
+        if: hashFiles('port/tests/golden/file_struct_sizes.cpp') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: file-sizes-win32
+          path: file-sizes/file_sizes_win32.txt
+          if-no-files-found: warn

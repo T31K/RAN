@@ -74,6 +74,11 @@ public:
 	{
 	}
 
+#ifndef _WIN32
+	// Native build: objects are deleted through this abstract class; with a non-virtual
+	// destructor that is undefined behaviour, which clang compiles into a trap.
+	virtual
+#endif
 	~DxEffAniData()
 	{
 		m_pd3dDevice = NULL;

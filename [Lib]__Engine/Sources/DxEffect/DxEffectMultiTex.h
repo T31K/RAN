@@ -29,6 +29,11 @@ struct DXMATERIAL_MULTITEX
 	~DXMATERIAL_MULTITEX();
 };
 
+#ifndef _WIN32
+// Native build: the texture pointer is a 4-byte slot in map files (win32/file_image.h).
+RAN_WIN32_IMAGE_POINTERS ( DXMATERIAL_MULTITEX, pTexture, szTexture, 68, 332 )
+#endif
+
 struct MULTITEX_PROPERTY_100
 {
 	BOOL			m_bTex1;

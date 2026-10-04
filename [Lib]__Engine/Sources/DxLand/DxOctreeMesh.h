@@ -106,6 +106,11 @@ struct DXOCMATERIAL
 	}
 };
 
+#ifndef _WIN32
+// Native build: the texture pointer is a 4-byte slot in map files (win32/file_image.h).
+RAN_WIN32_IMAGE_POINTERS ( DXOCMATERIAL, pTexture, szTexture, 68, 332 )
+#endif
+
 struct DxOcMeshes
 {
 	DxOctreeMesh*		pOcMesh;

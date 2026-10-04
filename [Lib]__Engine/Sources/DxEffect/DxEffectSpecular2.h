@@ -31,6 +31,11 @@ struct DXMATERIAL_SPEC2
 	~DXMATERIAL_SPEC2();
 };
 
+#ifndef _WIN32
+// Native build: the texture pointer is a 4-byte slot in map files (win32/file_image.h).
+RAN_WIN32_IMAGE_POINTERS ( DXMATERIAL_SPEC2, pSpecTex, szTexture, 4, 528 )
+#endif
+
 struct SPECULAR2_PROPERTY
 {
 	DWORD		m_dwColorOP;

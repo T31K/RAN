@@ -24,6 +24,12 @@ static bool NearQ(const D3DXQUATERNION& a, const D3DXQUATERNION& b, float eps = 
 }
 static D3DXMATRIX Ident() { D3DXMATRIX m; for (int i = 0; i < 4; ++i) for (int j = 0; j < 4; ++j) m.m[i][j] = i == j; return m; }
 
+// D3DXMATRIXA16 is 16-byte aligned like MSVC's, so structs holding one have Windows' layout
+// (the game's animation key reads them from map files by sizeof).
+struct MatrixKey { DWORD dwTime; D3DXMATRIXA16 mat; };
+static_assert(sizeof(MatrixKey) == 80 && alignof(D3DXMATRIXA16) == 16, "Windows layout of matrix keys");
+static_assert(sizeof(D3DXMATRIXA16) == 64, "the aligned matrix is still a 4x4 float matrix");
+
 int main()
 {
     const float yaws[] = { 0.0f, 0.3f, -1.2f, 2.5f }, pitches[] = { 0.0f, 0.7f, -0.4f, 1.4f }, rolls[] = { 0.0f, -0.9f, 0.2f, 3.0f };

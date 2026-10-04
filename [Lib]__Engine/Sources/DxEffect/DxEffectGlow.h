@@ -38,6 +38,11 @@ struct DXUSERMATERIAL
 #define		USEDAY		0x0001
 #define		USENIGHT	0x0002
 
+#ifndef _WIN32
+// Native build: the texture pointer is a 4-byte slot in map files (win32/file_image.h).
+RAN_WIN32_IMAGE_POINTERS ( DXUSERMATERIAL, pGlowTex, szTexture, 12, 536 )
+#endif
+
 struct GLOW_PROPERTY
 {
 	DWORD		m_dwFlag;

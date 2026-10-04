@@ -73,6 +73,10 @@ public:
 	BOOL operator >> ( std::vector<TYPE> &vecVALUE );
 
 	virtual BOOL ReadBuffer ( void* pBuffer, DWORD Size );
+#ifndef _WIN32
+	using basestream::WriteBuffer;
+	RAN_STREAM_IMAGE_OVERLOADS	// native build: Windows file images of some structs (win32/file_image.h)
+#endif
 
 public:
 	CSerialMemory ();

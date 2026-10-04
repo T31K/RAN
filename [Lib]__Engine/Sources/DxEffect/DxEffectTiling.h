@@ -167,6 +167,11 @@ protected:
 		{
 			SAFE_DELETE ( pPoint );
 		}
+
+#ifndef _WIN32
+		// Native build: pPoint is a 4-byte slot in map files (win32/file_image.h).
+		RAN_WIN32_IMAGE_POINTERS_MEMBER ( POINTEX, pPoint, vPos, 0, 24 )
+#endif
 	};
 
 protected:

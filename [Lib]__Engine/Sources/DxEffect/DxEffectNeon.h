@@ -39,6 +39,11 @@ struct DXMATERIAL_NEON
 	~DXMATERIAL_NEON();
 };
 
+#ifndef _WIN32
+// Native build: the texture pointers are 4-byte slots in map files (win32/file_image.h).
+RAN_WIN32_IMAGE_POINTERS ( DXMATERIAL_NEON, pSrcTex, szTexture, 24, 552 )
+#endif
+
 struct NEON_PROPERTY
 {
 	D3DXMATRIX		m_matFrameComb;

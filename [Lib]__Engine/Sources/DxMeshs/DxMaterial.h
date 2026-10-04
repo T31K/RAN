@@ -90,6 +90,13 @@ struct DXMATERIAL_CHAR_EFF
 	~DXMATERIAL_CHAR_EFF();
 };
 
+#ifndef _WIN32
+// Native build: the texture pointers are 4-byte slots in effect files (win32/file_image.h).
+RAN_WIN32_IMAGE_POINTERS ( DXMATERIAL_SPECULAR, pSpecTex, szTexture, 4, 528 )
+RAN_WIN32_IMAGE_POINTERS ( DXMATERIAL_CHAR_EFF_100, pEffTex, szTexture, 8, 532 )
+RAN_WIN32_IMAGE_POINTERS ( DXMATERIAL_CHAR_EFF, pEffTex, szTexture, 72, 596 )
+#endif
+
 //
 //struct DXMATERIAL_CHAR_EFF
 //{

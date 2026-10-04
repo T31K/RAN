@@ -46,7 +46,7 @@ MODE=(-fsyntax-only)
 # Warnings stay off (the game is MSVC code), except the ones where clang compiles the construct
 # into a runtime trap or undefined behaviour that MSVC defines: those are errors, so every such
 # site is fixed in source. RAN_WARN="-Wfoo ..." turns on more for scans.
-TRAPS=(-Werror=non-pod-varargs -Werror=return-type)
+TRAPS=(-Werror=non-pod-varargs -Werror=return-type -Werror=delete-abstract-non-virtual-dtor)
 # shellcheck disable=SC2206
 EXTRA=(${RAN_WARN:-})
 clang++ ${LANG_FLAG[@]+"${LANG_FLAG[@]}"} -std=c++14 "${MODE[@]}" -fms-extensions -fdeclspec \

@@ -109,7 +109,13 @@ class DxSkinMesh9
 public:
 	static METHOD	m_SkinningMethod;
 	static DWORD	m_dwBehaviorFlags;	// Behavior flags of the 3D device
-	
+
+#ifndef _WIN32
+	// Native build: objects are deleted through this abstract class; with a non-virtual
+	// destructor that is undefined behaviour, which clang compiles into a trap.
+	virtual ~DxSkinMesh9() {}
+#endif
+
 protected:
 	char			m_szName[MAX_PATH];				//	형상 xFile 이름.
 	char			m_szSkeleton[MAX_PATH];			//	Skeleton xFile 이름.

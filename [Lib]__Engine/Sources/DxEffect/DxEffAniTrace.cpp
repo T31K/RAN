@@ -16,6 +16,14 @@ DWORD		DxEffAniData_Trace::TYPEID		= EMEFFANI_TRACE;
 DWORD		DxEffAniData_Trace::VERSION		= 0x0100;
 char		DxEffAniData_Trace::NAME[64]	= "Trace EFFECT";
 
+#ifndef _WIN32
+// Native build: the base destructor is virtual (DxEffAni.h), so the declared destructor needs
+// a body; it never had one because nothing destroyed this type directly.
+DxEffAniData_Trace::~DxEffAniData_Trace()
+{
+}
+#endif
+
 DxEffAni* DxEffAniData_Trace::NEWOBJ ( SAnimContainer* pAnimContainer )
 {
 	DxEffAniTrace*	pEff = new DxEffAniTrace;
