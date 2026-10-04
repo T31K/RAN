@@ -32,6 +32,10 @@ add_test(NAME d3dx_math_test COMMAND d3dx_math_test)
 # D3DX texture layer: image decoding (DDS/DXTn, stb formats), pixel formats, resize/mips.
 add_executable(d3dx_image_test d3dx_image_test.cpp ${PORT_DIR}/d3dx/d3dx9_image.cpp)
 add_test(NAME d3dx_image_test COMMAND d3dx_image_test)
+# D3DX meshes: ID3DXMesh/PMesh on a fake device, optimize/clone/weld/normals, skin info + blended meshes.
+add_executable(d3dx_mesh_test d3dx_mesh_test.cpp ${PORT_DIR}/d3dx/d3dx9_mesh.cpp ${PORT_DIR}/d3dx/d3dx9_meshutil.cpp
+               ${PORT_DIR}/d3dx/d3dx9_skin.cpp ${PORT_DIR}/d3dx/d3dx9_core.cpp)
+add_test(NAME d3dx_mesh_test COMMAND d3dx_mesh_test)
 # .x file reader: DirectXFileCreate / D3DXFileCreate (text + binary, templates, data blobs).
 add_executable(xfile_test xfile_test.cpp ${PORT_DIR}/d3dx/xfile.cpp)
 add_test(NAME xfile_test COMMAND xfile_test)
@@ -67,6 +71,10 @@ add_executable(dinput_sdl_test dinput_sdl_test.cpp ${PORT_DIR}/platform/dinput_s
 target_include_directories(dinput_sdl_test PRIVATE ${PORT_DIR}/../Dependency/directx)
 target_compile_definitions(dinput_sdl_test PRIVATE INITGUID)   # GUID_SysKeyboard etc. (dxguid.lib on Windows)
 add_test(NAME dinput_sdl_test COMMAND dinput_sdl_test)
+
+# Windows cursor files (.cur/.ani) -> pixels for SDL colour cursors.
+add_executable(cursor_decode_test cursor_decode_test.cpp)
+add_test(NAME cursor_decode_test COMMAND cursor_decode_test)
 
 # GDI memory DCs, DIB sections and text on CoreText (the game's glyph-atlas baking).
 add_executable(gdi_text_test gdi_text_test.cpp ${PORT_DIR}/platform/gdi_coretext.cpp)

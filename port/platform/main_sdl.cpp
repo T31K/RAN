@@ -13,9 +13,14 @@
 #include "input_queue.h"
 #include "text_input.h"
 #include <SDL3/SDL.h>
+#include <csignal>
 #include <cstdio>
 #include <cstdlib>
+#include <execinfo.h>
 #include <string>
+#include <unistd.h>
+
+namespace ran_platform { void InstallCursorHooks(); }   // cursor_sdl.cpp
 
 namespace {
 
@@ -136,8 +141,22 @@ BOOL CursorPos(POINT* p)
 
 } // namespace
 
+// Fatal signals print the native backtrace to stderr before the default action (macOS also
+// writes a crash report, but throttles repeats of the same crash).
+void OnFatalSignal(int sig)
+{
+    const char head[] = "\n[platform] fatal signal - backtrace:\n";
+    write(2, head, sizeof(head) - 1);
+    void* frames[64];
+    const int n = backtrace(frames, 64);
+    backtrace_symbols_fd(frames, n, 2);
+    signal(sig, SIG_DFL);
+    raise(sig);
+}
+
 int main(int argc, char** argv)
 {
+    for (int sig : { SIGSEGV, SIGBUS, SIGILL, SIGTRAP, SIGABRT, SIGFPE }) signal(sig, OnFatalSignal);
     setenv("DXVK_WSI_DRIVER", "SDL3", 0);
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
         std::fprintf(stderr, "[platform] SDL_Init failed: %s\n", SDL_GetError());
@@ -147,6 +166,7 @@ int main(int argc, char** argv)
     ran_compat::MessageHook() = PumpMessages;
     ran_compat::CursorPosHook() = CursorPos;
     ran_compat::ClientSizeHook() = ClientSize;
+    ran_platform::InstallCursorHooks();
 
     CWinApp* app = AfxGetApp();   // the game's theApp (CBasicApp)
     static std::string cmdLine;

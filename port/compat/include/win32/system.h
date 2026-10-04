@@ -183,7 +183,21 @@ inline DWORD GetWindowThreadProcessId(HWND, LPDWORD pid) { if (pid) *pid = (DWOR
 inline int SetMapMode(HDC, int) { return 1; /* MM_TEXT */ }
 inline int GetObject(HANDLE, int, void* out) { (void)out; return 0; }
 #define GetObjectA GetObject
-inline BOOL DestroyCursor(HCURSOR) { return TRUE; }
+// Mouse cursors: the platform layer installs real ones (port/platform/cursor_sdl.cpp); without
+// it every call is a harmless no-op.
+namespace ran_compat {
+struct CursorHooks
+{
+    HCURSOR (*loadFile)(const char* path) = nullptr;
+    HCURSOR (*loadSystem)(const char* id) = nullptr;
+    HCURSOR (*set)(HCURSOR) = nullptr;
+    HCURSOR (*get)() = nullptr;
+    int (*show)(BOOL) = nullptr;
+    BOOL (*destroy)(HCURSOR) = nullptr;
+};
+inline CursorHooks& Cursors() { static CursorHooks h; return h; }
+}
+inline BOOL DestroyCursor(HCURSOR c) { return ran_compat::Cursors().destroy ? ran_compat::Cursors().destroy(c) : TRUE; }
 inline BOOL LocalFileTimeToFileTime(const FILETIME* in, FILETIME* out) { if (in && out) *out = *in; return TRUE; }
 #define DIB_RGB_COLORS 0
 #define CLSCTX_INPROC_SERVER 0x1
@@ -254,7 +268,7 @@ inline ULONG_PTR GetClassLongPtr(HWND, int) { return 0; }
 #define SetClassLong SetClassLongPtr
 #define GetClassLong GetClassLongPtr
 inline HWND WindowFromPoint(POINT) { return nullptr; }
-inline HCURSOR GetCursor() { return nullptr; }
+inline HCURSOR GetCursor() { return ran_compat::Cursors().get ? ran_compat::Cursors().get() : nullptr; }
 inline int GetWindowText(HWND, char* buf, int max) { if (buf && max > 0) buf[0] = 0; return 0; }
 #define GetWindowTextA GetWindowText
 #define SMTO_NORMAL 0x0000
@@ -328,8 +342,8 @@ inline HWND FindWindow(const char*, const char*) { return nullptr; }   // no oth
 #define CB_SETITEMDATA  0x0151
 #define CB_ADDSTRING    0x0143
 #define CB_RESETCONTENT 0x014B
-inline HCURSOR SetCursor(HCURSOR) { return nullptr; }
-inline int ShowCursor(BOOL show) { return show ? 0 : -1; }
+inline HCURSOR SetCursor(HCURSOR c) { return ran_compat::Cursors().set ? ran_compat::Cursors().set(c) : nullptr; }
+inline int ShowCursor(BOOL show) { return ran_compat::Cursors().show ? ran_compat::Cursors().show(show) : (show ? 0 : -1); }
 inline BOOL ScreenToClient(HWND, POINT*) { return TRUE; }
 inline BOOL ClientToScreen(HWND, POINT*) { return TRUE; }
 inline UINT RegisterClipboardFormat(const char*) { return 0xC000; }
@@ -376,7 +390,7 @@ inline BOOL GetWindowPlacement(HWND, WINDOWPLACEMENT* wp) { if (wp) std::memset(
 inline BOOL SetWindowPlacement(HWND, const WINDOWPLACEMENT*) { return FALSE; }
 inline HBRUSH CreateSolidBrush(COLORREF) { return nullptr; }
 // CreateCompatibleDC / DeleteDC / SelectObject / DeleteObject: win32/gdi.h (real memory DCs).
-inline HCURSOR LoadCursor(HINSTANCE, const char*) { return nullptr; }
+inline HCURSOR LoadCursor(HINSTANCE, const char* id) { return ran_compat::Cursors().loadSystem ? ran_compat::Cursors().loadSystem(id) : nullptr; }
 #define LoadCursorA LoadCursor
 #define IDC_ARROW ((const char*)(uintptr_t)32512)
 #define QS_POSTMESSAGE 0x0008
@@ -489,7 +503,7 @@ inline BOOL Module32Next(HANDLE, LPMODULEENTRY32) { return FALSE; }
 typedef void* HHOOK;
 inline int FillRect(HDC, const RECT*, HBRUSH) { return 0; }
 inline BOOL GetIconInfo(HICON, PICONINFO info) { if (info) std::memset(info, 0, sizeof(*info)); return FALSE; }
-inline HCURSOR LoadCursorFromFile(const char*) { return nullptr; }
+inline HCURSOR LoadCursorFromFile(const char* path) { return ran_compat::Cursors().loadFile ? ran_compat::Cursors().loadFile(path) : nullptr; }
 #define LoadCursorFromFileA LoadCursorFromFile
 // Gamma ramps (the game's brightness option): Phase 3 maps this onto the native renderer.
 inline BOOL GetDeviceGammaRamp(HDC, void*) { return FALSE; }
