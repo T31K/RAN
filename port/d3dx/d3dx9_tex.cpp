@@ -13,6 +13,7 @@
 #include <d3dx9.h>
 #include <algorithm>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iterator>
@@ -76,6 +77,9 @@ D3DFORMAT ChooseFormat(LPDIRECT3DDEVICE9 dev, D3DFORMAT requested, const Image& 
 {
     D3DFORMAT f = requested;
     if (f == D3DFMT_UNKNOWN || (UINT)f == D3DX_DEFAULT || (UINT)f == D3DX_FROM_FILE) f = img.info.Format;
+    // Diagnostic switch (M1 white-texture investigation): upload DXTn files decoded to 32-bit.
+    static const bool decodeDxt = std::getenv("RAN_DXT_DECODE") != nullptr;
+    if (decodeDxt && IsBlockCompressed(f)) return D3DFMT_A8R8G8B8;
     if (DeviceSupports(dev, f, usage, type)) return f;
     return HasAlpha(f) ? D3DFMT_A8R8G8B8 : D3DFMT_X8R8G8B8;
 }
@@ -108,7 +112,9 @@ Plan MakePlan(LPDIRECT3DDEVICE9 dev, const Image& img, UINT w, UINT h, UINT mips
     Plan p;
     p.w = w;
     p.h = h;
-    p.mips = (usage & D3DUSAGE_AUTOGENMIPMAP) ? 1 : ResolveMips(mipsReq, img.info.MipLevels, FullChain(w, h));
+    // Diagnostic switch (M1 white-texture investigation): load only the top mip level.
+    static const bool noMips = std::getenv("RAN_TEX_NOMIPS") != nullptr;
+    p.mips = (usage & D3DUSAGE_AUTOGENMIPMAP) || noMips ? 1 : ResolveMips(mipsReq, img.info.MipLevels, FullChain(w, h));
     p.format = ChooseFormat(dev, fmtReq, img, usage, type);
     p.direct = img.storage == p.format && img.info.Width == w && img.info.Height == h &&
                p.mips <= img.info.MipLevels && !key;

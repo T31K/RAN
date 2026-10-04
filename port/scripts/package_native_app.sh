@@ -97,9 +97,11 @@ cat > "$APP/Contents/Resources/vulkan/icd.d/kosmickrisp_icd.json" <<EOF
 EOF
 
 ICON=""
-for c in /Applications/RanOdyssey.app/Contents/Resources/AppIcon.icns "$ROOT/dist/RanOdyssey.app/Contents/Resources/AppIcon.icns"; do
+for c in /Applications/RanOdyssey.app/Contents/Resources/AppIcon.icns "$ROOT/dist/RanOdyssey.app/Contents/Resources/AppIcon.icns" \
+         "$ROOT/../dist/RanOdyssey.app/Contents/Resources/AppIcon.icns"; do
     [ -f "$c" ] && { cp "$c" "$APP/Contents/Resources/AppIcon.icns"; ICON="AppIcon"; break; }
 done
+[ -n "$ICON" ] || { echo "no AppIcon.icns found (looked for the RanOdyssey app's icon)"; exit 1; }
 cat > "$APP/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
