@@ -13,6 +13,8 @@ static int g_failed = 0;
 
 namespace fs = std::filesystem;
 
+extern "C" int c_fopen_probe(const char* windowsPath, char* out, int size);   // c_fopen_probe.c
+
 static void WriteText(const fs::path& p, const char* text)
 {
     FILE* f = std::fopen(p.c_str(), "wb");
@@ -59,6 +61,10 @@ int main()
     FILE* g = ran_compat::fopen_resolved((r + "\\Data\\Textures\\sky.dds").c_str(), "rb");
     CHECK(g != nullptr);
     if (g) std::fclose(g);
+    // C sources (minizip opening glogic.rcc) get the same resolution through ran_c_compat.h.
+    char cbuf[8] = {};
+    CHECK(c_fopen_probe((r + "\\data\\TEXTURES\\Sky.dds").c_str(), cbuf, 3) == 3 && std::strcmp(cbuf, "sky") == 0);
+    CHECK(c_fopen_probe((r + "\\nope\\missing.bin").c_str(), cbuf, 3) == -1);
 
     // CreateDirectory / GetFileAttributes / DeleteFile.
     CHECK(CreateDirectory((r + "\\Data\\Cache").c_str(), nullptr));

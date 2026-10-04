@@ -20,12 +20,18 @@ foreach(t compat_types_test cstring_test afx_types_test win32_kernel_test win32_
   add_test(NAME ${t} COMMAND ${t})
 endforeach()
 # The file test uses std::filesystem to set up fixtures (C++17); every other test keeps the
-# compat headers honest in C++14.
+# compat headers honest in C++14. It also checks the C bridge (fopen from C sources).
 set_target_properties(win32_files_test PROPERTIES CXX_STANDARD 17)
+enable_language(C)
+target_sources(win32_files_test PRIVATE c_fopen_probe.c ${PORT_DIR}/platform/c_bridge.cpp)
+set_source_files_properties(c_fopen_probe.c PROPERTIES COMPILE_OPTIONS "-include;ran_c_compat.h")
 
 # D3DX replacement (Phase 3): math library.
 add_executable(d3dx_math_test d3dx_math_test.cpp ${PORT_DIR}/d3dx/d3dx9_math.cpp)
 add_test(NAME d3dx_math_test COMMAND d3dx_math_test)
+# D3DX texture layer: image decoding (DDS/DXTn, stb formats), pixel formats, resize/mips.
+add_executable(d3dx_image_test d3dx_image_test.cpp ${PORT_DIR}/d3dx/d3dx9_image.cpp)
+add_test(NAME d3dx_image_test COMMAND d3dx_image_test)
 
 # Platform layer (Phase 2): SDL3 scancode -> DirectInput DIK table, checked against the SDK header.
 find_path(SDL3_INCLUDE_DIR SDL3/SDL_scancode.h HINTS /opt/homebrew/include /usr/local/include)

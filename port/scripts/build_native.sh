@@ -18,7 +18,8 @@ compile() {   # project<TAB>file
   mkdir -p "$(dirname "$o")"
   [ "$o" -nt "$f" ] && exit 0
   case "$f" in
-    *.c) clang -c -O1 -g0 -w -DNDEBUG -I"$ROOT/port/compat/include" -I"$(dirname "$f")" "$f" -o "$o" 2>"$o.err" ;;
+    # C sources get ran_c_compat.h first: fopen with Windows paths resolves like the C++ side.
+    *.c) clang -c -O1 -g0 -w -DNDEBUG -I"$ROOT/port/compat/include" -include ran_c_compat.h -I"$(dirname "$f")" "$f" -o "$o" 2>"$o.err" ;;
     *)   RAN_OBJ_OUT="$o" "$ROOT/port/scripts/compile_one.sh" "$f" 3 >/dev/null 2>"$o.err" ;;
   esac
   if [ $? -eq 0 ]; then rm -f "$o.err"; else echo "FAIL	$p	$f"; rm -f "$o"; fi
