@@ -52,6 +52,16 @@ font atlas), `.x` reader (all 1361 files), meshes / progressive meshes / skin in
 meshes, mesh loaders and hierarchy loading. Effects are not needed (no `.fx` in the client).
 Sprite / `ID3DXFont` only matter for the optional "D3DXFONT" font mode.
 
+## Releases
+
+- **0.2** (2026-10-05): runs on Macs that also had the classic (Wine) app - the bundled game data
+  now goes to its own `~/Library/Application Support/RanOdyssey Native/game` (the classic app's
+  `RanOdyssey/game` holds an older client layout: every texture failed to load, so the UI drew
+  white and the 3D scene black); startup no longer crashes on Mac built-in displays that list no
+  800x600 mode; frame limit off by default; Tab cycles the skill pages (Shift+Tab = Extreme
+  weapon swap); app icon restored. Verified on an M1 MacBook (macOS 26.6) and an M3.
+- **0.1** (2026-10-04): first native release.
+
 ## Running and testing
 
 - `port/scripts/build_native.sh` then `port/scripts/run_native.sh` (game folder defaults to

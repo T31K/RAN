@@ -112,7 +112,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
     <key>CFBundleIdentifier</key><string>com.t31k.ranodyssey.native</string>
     <key>CFBundleExecutable</key><string>ran_client</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>0.1</string>
+    <key>CFBundleShortVersionString</key><string>0.2</string>
     <key>CFBundleVersion</key><string>$(git -C "$ROOT" rev-list --count HEAD)</string>
     <key>CFBundleIconFile</key><string>$ICON</string>
     <key>LSMinimumSystemVersion</key><string>26.0</string>
