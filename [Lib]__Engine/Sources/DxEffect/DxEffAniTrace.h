@@ -17,6 +17,25 @@ struct EFFANI_PROPERTY_TRACE : public EFFANI_PROPERTY
 	}
 };
 
+#ifndef _WIN32
+// Native build: animation files hold MSVC's 24-byte std::string image (win32/file_image.h).
+template <> struct ran_compat::Win32Image<EFFANI_PROPERTY_TRACE>
+{
+	static const bool kConverts = true;
+	static const size_t kSize = 28;
+	static void Read ( const BYTE* s, EFFANI_PROPERTY_TRACE& d )
+	{
+		memcpy( &d.m_fScale, s, 4 );
+		d.m_strTexName = ran_compat::ReadMsvcString( s+4 );
+	}
+	static void Write ( const EFFANI_PROPERTY_TRACE& d, BYTE* s )
+	{
+		memcpy( s, &d.m_fScale, 4 );
+		ran_compat::WriteMsvcString( d.m_strTexName, s+4 );
+	}
+};
+#endif
+
 class DxEffAniData_Trace : public DxEffAniData
 {
 public:

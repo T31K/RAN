@@ -26,9 +26,17 @@ namespace ran_fsize
         table()[name] = size;
         return 0;
     }
+    // The size a stream really reads and writes. In the native build, types that declare their
+    // Windows image (win32/file_image.h) go through it, so their on-disk size is the image size.
+#ifndef _WIN32
+    template <class T, bool = ran_compat::Win32Image<T>::kConverts> struct OnDisk { enum { kSize = sizeof(T) }; };
+    template <class T> struct OnDisk<T, true> { enum { kSize = ran_compat::Win32Image<T>::kSize }; };
+#else
+    template <class T> struct OnDisk { enum { kSize = sizeof(T) }; };
+#endif
     // kSize is a constant expression, so the layout is computed during semantic analysis too
     // (clang -fsyntax-only -Xclang -fdump-record-layouts, used by analyze_file_structs.py).
-    template <class T, class Tag> struct Probe { enum { kSize = sizeof(T) }; static int reg; };
+    template <class T, class Tag> struct Probe { enum { kSize = OnDisk<T>::kSize }; static int reg; };
     template <class T, class Tag> int Probe<T, Tag>::reg = record(Tag::name(), (unsigned)Probe<T, Tag>::kSize);
 }
 

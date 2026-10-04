@@ -73,6 +73,11 @@ NOT_TYPE_HEAD = {"return", "sizeof", "delete", "new", "throw", "case", "goto", "
 # Records that are not byte-serialisable on any platform although a sizeof of them reaches a
 # file call (verified by hand); they are listed as comments with the reason.
 NOT_FILE = {
+    "SCROWGEN": "SCROWDATA::LoadFile only GASSERTs sizeof against the stored size (a no-op in Release) "
+                "and reads the members one by one; holds a std::string, never copied as bytes",
+    "SKILL::SEXT_DATA_103": "GLSKILL::LoadFile: GASSERT-only size check, members read one by one (std::string[])",
+    "SKILL::SEXT_DATA_104": "GLSKILL::LoadFile: GASSERT-only size check, members read one by one (std::string[])",
+    "SKILL::SEXT_DATA_105": "GLSKILL::LoadFile: GASSERT-only size check, members read one by one (std::string[])",
 }
 
 TOKEN = re.compile(r'"(?:\\.|[^"\\\n])*"|\'(?:\\.|[^\'\\\n])*\'|//[^\n]*|/\*.*?\*/|#(?:\\\r?\n|[^\n])*'

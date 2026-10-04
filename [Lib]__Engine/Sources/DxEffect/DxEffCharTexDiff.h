@@ -46,6 +46,42 @@ struct EFFCHAR_PROPERTY_TEXDIFF : public EFFCHAR_PROPERTY
 	}
 };
 
+#ifndef _WIN32
+// Native build: effect files hold MSVC's 24-byte std::string image (win32/file_image.h).
+template <> struct ran_compat::Win32Image<EFFCHAR_PROPERTY_TEXDIFF_100>
+{
+	static const bool kConverts = true;
+	static const size_t kSize = 36;
+	static void Read ( const BYTE* s, EFFCHAR_PROPERTY_TEXDIFF_100& d )
+	{
+		memcpy( &d.m_dwFlag, s, 4 );	memcpy( &d.m_dwMaterials, s+4, 4 );	memcpy( &d.m_fSpeed, s+8, 4 );
+		d.m_strTex = ran_compat::ReadMsvcString( s+12 );
+	}
+	static void Write ( const EFFCHAR_PROPERTY_TEXDIFF_100& d, BYTE* s )
+	{
+		memcpy( s, &d.m_dwFlag, 4 );	memcpy( s+4, &d.m_dwMaterials, 4 );	memcpy( s+8, &d.m_fSpeed, 4 );
+		ran_compat::WriteMsvcString( d.m_strTex, s+12 );
+	}
+};
+template <> struct ran_compat::Win32Image<EFFCHAR_PROPERTY_TEXDIFF>
+{
+	static const bool kConverts = true;
+	static const size_t kSize = 40;
+	static void Read ( const BYTE* s, EFFCHAR_PROPERTY_TEXDIFF& d )
+	{
+		memcpy( &d.m_dwFlag, s, 4 );	memcpy( &d.m_dwMaterials, s+4, 4 );
+		memcpy( &d.m_dwIntensity, s+8, 4 );	memcpy( &d.m_fSpeed, s+12, 4 );
+		d.m_strTex = ran_compat::ReadMsvcString( s+16 );
+	}
+	static void Write ( const EFFCHAR_PROPERTY_TEXDIFF& d, BYTE* s )
+	{
+		memcpy( s, &d.m_dwFlag, 4 );	memcpy( s+4, &d.m_dwMaterials, 4 );
+		memcpy( s+8, &d.m_dwIntensity, 4 );	memcpy( s+12, &d.m_fSpeed, 4 );
+		ran_compat::WriteMsvcString( d.m_strTex, s+16 );
+	}
+};
+#endif
+
 class DxEffCharTexDiff : public DxEffChar
 {
 public:

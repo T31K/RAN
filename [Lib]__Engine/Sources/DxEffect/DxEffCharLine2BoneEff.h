@@ -106,6 +106,36 @@ struct EFFCHAR_PROPERTY_LINE2BONEEFF : public EFFCHAR_PROPERTY
 
 	void Assign( EFFCHAR_PROPERTY_LINE2BONEEFF_0100 &sOldProperty );
 };
+
+#ifndef _WIN32
+// Native build: effect files hold the Win32 image (232 bytes) - each CMinMax<float> is
+// vtable pointer + min + max (12 bytes there, 16 here); the vtable slot is never read
+// (win32/file_image.h).
+template <> struct ran_compat::Win32Image<EFFCHAR_PROPERTY_LINE2BONEEFF>
+{
+	static const bool kConverts = true;
+	static const size_t kSize = 232;
+	static void Read ( const BYTE* s, EFFCHAR_PROPERTY_LINE2BONEEFF& d )
+	{
+		memcpy( &d.m_dwFlag, s, 76 );	// m_dwFlag .. m_fCreateLength: same layout
+		memcpy( &d.m_fMinMaxDist.min, s+80, 4 );		memcpy( &d.m_fMinMaxDist.max, s+84, 4 );
+		memcpy( &d.m_fMinMaxTexRotate.min, s+92, 4 );	memcpy( &d.m_fMinMaxTexRotate.max, s+96, 4 );
+		d.m_bWithCamMove = s[100] != 0;
+		memcpy( d.m_szTexture, s+101, BONELISTEFF_TEXNAME_SIZE );
+		memcpy( d.m_szTexture2, s+101+BONELISTEFF_TEXNAME_SIZE, BONELISTEFF_TEXNAME_SIZE );
+	}
+	static void Write ( const EFFCHAR_PROPERTY_LINE2BONEEFF& d, BYTE* s )
+	{
+		memcpy( s, &d.m_dwFlag, 76 );
+		memcpy( s+80, &d.m_fMinMaxDist.min, 4 );		memcpy( s+84, &d.m_fMinMaxDist.max, 4 );
+		memcpy( s+92, &d.m_fMinMaxTexRotate.min, 4 );	memcpy( s+96, &d.m_fMinMaxTexRotate.max, 4 );
+		s[100] = d.m_bWithCamMove ? 1 : 0;
+		memcpy( s+101, d.m_szTexture, BONELISTEFF_TEXNAME_SIZE );
+		memcpy( s+101+BONELISTEFF_TEXNAME_SIZE, d.m_szTexture2, BONELISTEFF_TEXNAME_SIZE );
+	}
+};
+static_assert( BONELISTEFF_TEXNAME_SIZE == 64, "Win32 image of EFFCHAR_PROPERTY_LINE2BONEEFF assumes 64-char names" );
+#endif
 //
 //struct DXCUSTOMBONE
 //{

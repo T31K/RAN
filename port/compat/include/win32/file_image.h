@@ -11,6 +11,7 @@
 #include <windows.h>
 #include <cstddef>
 #include <cstring>
+#include <string>
 #include <type_traits>
 #include <vector>
 
@@ -45,6 +46,27 @@ inline void WritePointerRun(const BYTE* src, BYTE* dst, size_t win32PtrOffset, s
     std::memcpy(dst, src, win32PtrOffset);
     std::memset(dst + win32PtrOffset, 0, 4 * count);   // pointer values mean nothing on disk
     std::memcpy(dst + win32After, src + nativeAfter, win32Size - win32After);
+}
+
+// MSVC x86 std::string as raw bytes (24): a 16-byte union of the inline text and a heap
+// pointer, then size and capacity. Files written by the Windows tools only hold usable text
+// when it fits inline (capacity 15); a heap pointer in a file means nothing, on Windows too.
+inline std::string ReadMsvcString(const BYTE* p)
+{
+    DWORD size = 0, capacity = 0;
+    std::memcpy(&size, p + 16, 4);
+    std::memcpy(&capacity, p + 20, 4);
+    if (capacity < 16 && size <= capacity) return std::string((const char*)p, size);
+    return std::string();
+}
+
+inline void WriteMsvcString(const std::string& s, BYTE* p)
+{
+    std::memset(p, 0, 24);
+    const DWORD size = (DWORD)(s.size() < 15 ? s.size() : 15), capacity = 15;
+    std::memcpy(p, s.data(), size);
+    std::memcpy(p + 16, &size, 4);
+    std::memcpy(p + 20, &capacity, 4);
 }
 
 template <class Stream, class T> BOOL ReadImage(Stream& s, T* p, DWORD size, std::false_type)
