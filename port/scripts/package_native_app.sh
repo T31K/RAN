@@ -122,7 +122,11 @@ EOF
 
 if [ -n "$GAME" ]; then
     echo "copying game data from $GAME ..."
-    rsync -a --exclude 'Game.pdb' --exclude '*.exe' --exclude '*.dll' "$GAME/" "$APP/Contents/Resources/game/"
+    # Windows-only files stay out (executables, DLLs, debug symbols, anti-cheat, installer
+    # leftovers, backups); the first launch clones this folder into Application Support.
+    rsync -a --exclude 'Game.pdb' --exclude '*.exe' --exclude '*.dll' --exclude 'GameGuard' \
+        --exclude '$PLUGINSDIR' --exclude '$SYSDIR' --exclude '*.bak' --exclude '*.des' \
+        --exclude '.DS_Store' "$GAME/" "$APP/Contents/Resources/game/"
 fi
 
 if [ "$SIGN" = 1 ]; then

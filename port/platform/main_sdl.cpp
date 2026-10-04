@@ -17,6 +17,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <execinfo.h>
+#include <copyfile.h>
 #include <sys/stat.h>
 extern "C" int _NSGetExecutablePath(char* buf, uint32_t* bufsize);   // <mach-o/dyld.h> redefines FALSE
 #include <algorithm>
@@ -256,6 +257,15 @@ void ConfigureFromBundle()
         const char* home = std::getenv("HOME");
         const std::string shared = std::string(home ? home : "") + "/Library/Application Support/RanOdyssey/game";
         const std::string bundled = contents + "/Resources/game";
+        if (!IsDir(shared + "/data") && IsDir(bundled + "/data")) {
+            // First launch of a bundle that carries the game: the game writes next to its data
+            // (options, caches), and an installed app is read-only - give this user a copy.
+            // On APFS it is a clone: instant, and it shares the blocks with the bundle.
+            const std::string parent = shared.substr(0, shared.rfind('/'));
+            ::mkdir(parent.c_str(), 0755);
+            if (copyfile(bundled.c_str(), shared.c_str(), nullptr, COPYFILE_ALL | COPYFILE_RECURSIVE | COPYFILE_CLONE) != 0)
+                std::fprintf(stderr, "[platform] could not copy the game data to %s\n", shared.c_str());
+        }
         if (IsDir(shared + "/data")) setenv("RAN_GAME_DIR", shared.c_str(), 1);
         else if (IsDir(bundled + "/data")) setenv("RAN_GAME_DIR", bundled.c_str(), 1);
     }
