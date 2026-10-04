@@ -256,19 +256,32 @@ index 5b156c6..c9b8ac1 100644
  #include <windows.h>
  #include <dlfcn.h>
 diff --git a/src/vulkan/vulkan_loader.cpp b/src/vulkan/vulkan_loader.cpp
-index f9d1e98..c9fad42 100644
+index f9d1e98..871621f 100644
 --- a/src/vulkan/vulkan_loader.cpp
 +++ b/src/vulkan/vulkan_loader.cpp
-@@ -14,6 +14,9 @@ namespace dxvk::vk {
+@@ -10,13 +10,21 @@
+ namespace dxvk::vk {
+ 
+   static std::pair<HMODULE, PFN_vkGetInstanceProcAddr> loadVulkanLibrary() {
+-    static const std::array<const char*, 2> dllNames = {{
++    static const std::array<const char*, 3> dllNames = {{
  #ifdef _WIN32
        "winevulkan.dll",
        "vulkan-1.dll",
++      "vulkan-1.dll",
 +#elif defined(__APPLE__)
++      // An app bundle ships the loader next to its other libraries; a bare name only finds it
++      // through DYLD_LIBRARY_PATH or the system fallback paths.
++      "@executable_path/../Frameworks/libvulkan.1.dylib",
 +      "libvulkan.1.dylib",
 +      "libvulkan.dylib",
  #else
        "libvulkan.so",
        "libvulkan.so.1",
++      "libvulkan.so.1",
+ #endif
+     }};
+ 
 diff --git a/src/wsi/sdl3/wsi_monitor_sdl3.cpp b/src/wsi/sdl3/wsi_monitor_sdl3.cpp
 index f568847..7e4b985 100644
 --- a/src/wsi/sdl3/wsi_monitor_sdl3.cpp

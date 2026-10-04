@@ -17,6 +17,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <execinfo.h>
+#include <sys/stat.h>
+extern "C" int _NSGetExecutablePath(char* buf, uint32_t* bufsize);   // <mach-o/dyld.h> redefines FALSE
 #include <algorithm>
 #include <string>
 #include <unistd.h>
@@ -217,6 +219,38 @@ BOOL CursorPos(POINT* p)
 
 } // namespace
 
+bool IsDir(const std::string& p)
+{
+    struct stat st;
+    return ::stat(p.c_str(), &st) == 0 && S_ISDIR(st.st_mode);
+}
+
+// Inside an app bundle (Contents/MacOS/ran_client) the bundle provides what run_native.sh
+// sets up by hand: the Vulkan driver manifest (Contents/Resources/vulkan/icd.d), and the game
+// folder - RAN_GAME_DIR if set, else the RanOdyssey app's per-user copy, else one inside the
+// bundle. The working directory becomes the game folder, like launching Game.exe.
+void ConfigureFromBundle()
+{
+    char exe[4096];
+    uint32_t size = sizeof(exe);
+    if (_NSGetExecutablePath(exe, &size) != 0) return;
+    std::string contents(exe);
+    contents = contents.substr(0, contents.rfind('/'));              // .../Contents/MacOS
+    contents = contents.substr(0, contents.rfind('/'));              // .../Contents
+    const std::string icd = contents + "/Resources/vulkan/icd.d/kosmickrisp_icd.json";
+    if (!std::getenv("VK_DRIVER_FILES") && ::access(icd.c_str(), R_OK) == 0) setenv("VK_DRIVER_FILES", icd.c_str(), 1);
+    if (!std::getenv("RAN_GAME_DIR")) {
+        const char* home = std::getenv("HOME");
+        const std::string shared = std::string(home ? home : "") + "/Library/Application Support/RanOdyssey/game";
+        const std::string bundled = contents + "/Resources/game";
+        if (IsDir(shared + "/data")) setenv("RAN_GAME_DIR", shared.c_str(), 1);
+        else if (IsDir(bundled + "/data")) setenv("RAN_GAME_DIR", bundled.c_str(), 1);
+    }
+    if (const char* dir = std::getenv("RAN_GAME_DIR")) {
+        if (::chdir(dir) != 0) std::fprintf(stderr, "[platform] cannot enter game folder %s\n", dir);
+    }
+}
+
 // Fatal signals print the native backtrace to stderr before the default action (macOS also
 // writes a crash report, but throttles repeats of the same crash).
 void OnFatalSignal(int sig)
@@ -234,6 +268,7 @@ int main(int argc, char** argv)
 {
     for (int sig : { SIGSEGV, SIGBUS, SIGILL, SIGTRAP, SIGABRT, SIGFPE }) signal(sig, OnFatalSignal);
     signal(SIGTERM, [](int) { _exit(0); });   // kill/quit from outside: no static teardown either
+    ConfigureFromBundle();
     setenv("DXVK_WSI_DRIVER", "SDL3", 0);
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
         std::fprintf(stderr, "[platform] SDL_Init failed: %s\n", SDL_GetError());
