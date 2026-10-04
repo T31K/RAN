@@ -62,7 +62,13 @@ inline std::u16string Utf8ToUtf16(const char* s)
     return out;
 }
 
-inline CWnd* TextTarget() { return CWnd::GetFocus() ? CWnd::GetFocus() : CWnd::MainWindow(); }
+inline CWnd* TextTarget()
+{
+    CWnd* w = CWnd::GetFocus() ? CWnd::GetFocus() : CWnd::MainWindow();
+    static const bool trace = std::getenv("RAN_TRACE_INPUT") != nullptr;   // diagnostics
+    if (trace) std::fprintf(stderr, "[input] target %p (main %p)\n", (void*)w, (void*)CWnd::MainWindow());
+    return w;
+}
 
 // Key press (also auto-repeat). While the input method composes, it owns the keys (Windows
 // reports them as VK_PROCESSKEY), so nothing is sent.
