@@ -58,7 +58,8 @@ Sprite / `ID3DXFont` only matter for the optional "D3DXFONT" font mode.
   `~/Projects/RAN/client`); `port/scripts/package_native_app.sh` builds the app bundle.
 - Unattended runs: `RAN_INPUT_SCRIPT="22:click 488 373; 31:text T31K; 49:key Return; 86:raise"`.
 - Diagnostics: `RAN_TRACE_INPUT`, `RAN_TRACE_AUDIO`, `DXVK_HUD=fps`; crashes print a backtrace.
-- Measured: ~30 FPS in town on an M3 with the GPU ~8% busy - that is the game's own Frame
-  Limit option (on by default, as on Windows; uncheck it in the in-game graphics options for
-  more). DXVK keeps one queued frame (`d3d9.maxFrameLatency = 1`, set in `main_sdl.cpp`) so
+- Frame rate: the native client starts with the game's Frame Limit (30 FPS) off, so it runs at
+  the display's refresh (60 FPS on an M3); the in-game graphics option still turns it on.
+- Keys: F1-F3 need Fn on a Mac keyboard, so Tab also cycles the skill pages (F1 -> F2 -> F3);
+  the Extreme classes' weapon swap moves from Tab to Shift+Tab. DXVK keeps one queued frame (`d3d9.maxFrameLatency = 1`, set in `main_sdl.cpp`) so
   input does not lag behind by up to three frames.

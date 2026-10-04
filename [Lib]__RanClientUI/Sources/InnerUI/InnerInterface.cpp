@@ -612,7 +612,15 @@ void CInnerInterface::UpdateShortcutAfter ()
 	}	
 	else 
 	{
+#ifdef _WIN32
 		if ( UIKeyCheck::GetInstance()->Check( DIK_TAB, DXKEY_DOWN ) )
+#else
+		// Native macOS client: plain Tab cycles the skill pages (SkillTrayTab.cpp), so the
+		// Extreme weapon swap is Shift+Tab.
+		if ( UIKeyCheck::GetInstance()->Check( DIK_TAB, DXKEY_DOWN ) &&
+			( UIKeyCheck::GetInstance()->CheckSimple( DIK_LSHIFT, DXKEY_DOWNED ) ||
+			  UIKeyCheck::GetInstance()->CheckSimple( DIK_RSHIFT, DXKEY_DOWNED ) ) )
+#endif
 		{
 			EMCHARCLASS emClass = GLGaeaClient::GetInstance().GetCharacter()->m_emClass;
 

@@ -43,7 +43,12 @@ namespace DXPARAMSET
 		DxPostProcess::GetInstance().SetOptionEnable( RANPARAM::bPost );
 		
 		g_bFRAME_LIMIT = RANPARAM::bFrameLimit;
-		
+#ifndef _WIN32
+		// Native macOS client: start uncapped (the in-game option still turns the cap on).
+		RANPARAM::bFrameLimit = FALSE;
+		g_bFRAME_LIMIT = FALSE;
+#endif
+
 
 		//	사운드 설정.
 		//		

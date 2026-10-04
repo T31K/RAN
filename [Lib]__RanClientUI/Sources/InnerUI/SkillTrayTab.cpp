@@ -105,8 +105,16 @@ void CSkillTrayTab::Update( int x, int y, BYTE LB, BYTE MB, BYTE RB, int nScroll
 		nNewIndex = 0;
 	if( UIKeyCheck::GetInstance()->Check( DIK_F2, DXKEY_DOWN ) )	
 		nNewIndex = 1;
-	if( UIKeyCheck::GetInstance()->Check( DIK_F3, DXKEY_DOWN ) )	
+	if( UIKeyCheck::GetInstance()->Check( DIK_F3, DXKEY_DOWN ) )
 		nNewIndex = 2;
+#ifndef _WIN32
+	// Native macOS client: F1-F3 need Fn on a Mac keyboard, so Tab cycles the skill pages too
+	// (not while typing in chat; Shift+Tab is the Extreme weapon swap, see InnerInterface.cpp).
+	UIKeyCheck* pKeyCheck = UIKeyCheck::GetInstance();
+	const bool bShift = pKeyCheck->CheckSimple( DIK_LSHIFT, DXKEY_DOWNED ) || pKeyCheck->CheckSimple( DIK_RSHIFT, DXKEY_DOWNED );
+	if( pKeyCheck->CheckSimple( DIK_TAB, DXKEY_DOWN ) && !bShift && !CInnerInterface::GetInstance().IsCHAT_BEGIN() )
+		nNewIndex = NEXT_INDEX[nOldIndex];
+#endif
 
 	if( nNewIndex == nOldIndex ) return ;
 	else
