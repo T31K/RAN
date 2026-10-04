@@ -262,7 +262,10 @@ void ConfigureFromBundle()
             // (options, caches), and an installed app is read-only - give this user a copy.
             // On APFS it is a clone: instant, and it shares the blocks with the bundle.
             const std::string parent = shared.substr(0, shared.rfind('/'));
-            ::mkdir(parent.c_str(), 0755);
+            for (size_t at = 1; at != std::string::npos; ) {   // mkdir -p
+                at = parent.find('/', at + 1);
+                ::mkdir(parent.substr(0, at).c_str(), 0755);
+            }
             if (copyfile(bundled.c_str(), shared.c_str(), nullptr, COPYFILE_ALL | COPYFILE_RECURSIVE | COPYFILE_CLONE) != 0)
                 std::fprintf(stderr, "[platform] could not copy the game data to %s\n", shared.c_str());
         }
