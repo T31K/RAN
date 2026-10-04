@@ -142,6 +142,9 @@ void LoadInputScript()
             up = down; up.at = t + 0.3; up.event.type = SDL_EVENT_MOUSE_BUTTON_UP;
             Script().push_back(down);
             Script().push_back(up);
+        } else if (op == "raise") {   // bring the game window to the front (app switching tests)
+            s.event.type = SDL_EVENT_USER;
+            Script().push_back(s);
         } else if (op == "text") {
             s.event.type = SDL_EVENT_TEXT_INPUT;
             s.text = arg;
@@ -172,6 +175,7 @@ void RunInputScript()
     while (next < Script().size() && Script()[next].at <= now) {
         ScriptStep& s = Script()[next++];
         if (s.warp) { if (g_window) SDL_WarpMouseInWindow(g_window, s.x, s.y); continue; }
+        if (s.event.type == SDL_EVENT_USER) { if (g_window) SDL_RaiseWindow(g_window); continue; }
         if (s.event.type == SDL_EVENT_TEXT_INPUT) s.event.text.text = s.text.c_str();
         Dispatch(s.event);
     }
