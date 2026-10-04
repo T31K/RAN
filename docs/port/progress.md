@@ -14,7 +14,7 @@ after an app switch).
 | 2 - platform layer | **Complete** (P2.1 login passes; window, input, text/IME, sound, cursors, files) |
 | 3 - graphics | **Complete for this client** (D3DX textures/fonts/meshes/skinning/.x; no .fx files ship) |
 | 4 - gameplay parity | In progress: movement, chat, UI, sound, app switching verified; combat/skills/effects and long sessions still to exercise |
-| 5 - ship | Started: self-contained `RanOdyssey Native.app` (34 MB, ad-hoc signed); Developer ID signing, notarisation and DMG still to do |
+| 5 - ship | Mostly done: self-contained `RanOdyssey Native.app` (34 MB), Developer ID + hardened runtime signing, 14 MB DMG (`package_native_app.sh --sign --dmg`); notarisation is one flag away (`--notarize`), OTA updates and retiring the Wine app still to do |
 
 ## Phase 1 - portable codebase, Windows still builds
 
