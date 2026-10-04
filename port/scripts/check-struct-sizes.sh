@@ -27,10 +27,17 @@ if [ ! -f "$GOLDEN" ]; then
   echo "no golden file yet ($GOLDEN): download it from the CI artifact 'msg-sizes-win32'"
   exit 3
 fi
-if diff <(sort "$GOLDEN") <(sort "$OUT_DIR/msg_sizes_macos.txt") > "$OUT_DIR/msg_sizes.diff"; then
-  echo "PASS: all $(wc -l < "$GOLDEN" | tr -d ' ') struct sizes match Windows x86"
+# Compare every struct measured on macOS with its Windows size (the golden file may list more:
+# structs excluded later as non-wire stay in it until the next CI refresh).
+tr -d '\r' < "$GOLDEN" | sort > "$OUT_DIR/golden.sorted"
+sort "$OUT_DIR/msg_sizes_macos.txt" > "$OUT_DIR/macos.sorted"
+join -a 2 -e MISSING -o 0,1.2,2.2 "$OUT_DIR/golden.sorted" "$OUT_DIR/macos.sorted" \
+  | awk '$2 != $3 { print "  " $1 ": windows " $2 ", macos " $3 }' > "$OUT_DIR/msg_sizes.diff"
+N=$(wc -l < "$OUT_DIR/macos.sorted" | tr -d ' ')
+if [ ! -s "$OUT_DIR/msg_sizes.diff" ]; then
+  echo "PASS: all $N struct sizes match Windows x86"
   exit 0
 fi
-echo "FAIL: size mismatches (< windows, > macos):"
+echo "FAIL: $(wc -l < "$OUT_DIR/msg_sizes.diff" | tr -d ' ') of $N structs differ:"
 cat "$OUT_DIR/msg_sizes.diff"
 exit 1

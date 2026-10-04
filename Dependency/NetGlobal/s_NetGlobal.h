@@ -469,7 +469,7 @@ struct G_SERVER_INFO
 	int nServerChannellMaxClient; ///< Channel max client
 	int	nServicePort;
 	int	nControlPort;
-	unsigned long ulServerIP;
+	ULONG ulServerIP;             // 4 bytes everywhere (unsigned long is 8 on macOS); sent in packets
 	bool bPk;                     ///< Channel PK information
 
 	char	szServerName[SERVER_NAME_LENGTH+1];
@@ -556,7 +556,7 @@ struct F_SERVER_INFO // Field Server Information
 {			
 	char szServerName[SERVER_NAME_LENGTH+1];	
 	char szServerIP[MAX_IP_LENGTH+1];
-	unsigned long ulServerIP;
+	ULONG ulServerIP;	// 4 bytes everywhere (unsigned long is 8 on macOS); sent in packets
 	int	nServicePort;
 
 	F_SERVER_INFO()

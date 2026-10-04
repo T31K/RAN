@@ -12,6 +12,11 @@
 typedef int64_t __time64_t;
 #endif
 
+// MFC declares its classes under #pragma pack(push, _AFX_PACKING) with _AFX_PACKING = 4, so
+// CTime/CTimeSpan (one __time64_t) are 4-byte aligned on Windows. They sit inside network
+// messages and saved structs, so the layout has to match (port/scripts/check-struct-sizes.sh).
+#pragma pack(push, 4)
+
 class CTimeSpan
 {
 public:
@@ -107,6 +112,9 @@ private:
 
     __time64_t m_time = 0;
 };
+
+#pragma pack(pop)
+static_assert(sizeof(CTime) == 8 && alignof(CTime) == 4, "CTime must match MFC's x86 layout (_AFX_PACKING 4)");
 
 class CPoint : public POINT
 {

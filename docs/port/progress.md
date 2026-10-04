@@ -1,15 +1,17 @@
 # Native macOS client - progress
 
-Plan: `docs/superpowers/plans/2026-10-03-native-macos-client.md`. Branch: `port/macos-spike`.
-Last updated 2026-10-04.
+Plan: `docs/superpowers/plans/2026-10-03-native-macos-client.md`. Developer guide:
+`docs/port/README.md`. Branch: `port/macos-spike`. Last updated 2026-10-04.
 
-## Phase 1 - portable codebase, Windows still builds
+Overall: roughly a third of the plan. Phase 1 complete, Phase 2 about half, Phase 3 started.
+
+## Phase 1 - portable codebase, Windows still builds: COMPLETE
 
 | Gate | Status | How to check |
 |---|---|---|
-| P1.1 every client source compiles natively | **Done** - 796/796 (+ the 3 shell files, now back in) | `port/scripts/compile_probe.sh` -> `docs/port/compile-probe.md` |
+| P1.1 every client source compiles natively | **Done** - 799/799 (the game's own shell files included) | `port/scripts/compile_probe.sh` -> `docs/port/compile-probe.md` |
 | P1.2 Windows CI green | **Done** - every pushed checkpoint builds (Release Win32) | GitHub Actions `Build` on `port/macos-spike` |
-| P1.3 network-message struct sizes == Win32 | Harness done (1000 structs incl. package `FILECONTEXT`); golden file from CI pending | `port/scripts/check-struct-sizes.sh` (needs `port/tests/golden/msg_sizes_win32.txt` from the CI artifact `msg-sizes-win32`) |
+| P1.3 network-message struct sizes == Win32 | **Done** - all 995 wire structs (+ package `FILECONTEXT`) identical to MSVC x86. Found and fixed: MFC `CTime` is 4-aligned (`_AFX_PACKING`), `ulServerIP` was `unsigned long`. 5 structs holding STL objects are listed as non-wire with reasons | `port/scripts/check-struct-sizes.sh` (golden: `port/tests/golden/msg_sizes_win32.txt`, refreshed from CI artifact `msg-sizes-win32`) |
 | P1.4 CP949 text round trip | **Done** - Item/Crow/SkillStrTable + UI tables, byte-exact (55 lines already corrupt in the shipped SkillStrTable degrade like Windows) | `port/scripts/check-cp949.sh` |
 | P1.5 Windows paths resolve to data files | **Done** - 4626 files x 3 spellings, also on a case-sensitive volume | `port/scripts/check-paths.sh` |
 
