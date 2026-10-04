@@ -145,6 +145,11 @@ void LoadInputScript()
         } else if (op == "raise") {   // bring the game window to the front (app switching tests)
             s.event.type = SDL_EVENT_USER;
             Script().push_back(s);
+        } else if (op == "resize") {  // resize the window (device reset tests): resize <w> <h>
+            s.event.type = SDL_EVENT_USER;
+            s.event.user.code = 1;
+            std::sscanf(arg.c_str(), "%f %f", &s.x, &s.y);
+            Script().push_back(s);
         } else if (op == "text") {
             s.event.type = SDL_EVENT_TEXT_INPUT;
             s.text = arg;
@@ -175,7 +180,11 @@ void RunInputScript()
     while (next < Script().size() && Script()[next].at <= now) {
         ScriptStep& s = Script()[next++];
         if (s.warp) { if (g_window) SDL_WarpMouseInWindow(g_window, s.x, s.y); continue; }
-        if (s.event.type == SDL_EVENT_USER) { if (g_window) SDL_RaiseWindow(g_window); continue; }
+        if (s.event.type == SDL_EVENT_USER) {
+            if (g_window && s.event.user.code == 1) SDL_SetWindowSize(g_window, (int)s.x, (int)s.y);
+            else if (g_window) SDL_RaiseWindow(g_window);
+            continue;
+        }
         if (s.event.type == SDL_EVENT_TEXT_INPUT) s.event.text.text = s.text.c_str();
         Dispatch(s.event);
     }
