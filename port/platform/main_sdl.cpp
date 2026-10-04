@@ -283,6 +283,10 @@ int main(int argc, char** argv)
     signal(SIGTERM, [](int) { _exit(0); });   // kill/quit from outside: no static teardown either
     ConfigureFromBundle();
     setenv("DXVK_WSI_DRIVER", "SDL3", 0);
+    // The game runs at 30 FPS by default (its Frame Limit option); with DXVK's default queue of
+    // three frames that is up to ~100 ms between a click and the frame that shows it. One
+    // queued frame keeps input responsive (the GPU is mostly idle anyway).
+    setenv("DXVK_CONFIG", "d3d9.maxFrameLatency = 1", 0);
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
         std::fprintf(stderr, "[platform] SDL_Init failed: %s\n", SDL_GetError());
         return 1;
