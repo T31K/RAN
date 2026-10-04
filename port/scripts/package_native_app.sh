@@ -1,6 +1,10 @@
 #!/bin/bash
 # port/scripts/package_native_app.sh - bundle the native client into a self-contained .app.
-#   port/scripts/package_native_app.sh [--with-game <client-folder>]
+#   port/scripts/package_native_app.sh [--with-game <client-folder>] [--sign] [--dmg] [--notarize]
+#     --sign      Developer ID + hardened runtime (identity below) instead of ad hoc
+#     --dmg       also build port/build/RanOdyssey-Native.dmg (signed with --sign)
+#     --notarize  submit the DMG to Apple's notary service and staple it (keychain profile
+#                 "ran-notary", as package-app.command); needs --sign --dmg
 # Produces port/build/RanOdyssey Native.app:
 #   Contents/MacOS/ran_client          the native client (port/scripts/build_native.sh)
 #   Contents/Frameworks/*.dylib        DXVK d3d9, SDL3, the Vulkan loader, the KosmicKrisp
@@ -15,8 +19,19 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 APP="$ROOT/port/build/RanOdyssey Native.app"
 BIN="$ROOT/port/build/native/ran_client"
-GAME=""
-[ "${1:-}" = "--with-game" ] && GAME="${2:?client folder}"
+GAME=""; SIGN=0; DMG=0; NOTARIZE=0
+IDENTITY="Developer ID Application: Teik Mun Wong (QGQYJRMCNQ)"
+PROFILE="ran-notary"
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --with-game) GAME="${2:?client folder}"; shift ;;
+        --sign) SIGN=1 ;;
+        --dmg) DMG=1 ;;
+        --notarize) NOTARIZE=1 ;;
+        *) echo "unknown option $1"; exit 1 ;;
+    esac
+    shift
+done
 [ -x "$BIN" ] || { echo "build first: port/scripts/build_native.sh"; exit 1; }
 
 MESA="$(brew --prefix mesa)"
@@ -110,6 +125,32 @@ if [ -n "$GAME" ]; then
     rsync -a --exclude 'Game.pdb' --exclude '*.exe' --exclude '*.dll' "$GAME/" "$APP/Contents/Resources/game/"
 fi
 
-codesign --force --deep --sign - "$APP" >/dev/null 2>&1 && echo "signed (ad hoc)"
+if [ "$SIGN" = 1 ]; then
+    # Inside out: every library, then the executable, then the bundle seal.
+    for f in "$FW"/*.dylib; do
+        codesign --force --timestamp --options runtime -s "$IDENTITY" "$f" >/dev/null || { echo "signing $f failed"; exit 1; }
+    done
+    codesign --force --timestamp --options runtime -s "$IDENTITY" "$APP/Contents/MacOS/ran_client" >/dev/null
+    codesign --force --timestamp --options runtime -s "$IDENTITY" "$APP" >/dev/null
+    codesign --verify --deep --strict "$APP" && echo "signed (Developer ID, hardened runtime)"
+else
+    codesign --force --deep --sign - "$APP" >/dev/null 2>&1 && echo "signed (ad hoc)"
+fi
 echo "bundle: $APP"
 echo "libraries:"; ls "$FW"
+
+if [ "$DMG" = 1 ]; then
+    OUT="$ROOT/port/build/RanOdyssey-Native.dmg"
+    STAGE="$(mktemp -d)"
+    cp -R "$APP" "$STAGE/"
+    ln -s /Applications "$STAGE/Applications"
+    hdiutil create -volname "RanOdyssey Native" -srcfolder "$STAGE" -fs HFS+ -format UDZO -ov "$OUT" >/dev/null
+    rm -rf "$STAGE"
+    [ "$SIGN" = 1 ] && codesign --force --timestamp -s "$IDENTITY" "$OUT"
+    echo "dmg: $OUT ($(du -h "$OUT" | cut -f1))"
+    if [ "$NOTARIZE" = 1 ]; then
+        [ "$SIGN" = 1 ] || { echo "--notarize needs --sign"; exit 1; }
+        xcrun notarytool submit "$OUT" --keychain-profile "$PROFILE" --wait
+        xcrun stapler staple "$OUT" && xcrun stapler validate "$OUT"
+    fi
+fi
