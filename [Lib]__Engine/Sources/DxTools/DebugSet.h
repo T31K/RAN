@@ -7,6 +7,9 @@
 
 #include "./gassert.h"
 #include <string>
+#ifndef _WIN32
+#include "ran_compat.h"	// ran_compat::VarArg (native build)
+#endif
 
 class	CD3DFontPar;
 namespace CDebugSet
@@ -35,7 +38,13 @@ namespace CDebugSet
 
 	//	Note	:	파일로 화면에 뿌림
 	//	Usage	:	파일명을 제일 앞에 쓰고, 디버그 정보를 printf ()를 사용하듯이 파라미터를 넘김
-	void ToLogFile ( const char *szFormat, ... );	
+	void ToLogFile ( const char *szFormat, ... );
+#ifndef _WIN32
+	// Native build: CString arguments go through `...` as their text, as with MSVC
+	// (ran_compat::VarArg; clang cannot pass a class through `...`).
+	template <class... A> void ToLogFile ( const char *szFormat, const A&... args )
+	{ static_cast<void (*)( const char*, ... )>( &ToLogFile )( szFormat, ran_compat::VarArg(args)... ); }
+#endif
 	// 추적 로그를 남길때 사용함
 	void ToTracingFile ( const char *szAccountName, const char *szFormat, ... );
 	// 해킹이 의심될 경우 남는 로그

@@ -43,6 +43,12 @@ case "$FILE" in *.h) LANG_FLAG=(-x c++-header) ;; esac
 # Release defines of the shipped Win32 build.
 MODE=(-fsyntax-only)
 [ -n "${RAN_OBJ_OUT:-}" ] && MODE=(-c -o "$RAN_OBJ_OUT" -O1 -g0 -DNDEBUG -D_LIB)
+# Warnings stay off (the game is MSVC code), except the ones where clang compiles the construct
+# into a runtime trap or undefined behaviour that MSVC defines: those are errors, so every such
+# site is fixed in source. RAN_WARN="-Wfoo ..." turns on more for scans.
+TRAPS=(-Werror=non-pod-varargs -Werror=return-type)
+# shellcheck disable=SC2206
+EXTRA=(${RAN_WARN:-})
 clang++ ${LANG_FLAG[@]+"${LANG_FLAG[@]}"} -std=c++14 "${MODE[@]}" -fms-extensions -fdeclspec \
-  -Wno-everything -ferror-limit="$LIMIT" \
+  -Wno-everything "${TRAPS[@]}" ${EXTRA[@]+"${EXTRA[@]}"} -ferror-limit="$LIMIT" \
   "${INCS[@]}" "$FILE"

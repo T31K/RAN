@@ -29,6 +29,16 @@ int main()
     CString big;
     big.Format("%s", std::string(5000, 'z').c_str());
     CHECK(big.GetLength() == 5000);
+    // CString arguments pass through `...` as their text, like MFC (DebugSet's log name).
+    const CString dir("save"), name("log.txt");
+    char buf[8] = "arr";
+    CString path;
+    path.Format("%s\\%s %s %d", dir, name, buf, 3);
+    CHECK(path == "save\\log.txt arr 3");
+    path.AppendFormat("|%s", CString("x"));
+    CHECK(path == "save\\log.txt arr 3|x");
+    path.Format("%s", path);   // own text as an argument
+    CHECK(path == "save\\log.txt arr 3|x");
 
     // Element access.
     CHECK(s.GetAt(1) == 'e');

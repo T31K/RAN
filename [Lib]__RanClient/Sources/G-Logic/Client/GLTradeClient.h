@@ -20,7 +20,7 @@ public:
 	const SINVEN_POS& GetPreItem ()		{ return m_sPreTradeItem; }
 	void SetPreItem ( const SINVEN_POS& sPreItem );
 
-	BOOL ValidPreItem ()				{ m_sPreTradeItem.VALID(); }
+	BOOL ValidPreItem ()				{ return m_sPreTradeItem.VALID(); }
 	void ReSetPreItem ()				{ m_sPreTradeItem.RESET(); }
 
 public:

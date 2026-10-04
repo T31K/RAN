@@ -63,7 +63,7 @@ protected:
 public:
 	LPDIRECT3DTEXTUREQ GetTexture ()	{ return m_pMeshTexture; }
 	HRESULT UpdateRender ( float fElapsedTime, LPDIRECT3DDEVICEQ pd3dDevice );
-	HRESULT ReSet ()					{ m_fAngle = 0.0f; }
+	HRESULT ReSet ()					{ m_fAngle = 0.0f; return S_OK; }
 
 public:
 	HRESULT RestoreDeviceObjects ( LPDIRECT3DDEVICEQ pd3dDevice );

@@ -29,9 +29,21 @@ typedef char* LPTSTR;
 typedef const char* LPCSTR;
 typedef char* LPSTR;
 
+class CString;
+class CStringW;
+
 namespace ran_compat {
     // CP949 lead bytes are 0x81..0xFE; the following byte belongs to the same character.
     inline bool IsLeadByte(char c) { const unsigned char u = (unsigned char)c; return u >= 0x81 && u <= 0xFE; }
+
+    // MSVC passes a CString through `...` as its character pointer (MFC's CString is a single
+    // pointer), so `Format("%s", str)` works on Windows. Clang cannot pass a class through `...`
+    // (the call traps at run time), so the compat Format functions are templates that hand
+    // every argument through VarArg: strings become their character pointers, the rest is
+    // passed on unchanged (arrays still decay at the `...`).
+    template <class T> inline const T& VarArg(const T& v) { return v; }
+    inline const char* VarArg(const CString& s);
+    inline const char16_t* VarArg(const CStringW& s);
 }
 
 class CString
@@ -58,14 +70,22 @@ public:
     char operator[](int i) const { return m_str[(size_t)i]; }
     void SetAt(int i, char ch) { m_str[(size_t)i] = ch; }
 
-    void Format(const char* fmt, ...)
+    template <class... A> void Format(const char* fmt, const A&... args)
+    {
+        FormatC(fmt, ran_compat::VarArg(args)...);
+    }
+    template <class... A> void AppendFormat(const char* fmt, const A&... args)
+    {
+        AppendFormatC(fmt, ran_compat::VarArg(args)...);
+    }
+    void FormatC(const char* fmt, ...)
     {
         va_list ap;
         va_start(ap, fmt);
         FormatV(fmt, ap);
         va_end(ap);
     }
-    void AppendFormat(const char* fmt, ...)
+    void AppendFormatC(const char* fmt, ...)
     {
         va_list ap;
         va_start(ap, fmt);
@@ -339,6 +359,9 @@ private:
     std::u16string m_str;
 };
 typedef CString CStringA;
+
+inline const char* ran_compat::VarArg(const CString& s) { return s.GetString(); }
+inline const char16_t* ran_compat::VarArg(const CStringW& s) { return s.GetString(); }
 
 class CStringArray
 {

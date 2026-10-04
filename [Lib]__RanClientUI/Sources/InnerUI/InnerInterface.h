@@ -322,6 +322,19 @@ public:
 public:
 	const char* MakeString ( const char* szFormat, ... );
 
+#ifndef _WIN32
+	// Native build: CString arguments go through `...` as their text, as with MSVC
+	// (ran_compat::VarArg; clang cannot pass a class through `...`).
+	template <class... A> BOOL PrintMsgText ( D3DCOLOR dwColor, const char* szFormat, const A&... args )
+	{ return (this->*static_cast<BOOL (CInnerInterface::*)( D3DCOLOR, const char*, ... )>( &CInnerInterface::PrintMsgText ))( dwColor, szFormat, ran_compat::VarArg(args)... ); }
+	template <class... A> BOOL PrintConsoleText ( const char* szFormat, const A&... args )
+	{ return (this->*static_cast<BOOL (CInnerInterface::*)( const char*, ... )>( &CInnerInterface::PrintConsoleText ))( szFormat, ran_compat::VarArg(args)... ); }
+	template <class... A> BOOL PrintMsgTextDlg ( D3DCOLOR dwColor, const char* szFormat, const A&... args )
+	{ return (this->*static_cast<BOOL (CInnerInterface::*)( D3DCOLOR, const char*, ... )>( &CInnerInterface::PrintMsgTextDlg ))( dwColor, szFormat, ran_compat::VarArg(args)... ); }
+	template <class... A> const char* MakeString ( const char* szFormat, const A&... args )
+	{ return (this->*static_cast<const char* (CInnerInterface::*)( const char*, ... )>( &CInnerInterface::MakeString ))( szFormat, ran_compat::VarArg(args)... ); }
+#endif
+
 public:
 	BOOL IsGateOpen()							{ return m_bGateOpen; }
 	void SetGateOpen( BOOL bGateOpen )			{ m_bGateOpen = bGateOpen; }

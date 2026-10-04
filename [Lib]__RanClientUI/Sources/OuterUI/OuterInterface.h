@@ -169,6 +169,12 @@ public:
 	void RunMMOSpeed();
 
 	const char* MakeString ( const char* szFormat, ... );
+#ifndef _WIN32
+	// Native build: CString arguments go through `...` as their text, as with MSVC
+	// (ran_compat::VarArg; clang cannot pass a class through `...`).
+	template <class... A> const char* MakeString ( const char* szFormat, const A&... args )
+	{ return (this->*static_cast<const char* (COuterInterface::*)( const char*, ... )>( &COuterInterface::MakeString ))( szFormat, ran_compat::VarArg(args)... ); }
+#endif
 
 	void SetBlockProgramFound ( bool bFOUND )			{ m_bBlockProgramFound = bFOUND; }
 	bool IsBlockProgramFound ()							{ return m_bBlockProgramFound; }

@@ -181,7 +181,7 @@ struct GLCONST_CHARCLASS
 
 private:
 	//	대입 연산이 못일어나게 원천적으로 막혀있음.
-	GLCONST_CHARCLASS& operator= ( GLCONST_CHARCLASS &Input )	{ GASSERT(0); };	
+	GLCONST_CHARCLASS& operator= ( GLCONST_CHARCLASS &Input )	{ GASSERT(0); return *this; };	
 };
 
 struct GLCLUBRANK
