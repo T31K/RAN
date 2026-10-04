@@ -14,7 +14,7 @@ after an app switch).
 | 2 - platform layer | **Complete** (P2.1 login passes; window, input, text/IME, sound, cursors, files) |
 | 3 - graphics | **Complete for this client** (D3DX textures/fonts/meshes/skinning/.x; no .fx files ship) |
 | 4 - gameplay parity | In progress: movement, chat, UI, sound, app switching verified; combat/skills/effects and long sessions still to exercise |
-| 5 - ship | Mostly done: self-contained `RanOdyssey Native.app` (34 MB), Developer ID + hardened runtime signing, 14 MB DMG (`package_native_app.sh --sign --dmg`); notarisation is one flag away (`--notarize`), OTA updates and retiring the Wine app still to do |
+| 5 - ship | Done for a first release: `package_native_app.sh --with-game ~/Projects/RAN/client --sign --dmg` builds a self-contained, Developer ID-signed app with the game data inside (825 MB DMG, connects to the VPS); the first launch clones the data into `~/Library/Application Support/RanOdyssey/game` (APFS clone: instant, no extra space); notarised + stapled. Still to do: OTA updates for the native app, retiring the Wine app |
 
 ## Phase 1 - portable codebase, Windows still builds
 
@@ -58,4 +58,7 @@ Sprite / `ID3DXFont` only matter for the optional "D3DXFONT" font mode.
   `~/Projects/RAN/client`); `port/scripts/package_native_app.sh` builds the app bundle.
 - Unattended runs: `RAN_INPUT_SCRIPT="22:click 488 373; 31:text T31K; 49:key Return; 86:raise"`.
 - Diagnostics: `RAN_TRACE_INPUT`, `RAN_TRACE_AUDIO`, `DXVK_HUD=fps`; crashes print a backtrace.
-- Measured: ~30 FPS in town on an M3 (frame times 29-37 ms - the game's own frame cap).
+- Measured: ~30 FPS in town on an M3 with the GPU ~8% busy - that is the game's own Frame
+  Limit option (on by default, as on Windows; uncheck it in the in-game graphics options for
+  more). DXVK keeps one queued frame (`d3d9.maxFrameLatency = 1`, set in `main_sdl.cpp`) so
+  input does not lag behind by up to three frames.
