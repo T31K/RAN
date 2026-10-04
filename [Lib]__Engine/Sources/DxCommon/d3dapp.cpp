@@ -766,6 +766,13 @@ HRESULT CD3DApplication::BuildDeviceList()
 					}
 				}
 			}
+#ifndef _WIN32
+			// Native macOS client: a Mac's built-in display lists only its scaled modes (no
+			// 800x600 / 1024x768), so neither search above may match; take the first mode
+			// instead of indexing modes[-1] (the game runs windowed at the saved size anyway).
+			if ( pDevice->dwCurrentMode == -1 && pDevice->dwNumModes > 0 )
+				pDevice->dwCurrentMode = 0;
+#endif
 
 			// Check if the device is compatible with the desktop display mode
 			// (which was added initially as formats[0])
