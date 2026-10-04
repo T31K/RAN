@@ -54,7 +54,7 @@ bool Dispatch(const SDL_Event& e)
         Send(WM_ACTIVATE, active ? 1 /*WA_ACTIVE*/ : 0 /*WA_INACTIVE*/, 0);
         break;
     }
-    case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+    case SDL_EVENT_WINDOW_RESIZED:   // points, like GetClientRect (see ClientSize)
         Send(WM_SIZE, 0 /*SIZE_RESTORED*/, MakeLParam(e.window.data1, e.window.data2));
         break;
     case SDL_EVENT_WINDOW_MINIMIZED:
@@ -115,6 +115,17 @@ BOOL PumpMessages(MSG* msg, BOOL wait, BOOL remove)
     return FALSE;
 }
 
+// GetClientRect: window size in points. The game's windowed back buffer takes this size and
+// its UI/mouse coordinates use the same units; macOS scales the frame up on Retina screens.
+BOOL ClientSize(HWND hwnd, SIZE* s)
+{
+    int w = 0, h = 0;
+    if (!hwnd || (SDL_Window*)hwnd != g_window || !SDL_GetWindowSize(g_window, &w, &h)) return FALSE;
+    s->cx = w;
+    s->cy = h;
+    return TRUE;
+}
+
 BOOL CursorPos(POINT* p)
 {
     float x = 0, y = 0;
@@ -135,6 +146,7 @@ int main(int argc, char** argv)
     CWnd::CreateMainWindowHook() = CreateMainWindow;
     ran_compat::MessageHook() = PumpMessages;
     ran_compat::CursorPosHook() = CursorPos;
+    ran_compat::ClientSizeHook() = ClientSize;
 
     CWinApp* app = AfxGetApp();   // the game's theApp (CBasicApp)
     static std::string cmdLine;

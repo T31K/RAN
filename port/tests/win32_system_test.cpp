@@ -20,6 +20,17 @@ int main()
     const std::string home = ::mkdtemp(tmpl);
     setenv("RAN_USER_DATA_DIR", home.c_str(), 1);
 
+    // ---- Window rects come from the platform's client size (points); no hook = empty.
+    {
+        RECT r = { 1, 2, 3, 4 };
+        CHECK(!GetClientRect((HWND)0x1, &r) && r.right == 0 && r.bottom == 0);
+        ran_compat::ClientSizeHook() = [](HWND, SIZE* s) -> BOOL { s->cx = 1024; s->cy = 768; return TRUE; };
+        CHECK(GetClientRect((HWND)0x1, &r) && r.left == 0 && r.top == 0 && r.right == 1024 && r.bottom == 768);
+        CHECK(GetWindowRect((HWND)0x1, &r) && r.right == 1024);
+        CHECK(!GetClientRect(nullptr, &r));
+        ran_compat::ClientSizeHook() = nullptr;
+    }
+
     // ---- Shell folders: "My Documents" is the per-user data directory, created on demand.
     char docs[MAX_PATH] = {};
     CHECK(SHGetSpecialFolderPath(nullptr, docs, CSIDL_PERSONAL, TRUE));

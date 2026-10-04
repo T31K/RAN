@@ -160,6 +160,9 @@ inline errno_t _makepath_s(char* out, size_t, const char* drive, const char* dir
 inline void keybd_event(BYTE, BYTE, DWORD, ULONG_PTR) {}
 namespace ran_compat {
     inline BOOL (*&CursorPosHook())(POINT*) { static BOOL (*hook)(POINT*) = nullptr; return hook; }
+    // Client size of a window the platform layer created (the SDL window), in points - the
+    // same units as the cursor, so the windowed back buffer, UI layout and mouse agree.
+    inline BOOL (*&ClientSizeHook())(HWND, SIZE*) { static BOOL (*hook)(HWND, SIZE*) = nullptr; return hook; }
 }
 inline BOOL GetCursorPos(POINT* p)
 {
@@ -353,8 +356,19 @@ static_assert(sizeof(BITMAPFILEHEADER) == 14, "BITMAPFILEHEADER is read straight
 inline HKL GetKeyboardLayout(DWORD) { return (HKL)(uintptr_t)0x04120412; }   // ko-KR
 inline UINT GetACP() { return 949; }
 typedef struct tagBITMAPINFO { BITMAPINFOHEADER bmiHeader; RGBQUAD bmiColors[1]; } BITMAPINFO, *LPBITMAPINFO;
-inline BOOL GetWindowRect(HWND, RECT* r) { if (r) SetRectEmpty(r); return FALSE; }
-inline BOOL GetClientRect(HWND, RECT* r) { if (r) SetRectEmpty(r); return FALSE; }
+// The native window has no frame, and "screen" coordinates are window-relative (GetCursorPos,
+// ScreenToClient), so the window and client rects are both (0, 0, width, height).
+inline BOOL GetClientRect(HWND hwnd, RECT* r)
+{
+    if (!r) return FALSE;
+    SetRectEmpty(r);
+    SIZE s = {};
+    if (!hwnd || !ran_compat::ClientSizeHook() || !ran_compat::ClientSizeHook()(hwnd, &s)) return FALSE;
+    r->right = s.cx;
+    r->bottom = s.cy;
+    return TRUE;
+}
+inline BOOL GetWindowRect(HWND hwnd, RECT* r) { return GetClientRect(hwnd, r); }
 inline HDC GetDC(HWND) { return nullptr; }
 inline int ReleaseDC(HWND, HDC) { return 0; }
 inline HWND GetDlgItem(HWND, int) { return nullptr; }

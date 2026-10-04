@@ -114,12 +114,12 @@ public:
     static void SetCaretPos(POINT) {}
     static CPoint GetCaretPos() { return CPoint(0, 0); }
     BOOL SetWindowPos(const CWnd*, int, int, int, int, UINT) { return FALSE; }
-    void GetClientRect(RECT* r) const { if (r) SetRectEmpty(r); }
+    void GetClientRect(RECT* r) const { ::GetClientRect(m_hWnd, r); }
     void ScreenToClient(POINT*) const {}
     void ScreenToClient(RECT*) const {}
     void ClientToScreen(POINT*) const {}
     void ClientToScreen(RECT*) const {}
-    void GetWindowRect(RECT* r) const { if (r) SetRectEmpty(r); }
+    void GetWindowRect(RECT* r) const { ::GetWindowRect(m_hWnd, r); }
     void Invalidate(BOOL = TRUE) {}
     void UpdateWindow() {}
     CWnd* GetDlgItem(int) const { return nullptr; }
