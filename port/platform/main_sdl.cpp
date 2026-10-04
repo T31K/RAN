@@ -19,6 +19,7 @@
 #include <execinfo.h>
 #include <copyfile.h>
 #include <sys/stat.h>
+#include <ctime>
 extern "C" int _NSGetExecutablePath(char* buf, uint32_t* bufsize);   // <mach-o/dyld.h> redefines FALSE
 #include <algorithm>
 #include <string>
@@ -241,8 +242,9 @@ bool IsDir(const std::string& p)
 
 // Inside an app bundle (Contents/MacOS/ran_client) the bundle provides what run_native.sh
 // sets up by hand: the Vulkan driver manifest (Contents/Resources/vulkan/icd.d), and the game
-// folder - RAN_GAME_DIR if set, else the RanOdyssey app's per-user copy, else one inside the
-// bundle. The working directory becomes the game folder, like launching Game.exe.
+// folder - RAN_GAME_DIR if set; else, for a bundle that carries the game, this user's copy of
+// it in "RanOdyssey Native/game"; else the classic RanOdyssey app's per-user copy. The working
+// directory becomes the game folder, like launching Game.exe.
 void ConfigureFromBundle()
 {
     char exe[4096];
@@ -255,22 +257,34 @@ void ConfigureFromBundle()
     if (!std::getenv("VK_DRIVER_FILES") && ::access(icd.c_str(), R_OK) == 0) setenv("VK_DRIVER_FILES", icd.c_str(), 1);
     if (!std::getenv("RAN_GAME_DIR")) {
         const char* home = std::getenv("HOME");
-        const std::string shared = std::string(home ? home : "") + "/Library/Application Support/RanOdyssey/game";
+        const std::string support = std::string(home ? home : "") + "/Library/Application Support";
         const std::string bundled = contents + "/Resources/game";
-        if (!IsDir(shared + "/data") && IsDir(bundled + "/data")) {
-            // First launch of a bundle that carries the game: the game writes next to its data
-            // (options, caches), and an installed app is read-only - give this user a copy.
-            // On APFS it is a clone: instant, and it shares the blocks with the bundle.
-            const std::string parent = shared.substr(0, shared.rfind('/'));
-            for (size_t at = 1; at != std::string::npos; ) {   // mkdir -p
-                at = parent.find('/', at + 1);
-                ::mkdir(parent.substr(0, at).c_str(), 0755);
+        if (IsDir(bundled + "/data")) {
+            // The game writes next to its data (options, caches) and an installed app is
+            // read-only, so each user gets a copy - an APFS clone: instant, sharing the blocks
+            // with the bundle. Its own folder: the classic (Wine) app's "RanOdyssey/game" holds
+            // an older client layout that this one cannot load. The marker is written only
+            // after a complete copy, so an interrupted first launch is redone.
+            const std::string mine = support + "/RanOdyssey Native/game";
+            const std::string marker = mine + "/.ran-native-copy";
+            if (::access(marker.c_str(), F_OK) != 0) {
+                if (IsDir(mine)) ::rename(mine.c_str(), (mine + ".incomplete." + std::to_string((long)::time(nullptr))).c_str());
+                const std::string parent = mine.substr(0, mine.rfind('/'));
+                for (size_t at = 1; at != std::string::npos; ) {   // mkdir -p
+                    at = parent.find('/', at + 1);
+                    ::mkdir(parent.substr(0, at).c_str(), 0755);
+                }
+                if (copyfile(bundled.c_str(), mine.c_str(), nullptr, COPYFILE_ALL | COPYFILE_RECURSIVE | COPYFILE_CLONE) == 0) {
+                    if (FILE* m = std::fopen(marker.c_str(), "w")) std::fclose(m);
+                } else {
+                    std::fprintf(stderr, "[platform] could not copy the game data to %s\n", mine.c_str());
+                }
             }
-            if (copyfile(bundled.c_str(), shared.c_str(), nullptr, COPYFILE_ALL | COPYFILE_RECURSIVE | COPYFILE_CLONE) != 0)
-                std::fprintf(stderr, "[platform] could not copy the game data to %s\n", shared.c_str());
+            setenv("RAN_GAME_DIR", (::access(marker.c_str(), F_OK) == 0 ? mine : bundled).c_str(), 1);
+        } else {
+            const std::string classic = support + "/RanOdyssey/game";
+            if (IsDir(classic + "/data")) setenv("RAN_GAME_DIR", classic.c_str(), 1);
         }
-        if (IsDir(shared + "/data")) setenv("RAN_GAME_DIR", shared.c_str(), 1);
-        else if (IsDir(bundled + "/data")) setenv("RAN_GAME_DIR", bundled.c_str(), 1);
     }
     if (const char* dir = std::getenv("RAN_GAME_DIR")) {
         if (::chdir(dir) != 0) std::fprintf(stderr, "[platform] cannot enter game folder %s\n", dir);

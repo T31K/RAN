@@ -2415,8 +2415,14 @@ HRESULT CD3DApplication::Render3DEnvironment()
 // Name : Present()
 // DirectX 위에 설치된 GUI를 위해서 별도로 Present 관리 ( 준혁 )
 //-----------------------------------------------------------------------------
+#ifndef _WIN32
+void RanNativeSnapshot(IDirect3DDevice9* dev);	// port/platform/snapshot.cpp (RAN_SNAPSHOT_AT)
+#endif
 VOID CD3DApplication::Present()
 {
+#ifndef _WIN32
+	RanNativeSnapshot( m_pd3dDevice );
+#endif
 	if( m_bVisibleGUI )
 	{
 		RECT rcTop = { 0, 0, (LONG)m_d3dsdBackBuffer.Width, m_rtBoundGUI.top };

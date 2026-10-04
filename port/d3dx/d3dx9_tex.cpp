@@ -79,7 +79,8 @@ D3DFORMAT ChooseFormat(LPDIRECT3DDEVICE9 dev, D3DFORMAT requested, const Image& 
     if (f == D3DFMT_UNKNOWN || (UINT)f == D3DX_DEFAULT || (UINT)f == D3DX_FROM_FILE) f = img.info.Format;
     // Diagnostic switch (M1 white-texture investigation): upload DXTn files decoded to 32-bit.
     static const bool decodeDxt = std::getenv("RAN_DXT_DECODE") != nullptr;
-    if (decodeDxt && IsBlockCompressed(f)) return D3DFMT_A8R8G8B8;
+    static const bool solid = std::getenv("RAN_TEX_SOLID") != nullptr;   // see FillFace
+    if (solid || (decodeDxt && IsBlockCompressed(f))) return D3DFMT_A8R8G8B8;
     if (DeviceSupports(dev, f, usage, type)) return f;
     return HasAlpha(f) ? D3DFMT_A8R8G8B8 : D3DFMT_X8R8G8B8;
 }
@@ -139,6 +140,9 @@ HRESULT FillFace(const Image& img, UINT face, const Plan& plan, D3DCOLOR key, Lo
     }
     Pixels px = Resize(img.DecodeLevel(face, 0), plan.w, plan.h);
     ApplyColorKey(px, key);
+    // Diagnostic switch (M1 white-texture investigation): every loaded texture solid magenta.
+    static const bool solid = std::getenv("RAN_TEX_SOLID") != nullptr;
+    if (solid) std::fill(px.argb.begin(), px.argb.end(), 0xFFFF00FFu);
     for (UINT l = 0; l < plan.mips; ++l) {
         D3DLOCKED_RECT lr;
         HRESULT hr = lock(l, &lr);
