@@ -14,7 +14,7 @@ after an app switch).
 | 2 - platform layer | **Complete** (P2.1 login passes; window, input, text/IME, sound, cursors, files) |
 | 3 - graphics | **Complete for this client** (D3DX textures/fonts/meshes/skinning/.x; no .fx files ship) |
 | 4 - gameplay parity | In progress: movement, chat, UI, sound, app switching verified; combat/skills/effects and long sessions still to exercise |
-| 5 - ship | Done for a first release: `package_native_app.sh --with-game ~/Projects/RAN/client --sign --dmg` builds a self-contained, Developer ID-signed app with the game data inside (825 MB DMG, connects to the VPS); the first launch clones the data into `~/Library/Application Support/RanOdyssey/game` (APFS clone: instant, no extra space); notarised + stapled. Still to do: OTA updates for the native app, retiring the Wine app |
+| 5 - ship | Shipping. `port/scripts/release_native.sh <version>` builds, packages the game data, notarises the DMG (download page, `installer` release) and the app, and publishes a Sparkle appcast with delta updates on the `native-updates` release; installed apps update silently (hourly check, install on quit). New game data reaches existing installs through the `.data-version` stamp (`game_sync.cpp`). Crashes, F12 bug reports and logged errors go to `api.kaleidoscopical.com/ran/reports` (`telemetry.cpp`). v0.3 (build 127) = the first self-updating release. Still to do: retiring the Wine app |
 
 ## Phase 1 - portable codebase, Windows still builds
 
