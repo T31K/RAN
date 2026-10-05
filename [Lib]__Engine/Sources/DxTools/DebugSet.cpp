@@ -9,6 +9,9 @@
 #include "DebugSet.h"
 #include "./CList.h"
 #include "./compbyte.h"
+#ifndef _WIN32
+#include "ran_telemetry.h"
+#endif
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -627,6 +630,9 @@ namespace CDebugSet
 			fprintf ( fp, "[%s] %s\n", strTIME.c_str(), szBuffer );
 
 			fclose(fp);
+#ifndef _WIN32
+			ran_telemetry::OnLogLine ( m_strLogFile.GetString(), szBuffer );	// error reports (native)
+#endif
 		}
 	}
 

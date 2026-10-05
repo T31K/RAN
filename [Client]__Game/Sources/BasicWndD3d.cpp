@@ -42,6 +42,44 @@
 #include "../[Lib]__EngineSound/Sources/DxSound/BgmSound.h"
 #include ".\basicwnd.h"
 
+#ifndef _WIN32
+#include "ran_telemetry.h"
+
+//	Error reports (port/platform/telemetry.cpp) ask the game where the player is and show their
+//	notices in the chat box - only while a map is loaded (the chat UI exists from then on).
+namespace
+{
+	ran_telemetry::GameState RanTelemetryState ()
+	{
+		static char szName[CHAR_SZNAME+1];
+		ran_telemetry::GameState sState = { "", -1, -1 };
+		GLGaeaClient &sGaea = GLGaeaClient::GetInstance();
+		if ( !sGaea.GetActiveMap() )	return sState;
+		StringCchCopy ( szName, CHAR_SZNAME+1, sGaea.GetCharacter()->m_szName );
+		sState.character = szName;
+		SNATIVEID sMapID = sGaea.GetActiveMapID();
+		sState.mapMain = sMapID.wMainID;
+		sState.mapSub = sMapID.wSubID;
+		return sState;
+	}
+
+	void RanTelemetryNotify ( const char* szText )
+	{
+		if ( GLGaeaClient::GetInstance().GetActiveMap() )
+			CInnerInterface::GetInstance().PrintConsoleText ( "%s", szText );
+	}
+
+	struct RanTelemetryHooks
+	{
+		RanTelemetryHooks ()
+		{
+			ran_telemetry::SetStateHook ( RanTelemetryState );
+			ran_telemetry::SetNotifyHook ( RanTelemetryNotify );
+		}
+	} g_sRanTelemetryHooks;
+}
+#endif
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif

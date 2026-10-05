@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -67,27 +68,52 @@ bool WriteTga(const std::string& path, const D3DLOCKED_RECT& lr, UINT w, UINT h)
     return true;
 }
 
-void Save(IDirect3DDevice9* dev, const std::string& path)
+// Locks a system-memory copy of the back buffer and hands it to `use`.
+template <class F> bool WithBackBuffer(IDirect3DDevice9* dev, F use)
 {
     IDirect3DSurface9* bb = nullptr;
-    if (FAILED(dev->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &bb)) || !bb) return;
+    if (FAILED(dev->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &bb)) || !bb) return false;
     D3DSURFACE_DESC d;
     bb->GetDesc(&d);
+    bool ok = false;
     IDirect3DSurface9* sys = nullptr;
     if (SUCCEEDED(dev->CreateOffscreenPlainSurface(d.Width, d.Height, d.Format, D3DPOOL_SYSTEMMEM, &sys, nullptr)) &&
         SUCCEEDED(dev->GetRenderTargetData(bb, sys))) {
         D3DLOCKED_RECT lr;
         if (SUCCEEDED(sys->LockRect(&lr, nullptr, D3DLOCK_READONLY))) {
-            const bool ok = WriteTga(path, lr, d.Width, d.Height);
+            ok = use(lr, d.Width, d.Height);
             sys->UnlockRect();
-            std::fprintf(stderr, "[snapshot] %s %s (%ux%u)\n", ok ? "saved" : "FAILED", path.c_str(), d.Width, d.Height);
         }
     }
     if (sys) sys->Release();
     bb->Release();
+    return ok;
+}
+
+void Save(IDirect3DDevice9* dev, const std::string& path)
+{
+    WithBackBuffer(dev, [&](const D3DLOCKED_RECT& lr, UINT w, UINT h) {
+        const bool ok = WriteTga(path, lr, w, h);
+        std::fprintf(stderr, "[snapshot] %s %s (%ux%u)\n", ok ? "saved" : "FAILED", path.c_str(), w, h);
+        return ok;
+    });
 }
 
 } // namespace
+
+// The back buffer as tightly packed BGRX rows, top first (error report screenshots).
+bool RanCaptureBackBuffer(IDirect3DDevice9* dev, std::vector<unsigned char>& bgra, unsigned& w, unsigned& h)
+{
+    if (!dev) return false;
+    return WithBackBuffer(dev, [&](const D3DLOCKED_RECT& lr, UINT width, UINT height) {
+        w = width;
+        h = height;
+        bgra.resize((size_t)w * h * 4);
+        for (UINT y = 0; y < h; ++y)
+            std::memcpy(&bgra[(size_t)y * w * 4], (const unsigned char*)lr.pBits + (size_t)y * lr.Pitch, (size_t)w * 4);
+        return true;
+    });
+}
 
 void RanNativeSnapshot(IDirect3DDevice9* dev)
 {

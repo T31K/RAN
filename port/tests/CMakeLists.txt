@@ -76,6 +76,10 @@ add_test(NAME dinput_sdl_test COMMAND dinput_sdl_test)
 add_executable(game_sync_test game_sync_test.cpp ${PORT_DIR}/platform/game_sync.cpp)
 add_test(NAME game_sync_test COMMAND game_sync_test)
 
+# Error reports: JSON, base64 and the game-error throttle (header-only).
+add_executable(telemetry_core_test telemetry_core_test.cpp)
+add_test(NAME telemetry_core_test COMMAND telemetry_core_test)
+
 # Windows cursor files (.cur/.ani) -> pixels for SDL colour cursors.
 add_executable(cursor_decode_test cursor_decode_test.cpp)
 add_test(NAME cursor_decode_test COMMAND cursor_decode_test)

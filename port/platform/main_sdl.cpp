@@ -13,6 +13,7 @@
 #include "input_queue.h"
 #include "text_input.h"
 #include "game_sync.h"
+#include "ran_telemetry.h"
 #include <SDL3/SDL.h>
 #include <csignal>
 #include <cstdio>
@@ -76,6 +77,9 @@ bool Dispatch(const SDL_Event& e)
     // keys and text also go to the focused window as messages (text_input.h: chat, login).
     case SDL_EVENT_KEY_DOWN:
     case SDL_EVENT_KEY_UP:
+        // F12 sends a bug report (screenshot + log); Ctrl+F12 stays the engine's profiler.
+        if (e.type == SDL_EVENT_KEY_DOWN && e.key.scancode == SDL_SCANCODE_F12 && !(e.key.mod & SDL_KMOD_CTRL))
+            ran_telemetry::RequestHotkeyReport();
         ran_platform::InputKey(ran_platform::SdlScancodeToDik(e.key.scancode), e.type == SDL_EVENT_KEY_DOWN);
         if (e.type == SDL_EVENT_KEY_DOWN) ran_platform::TextKeyDown(ran_platform::SdlKeyToVk(e.key.key));
         else ran_platform::TextKeyUp(ran_platform::SdlKeyToVk(e.key.key));
@@ -308,6 +312,7 @@ void ConfigureFromBundle()
 // writes a crash report, but throttles repeats of the same crash).
 void OnFatalSignal(int sig)
 {
+    ran_telemetry::OnFatalSignal(sig);   // crash report, sent on the next launch
     const char head[] = "\n[platform] fatal signal - backtrace:\n";
     write(2, head, sizeof(head) - 1);
     void* frames[64];
@@ -331,6 +336,7 @@ int main(int argc, char** argv)
         std::fprintf(stderr, "[platform] SDL_Init failed: %s\n", SDL_GetError());
         return 1;
     }
+    ran_telemetry::Init();
     CWnd::CreateMainWindowHook() = CreateMainWindow;
     ran_compat::MessageHook() = PumpMessages;
     ran_compat::CursorPosHook() = CursorPos;

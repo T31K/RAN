@@ -13,6 +13,9 @@
 #include "china_md5.h"
 #include <string.h>
 #include <wchar.h>
+#ifndef _WIN32
+#include "ran_telemetry.h"
+#endif
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -29,6 +32,9 @@ int CNetClient::SndLogin(
 	int nChannel)
 {
 	if (nChannel < 0 || nChannel >= MAX_CHANNEL_NUMBER) nChannel = 0;
+#ifndef _WIN32
+	ran_telemetry::SetAccount(szUserID);	// error reports name the account (native)
+#endif
 
 	NET_LOGIN_DATA nld;
 		
