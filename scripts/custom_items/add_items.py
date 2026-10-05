@@ -1,4 +1,5 @@
-"""Add Samehada (0_22) and Samehada Unleashed (0_23) to a glogic.rcc, cloned from ChuWang Sword (0_17).
+"""Add Samehada (0_22) and Samehada Unleashed (0_23) to a glogic.rcc, cloned from ChuWang Sword (0_17),
+and apply the server's item rules (every item droppable).
 
   add_items.py <glogic.rcc> [<output glogic.rcc>]      (in place when no output is given)
 
@@ -17,14 +18,15 @@ from rcc import rewrite_zip, aes
 
 TEMPLATE = (0, 17)       # ChuWang Sword: last permanent MID-0 sword that has wearing models
 NAMES_AFTER = (0, 21)    # string table entries go after the last MID-0 entry
+ICON_SHEET = 'custom_items.dds'   # textures/gui, built by render_icons.py
 NEW = [
-    # nid, name, description, piece prefix, damage low/high, hit, avoid
+    # nid, name, description, piece prefix, damage low/high, hit, avoid, icon cell on ICON_SHEET
     ((0, 22), 'Samehada',
      'The living shark-skin greatsword of the Seven Swordsmen of the Mist. It shaves and devours chakra.',
-     'SDN9024', 420, 520, 30, 0),
+     'SDN9024', 420, 520, 30, 0, (0, 0)),
     ((0, 23), 'Samehada Unleashed',
      'Samehada with its bandages torn away. Its scales bristle and its teeth hunger for every cut.',
-     'SDN9025', 560, 690, 40, 5),
+     'SDN9025', 560, 690, 40, 5, (1, 0)),
 ]
 
 
@@ -50,11 +52,15 @@ def build_isf(raw):
     for nid, *_ in NEW:
         if nid in by:
             items.remove(by[nid])
+    # Server rule: every item can be dropped on the ground (and so also sold and traded).
+    dropped = sum(I.add_flags(i, I.TRADE_THROW) for i in items)
+    print(f'{dropped} items made droppable')
     tpl = by[TEMPLATE]
-    for nid, name, desc, prefix, lo, hi, hit, avoid in NEW:
+    for nid, name, desc, prefix, lo, hi, hit, avoid, cell in NEW:
         it = copy.deepcopy(tpl)
         I.set_basic(it, nid=nid, name='IN_%03d_%03d' % nid)
         set_wearing(it, prefix)
+        I.set_icon(it, cell, ICON_SHEET)
         I.set_suit(it, dmg_lo=lo, dmg_hi=hi, hit=hit, avoid=avoid)
         items.append(it)
     return I.serialize(head, items, tail)
@@ -91,7 +97,7 @@ def apply(src, dst):
         for nid, name, *_ in NEW:
             it = by[nid]
             cps = re.findall(rb'[\w\[\]]+\.cps', it.chunk(I.FILE_SBASIC)[2])
-            print(nid, repr(nm.get(nid)), I.suit(it), sorted({c.decode() for c in cps}))
+            print(nid, repr(nm.get(nid)), I.suit(it), sorted({c.decode() for c in cps}), 'icon', I.icon(it))
         print(len(items), 'items')
 
 

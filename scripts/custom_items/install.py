@@ -6,7 +6,8 @@
   data/skinobject/skinobject.rcc += <frame>_{M,W}.cps
   data/skin/                     += s_{m,w}_<tag>.X
   textures/item/                 += <tex>.dds, <tex>_s.dds
-Run make_samehada.py first (assets in port/build/custom_items). The server needs only the
+  textures/gui/                  += custom_items.dds (inventory icons)
+Run make_samehada.py and render_icons.py first (assets in port/build/custom_items). The server needs only the
 glogic.rcc part: add_items.py /opt/ran/game-client/data/glogic/glogic.rcc, then restart it.
 """
 import os
@@ -31,6 +32,7 @@ def main():
             shutil.copy2(f'{OUT}/s_{sex}_{tag}.X', f'{game}/data/skin/')
         for f in (f'{tex}.dds', f'{tex}_s.dds'):
             shutil.copy2(f'{OUT}/{f}', f'{game}/textures/item/')
+    shutil.copy2(f'{OUT}/{add_items.ICON_SHEET}', f'{game}/textures/gui/')   # render_icons.py
     print('installed into', game)
 
 

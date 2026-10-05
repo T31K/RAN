@@ -119,6 +119,29 @@ VARIANTS = [
 ]
 
 
+# Both Samehadas share one scale colour: a muted slate-indigo halfway between the bandaged
+# model's blue-grey (hue 240, sat 0.19) and the unleashed model's purple (hue 264, sat 0.54).
+SCALE_HSV = (252 / 360, 0.36, 0.41)
+
+
+def recolor_scales(png_path):
+    """Move the blue/purple scale pixels to SCALE_HSV, keeping their light/dark variation; the
+    white bandages and teeth and the gold handle (other hues / no saturation) stay."""
+    from PIL import Image
+    img = Image.open(png_path).convert('RGB')
+    hsv = np.asarray(img.convert('HSV'), np.float32) / 255.0
+    h, s, v = hsv[..., 0], hsv[..., 1], hsv[..., 2]
+    scales = (h > 0.55) & (h < 0.83) & (s > 0.08)
+    if not scales.any():
+        return
+    ms, mv = np.median(s[scales]), np.median(v[scales])
+    h = np.where(scales, SCALE_HSV[0], h)
+    s = np.where(scales, np.clip(s * SCALE_HSV[1] / ms, 0, 1), s)
+    v = np.where(scales, np.clip(v * SCALE_HSV[2] / mv, 0, 1), v)
+    out = np.stack([h, s, v], -1)
+    Image.fromarray((out * 255).round().astype(np.uint8), 'HSV').convert('RGB').save(png_path)
+
+
 def build(glb, scale, frame, tag, tex, px):
     global MODEL, SCALE, NEW_FRAME
     MODEL, SCALE, NEW_FRAME = os.path.expanduser(glb), scale, frame
@@ -142,6 +165,7 @@ def build(glb, scale, frame, tag, tex, px):
         open(f'{OUT}/{frame}_{sex.upper()}.cps', 'wb').write(cps)
 
     open(f'{OUT}/{tex}.png', 'wb').write(png)
+    recolor_scales(f'{OUT}/{tex}.png')
     size = f'{px}x{px}'
     mips = str(int(np.log2(px)))
     subprocess.run(['magick', f'{OUT}/{tex}.png', '-resize', size, '-define', 'dds:compression=dxt1',

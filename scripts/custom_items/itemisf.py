@@ -79,6 +79,59 @@ def set_basic(item, nid=None, name=None, replace=()):
     item.chunk(FILE_SBASIC)[2] = struct.pack('<III', nid, group, len(nm)) + nm + rest
 
 
+# SBASIC after the name: level DWORD, 2 grade WORDs, fExpMultiple, 5 reserved WORDs -> dwFlags
+# (TRADE_SALE 1, TRADE_EXCHANGE 2, TRADE_THROW 4 = may be dropped on the ground; SBASIC::LOAD
+# turns THROW into all three).
+FLAGS_AT = 4 + 4 + 4 + 10
+TRADE_THROW = 0x04
+
+
+def add_flags(item, bits):
+    """OR bits into dwFlags; True if the item changed."""
+    t, v, data = item.chunk(FILE_SBASIC)
+    nid, group, name, rest = basic_fields(data)
+    flags = struct.unpack_from('<I', rest, FLAGS_AT)[0]
+    if flags & bits == bits:
+        return False
+    rest = bytearray(rest)
+    struct.pack_into('<I', rest, FLAGS_AT, flags | bits)
+    item.chunk(FILE_SBASIC)[2] = struct.pack('<III', nid, group, len(name)) + name + bytes(rest)
+    return True
+
+
+# SBASIC after the name: level DWORD, 2 grade WORDs, fExpMultiple, 5 reserved WORDs, 7 DWORDs
+# (flags/prices/type/reqs), 2 req-level WORDs... (sReqStats, inven size) -> the icon DWORD
+# (x | y << 16) at this offset, then 5 CStrings; the 5th is the inventory icon sheet.
+ICON_AT = 4 + 4 + 4 + 10 + 4 * 7 + 8 + 12 + 4
+
+
+def icon(item):
+    """((x, y), sheet) of the inventory icon."""
+    _, _, _, rest = basic_fields(item.chunk(FILE_SBASIC)[2])
+    xy = struct.unpack_from('<I', rest, ICON_AT)[0]
+    o = ICON_AT + 4
+    strings = []
+    for _ in range(5):
+        n = struct.unpack_from('<I', rest, o)[0]
+        strings.append(rest[o + 4:o + 4 + n].split(b'\0')[0].decode('latin1'))
+        o += 4 + n
+    return (xy & 0xFFFF, xy >> 16), strings[4]
+
+
+def set_icon(item, xy, sheet):
+    t, v, data = item.chunk(FILE_SBASIC)
+    nid, group, name, rest = basic_fields(data)
+    rest = bytearray(rest)
+    struct.pack_into('<I', rest, ICON_AT, xy[0] | (xy[1] << 16))
+    o = ICON_AT + 4
+    for _ in range(4):
+        o += 4 + struct.unpack_from('<I', rest, o)[0]
+    n = struct.unpack_from('<I', rest, o)[0]
+    s = sheet.encode() + b'\0'
+    rest = bytes(rest[:o]) + struct.pack('<I', len(s)) + s + bytes(rest[o + 4 + n:])
+    item.chunk(FILE_SBASIC)[2] = struct.pack('<III', nid, group, len(name)) + name + rest
+
+
 def suit(item):
     d = item.chunk(FILE_SSUIT)[2]
     hit, avoid, lo, hi, dfn = struct.unpack_from('<hhHHh', d, 20)
