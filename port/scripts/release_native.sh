@@ -26,7 +26,7 @@ SPARKLE_BIN="$ROOT/port/third_party/sparkle/bin"
 mkdir -p "$REL"
 [ -d "$SPARKLE_BIN" ] || "$ROOT/port/scripts/fetch_sparkle.sh"
 
-[ -z "$(git -C "$ROOT" status --porcelain -- port '[Lib]__*' '[Client]__Game' scripts)" ] || {
+[ -z "$(git -C "$ROOT" status --porcelain --untracked-files=no -- port '[Lib]__*' '[Client]__Game' scripts)" ] || {
     echo "uncommitted source changes - commit first (the build number is the commit count)"; exit 1; }
 
 echo "== build"
