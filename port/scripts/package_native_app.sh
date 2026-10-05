@@ -10,11 +10,13 @@
 #   Contents/Frameworks/*.dylib        DXVK d3d9, SDL3, the Vulkan loader, the KosmicKrisp
 #                                      Vulkan driver and every non-system library they need,
 #                                      relinked to @rpath (= Contents/Frameworks)
+#   Contents/Frameworks/Sparkle.framework  automatic updates (port/platform/updater.cpp)
 #   Contents/Resources/vulkan/icd.d    the driver manifest, pointing inside the bundle
 #   Contents/Resources/game            only with --with-game (else the client uses the RanOdyssey
 #                                      app's per-user copy, see ConfigureFromBundle in main_sdl.cpp)
-# The bundle is signed ad hoc (runs on this Mac). Developer ID signing + notarisation for other
-# Macs is a separate step (the existing package-app.command flow).
+#                                      + .data-version, the content stamp game_sync.cpp compares
+# RAN_VERSION=0.4 sets the version (default below). Without --sign the bundle is signed ad hoc
+# (runs on this Mac only). Releases: port/scripts/release_native.sh.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 APP="$ROOT/port/build/RanOdyssey Native.app"
@@ -22,6 +24,14 @@ BIN="$ROOT/port/build/native/ran_client"
 GAME=""; SIGN=0; DMG=0; NOTARIZE=0
 IDENTITY="Developer ID Application: Teik Mun Wong (QGQYJRMCNQ)"
 PROFILE="ran-notary"
+VERSION="${RAN_VERSION:-0.3}"          # CFBundleShortVersionString; CFBundleVersion = commit count
+# Automatic updates (port/platform/updater.cpp): the appcast lives on one rolling GitHub release
+# (port/scripts/release_native.sh), signed with the EdDSA key in the login keychain.
+FEED_URL="https://github.com/T31K/RAN/releases/download/native-updates/appcast.xml"
+SPARKLE_PUBLIC_KEY="1Q1oylE7YniVcyW+e9t9hA9i20KECOX8SJouwDjP/Q8="
+SPARKLE="$ROOT/port/third_party/sparkle/Sparkle.framework"
+# Error reports (port/platform/telemetry.cpp): the ingest key, kept out of git.
+INGEST_KEY="$(cat "$HOME/.config/ran/ingest-key" 2>/dev/null || true)"
 while [ $# -gt 0 ]; do
     case "$1" in
         --with-game) GAME="${2:?client folder}"; shift ;;
@@ -85,6 +95,10 @@ done
 install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/ran_client" 2>/dev/null || true
 for f in "$FW"/*.dylib; do install_name_tool -add_rpath "@loader_path" "$f" 2>/dev/null || true; done
 
+# Sparkle (loaded at run time by updater.cpp; the bundle without it simply never updates).
+[ -d "$SPARKLE" ] || "$ROOT/port/scripts/fetch_sparkle.sh"
+ditto "$SPARKLE" "$FW/Sparkle.framework"
+
 # Driver manifest: the loader resolves a relative library_path against the manifest's folder.
 cat > "$APP/Contents/Resources/vulkan/icd.d/kosmickrisp_icd.json" <<EOF
 {
@@ -112,12 +126,19 @@ cat > "$APP/Contents/Info.plist" <<EOF
     <key>CFBundleIdentifier</key><string>com.t31k.ranodyssey.native</string>
     <key>CFBundleExecutable</key><string>ran_client</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>0.2</string>
+    <key>CFBundleShortVersionString</key><string>$VERSION</string>
     <key>CFBundleVersion</key><string>$(git -C "$ROOT" rev-list --count HEAD)</string>
     <key>CFBundleIconFile</key><string>$ICON</string>
     <key>LSMinimumSystemVersion</key><string>26.0</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>LSApplicationCategoryType</key><string>public.app-category.role-playing-games</string>
+    <key>SUFeedURL</key><string>$FEED_URL</string>
+    <key>SUPublicEDKey</key><string>$SPARKLE_PUBLIC_KEY</string>
+    <key>SUEnableAutomaticChecks</key><true/>
+    <key>SUAutomaticallyUpdate</key><true/>
+    <key>SUAllowsAutomaticUpdates</key><true/>
+    <key>SUScheduledCheckInterval</key><integer>3600</integer>
+    <key>RANIngestKey</key><string>$INGEST_KEY</string>
 </dict>
 </plist>
 EOF
@@ -137,7 +158,14 @@ if [ -n "$GAME" ]; then
 fi
 
 if [ "$SIGN" = 1 ]; then
-    # Inside out: every library, then the executable, then the bundle seal.
+    # Inside out: Sparkle's helpers (as Sparkle's docs prescribe), every library, then the
+    # executable, then the bundle seal.
+    SP="$FW/Sparkle.framework/Versions/B"
+    codesign --force --timestamp --options runtime -s "$IDENTITY" "$SP/XPCServices/Installer.xpc" >/dev/null
+    codesign --force --timestamp --options runtime -s "$IDENTITY" --preserve-metadata=entitlements "$SP/XPCServices/Downloader.xpc" >/dev/null
+    codesign --force --timestamp --options runtime -s "$IDENTITY" "$SP/Autoupdate" >/dev/null
+    codesign --force --timestamp --options runtime -s "$IDENTITY" "$SP/Updater.app" >/dev/null
+    codesign --force --timestamp --options runtime -s "$IDENTITY" "$FW/Sparkle.framework" >/dev/null
     for f in "$FW"/*.dylib; do
         codesign --force --timestamp --options runtime -s "$IDENTITY" "$f" >/dev/null || { echo "signing $f failed"; exit 1; }
     done

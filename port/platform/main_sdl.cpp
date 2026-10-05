@@ -14,6 +14,7 @@
 #include "text_input.h"
 #include "game_sync.h"
 #include "ran_telemetry.h"
+#include "updater.h"
 #include <SDL3/SDL.h>
 #include <csignal>
 #include <cstdio>
@@ -337,6 +338,7 @@ int main(int argc, char** argv)
         return 1;
     }
     ran_telemetry::Init();
+    ran_platform::StartUpdater();
     CWnd::CreateMainWindowHook() = CreateMainWindow;
     ran_compat::MessageHook() = PumpMessages;
     ran_compat::CursorPosHook() = CursorPos;
