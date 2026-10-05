@@ -108,8 +108,9 @@ bool Dispatch(const SDL_Event& e)
 
 // RAN_INPUT_SCRIPT="2:click 488 373; 4:text T31K; 5:key TAB; ..." - scripted input for
 // unattended test runs: at each time (seconds after the first message pump) the action goes
-// through the same path as real input (click = move the cursor there, press, release the left
-// button; text = committed text input; key = press and release an SDL key name).
+// through the same path as real input (click / rclick = move the cursor there, press, release the
+// left / right button; move = cursor only; text = committed text input; key = press and release
+// an SDL key name).
 struct ScriptStep { double at; SDL_Event event; std::string text; bool warp; float x, y; };
 std::vector<ScriptStep>& Script() { static std::vector<ScriptStep> s; return s; }
 
@@ -133,13 +134,18 @@ void LoadInputScript()
         const std::string op = cmd.substr(0, sp), arg = sp == std::string::npos ? "" : cmd.substr(sp + 1);
         ScriptStep s = {};
         s.at = t;
-        if (op == "click") {
+        if (op == "move") {   // move the cursor only (hover tooltips): move <x> <y>
+            std::sscanf(arg.c_str(), "%f %f", &s.x, &s.y);
+            s.warp = true;
+            Script().push_back(s);
+        } else if (op == "click" || op == "rclick") {
             float x = 0, y = 0;
             std::sscanf(arg.c_str(), "%f %f", &x, &y);
             s.warp = true; s.x = x; s.y = y;
             Script().push_back(s);
             ScriptStep down = {}, up = {};
-            down.at = t + 0.15; down.event.type = SDL_EVENT_MOUSE_BUTTON_DOWN; down.event.button.button = SDL_BUTTON_LEFT;
+            down.at = t + 0.15; down.event.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
+            down.event.button.button = op == "rclick" ? SDL_BUTTON_RIGHT : SDL_BUTTON_LEFT;
             down.event.button.x = x; down.event.button.y = y;
             up = down; up.at = t + 0.3; up.event.type = SDL_EVENT_MOUSE_BUTTON_UP;
             Script().push_back(down);
