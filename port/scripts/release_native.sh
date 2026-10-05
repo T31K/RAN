@@ -49,7 +49,7 @@ echo "archive: $ZIP ($(du -h "$ZIP" | cut -f1))"
 echo "== appcast + deltas"
 "$SPARKLE_BIN/generate_appcast" --download-url-prefix "https://github.com/$REPO/releases/download/$FEED_TAG/" \
     --maximum-deltas 3 "$REL"
-grep -o 'sparkle:version="[0-9]*"' "$REL/appcast.xml" | head -5
+grep -o '<sparkle:version>[0-9]*' "$REL/appcast.xml" | head -5 || true
 
 echo "== upload"
 if ! gh release view "$FEED_TAG" -R "$REPO" >/dev/null 2>&1; then

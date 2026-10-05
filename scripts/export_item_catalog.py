@@ -62,6 +62,13 @@ CATEGORY_NAMES = {
 # In these categories SID 0 is a real item, not a header.
 REAL_SID0 = {4, 5, 6, 8, 13, 14}
 
+# Items left out: no wearing model in the game data, so they are invisible in game.
+HIDDEN = {
+    (161, 1),  # The Cloud Board
+    (161, 2),  # The UFO Board
+    (161, 3),  # The Shark Board
+}
+
 
 def group(mid):
     if mid in (0, 3, 13, 14, 19, 23, 27, 28, 29, 30, 31, 68, 69, 70, 74, 75, 77, 79, 81, 82,
@@ -177,7 +184,7 @@ def main():
 
     categories = {}
     for (mid, sid), name in sorted(names.items()):
-        if (sid == 0 and mid not in REAL_SID0) or is_junk(name):
+        if (sid == 0 and mid not in REAL_SID0) or is_junk(name) or (mid, sid) in HIDDEN:
             continue
         row = [sid, name]
         icon = icons.get((mid, sid))
