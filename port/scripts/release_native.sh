@@ -47,8 +47,12 @@ ditto -c -k --keepParent "$APP" "$ZIP"
 echo "archive: $ZIP ($(du -h "$ZIP" | cut -f1))"
 
 echo "== appcast + deltas"
+# generate_appcast unpacks every archive (~2 GB each) into its cache: check the space, clean up after.
+FREE_GB=$(df -g "$HOME" | awk 'NR==2 {print $4}')
+[ "$FREE_GB" -ge 6 ] || { echo "only ${FREE_GB} GB free - generate_appcast needs ~6 GB; free some space and rerun"; exit 1; }
 "$SPARKLE_BIN/generate_appcast" --download-url-prefix "https://github.com/$REPO/releases/download/$FEED_TAG/" \
     --maximum-deltas 3 "$REL"
+rm -rf "$HOME/Library/Caches/Sparkle_generate_appcast"
 grep -o '<sparkle:version>[0-9]*' "$REL/appcast.xml" | head -5 || true
 
 echo "== upload"
