@@ -62,8 +62,8 @@ Off switch: `RAN_TELEMETRY=0` disables everything (for local dev runs).
 
 ## Server (main-server, `routes/ran.js`, mounted at `/ran`)
 
-- `POST /ran/reports` — multipart: `report` (JSON) + optional `screenshot` (PNG) + optional
-  `ips` (text). Auth: `X-Ran-Key` = ingest key compiled into the app (env `RAN_INGEST_KEY`).
+- `POST /ran/reports` — JSON body: report fields + optional `screenshot_png_b64` + optional
+  `ips` (text) (main-server already parses JSON bodies; no multipart dependency). Auth: `X-Ran-Key` = ingest key compiled into the app (env `RAN_INGEST_KEY`).
   Limits: 5 MB total, 30 requests/min per IP. Stores to R2 bucket **`ran-reports`** at
   `reports/<account>/<YYYYMMDD-HHMMSS>-<type>-<shortid>/` as `report.json`, `screenshot.png`,
   `crash.ips`. Returns `{ id }`.
