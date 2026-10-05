@@ -72,6 +72,10 @@ target_include_directories(dinput_sdl_test PRIVATE ${PORT_DIR}/../Dependency/dir
 target_compile_definitions(dinput_sdl_test PRIVATE INITGUID)   # GUID_SysKeyboard etc. (dxguid.lib on Windows)
 add_test(NAME dinput_sdl_test COMMAND dinput_sdl_test)
 
+# Refreshing a user's game copy from a newer app bundle (data/textures/sounds swap).
+add_executable(game_sync_test game_sync_test.cpp ${PORT_DIR}/platform/game_sync.cpp)
+add_test(NAME game_sync_test COMMAND game_sync_test)
+
 # Windows cursor files (.cur/.ani) -> pixels for SDL colour cursors.
 add_executable(cursor_decode_test cursor_decode_test.cpp)
 add_test(NAME cursor_decode_test COMMAND cursor_decode_test)

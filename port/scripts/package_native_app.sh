@@ -129,6 +129,11 @@ if [ -n "$GAME" ]; then
     rsync -a --exclude 'Game.pdb' --exclude '*.exe' --exclude '*.dll' --exclude 'GameGuard' \
         --exclude '$PLUGINSDIR' --exclude '$SYSDIR' --exclude '*.bak' --exclude '*.des' \
         --exclude '.DS_Store' "$GAME/" "$APP/Contents/Resources/game/"
+    # Content stamp: an updated app re-clones data/textures/sounds into existing players' copies
+    # when this differs from theirs (game_sync.cpp), so new items and models reach everyone.
+    ( cd "$APP/Contents/Resources/game" && find data textures sounds -type f -print0 2>/dev/null | sort -z \
+        | xargs -0 shasum -a 256 | shasum -a 256 | cut -d' ' -f1 ) > "$APP/Contents/Resources/game/.data-version"
+    echo "game data stamp: $(cat "$APP/Contents/Resources/game/.data-version")"
 fi
 
 if [ "$SIGN" = 1 ]; then

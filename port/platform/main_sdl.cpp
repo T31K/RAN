@@ -12,6 +12,7 @@
 #include "input_map.h"
 #include "input_queue.h"
 #include "text_input.h"
+#include "game_sync.h"
 #include <SDL3/SDL.h>
 #include <csignal>
 #include <cstdio>
@@ -285,6 +286,12 @@ void ConfigureFromBundle()
                 } else {
                     std::fprintf(stderr, "[platform] could not copy the game data to %s\n", mine.c_str());
                 }
+            } else if (ran_platform::GameDataStale(bundled, mine)) {
+                // An updated app brings new game data (items, models, textures): refresh the
+                // copy's content folders; the player's settings at its top level stay.
+                std::fprintf(stderr, "[platform] game data changed in this version - updating %s\n", mine.c_str());
+                if (!ran_platform::SyncGameData(bundled, mine))
+                    std::fprintf(stderr, "[platform] game data update incomplete; retried next launch\n");
             }
             setenv("RAN_GAME_DIR", (::access(marker.c_str(), F_OK) == 0 ? mine : bundled).c_str(), 1);
         } else {
