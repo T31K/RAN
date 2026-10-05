@@ -7,7 +7,7 @@
   data/skin/                     += s_{m,w}_<tag>.X
   textures/item/                 += <tex>.dds, <tex>_s.dds
   textures/gui/                  += custom_items.dds (inventory icons)
-Run make_samehada.py and render_icons.py first (assets in port/build/custom_items). The server needs only the
+Run make_samehada.py, make_gauntlet.py and render_icons.py first (assets in port/build/custom_items). The server needs only the
 glogic.rcc part: add_items.py /opt/ran/game-client/data/glogic/glogic.rcc, then restart it.
 """
 import os
@@ -15,8 +15,14 @@ import shutil
 import sys
 import zipfile
 import add_items
-from make_samehada import OUT, VARIANTS
+import make_gauntlet
+import make_samehada
+from make_samehada import OUT
 from rcc import rewrite_zip
+
+# (frame, mesh tag, texture stem) of every custom model
+PIECES = [(frame, tag, tex) for _, _, frame, tag, tex, _ in make_samehada.VARIANTS] + \
+         [(frame, tag, tex) for _, _, frame, tag, tex, _, _ in make_gauntlet.VARIANTS]
 
 
 def main():
@@ -24,10 +30,10 @@ def main():
     add_items.apply(f'{game}/data/glogic/glogic.rcc', f'{game}/data/glogic/glogic.rcc')
     skinobj = f'{game}/data/skinobject/skinobject.rcc'
     rewrite_zip(skinobj, {f'{frame}_{s}.cps': open(f'{OUT}/{frame}_{s}.cps', 'rb').read()
-                          for _, _, frame, _, _, _ in VARIANTS for s in 'MW'})
+                          for frame, _, _ in PIECES for s in 'MW'})
     with zipfile.ZipFile(skinobj) as z:
         assert z.testzip() is None
-    for _, _, _, tag, tex, _ in VARIANTS:
+    for _, tag, tex in PIECES:
         for sex in 'mw':
             shutil.copy2(f'{OUT}/s_{sex}_{tag}.X', f'{game}/data/skin/')
         for f in (f'{tex}.dds', f'{tex}_s.dds'):

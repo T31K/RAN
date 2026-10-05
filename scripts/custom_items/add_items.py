@@ -1,10 +1,11 @@
-"""Add Samehada (0_22) and Samehada Unleashed (0_23) to a glogic.rcc, cloned from ChuWang Sword (0_17),
-and apply the server's item rules (every item droppable).
+"""Add Samehada (0_22) and Samehada Unleashed (0_23), cloned from ChuWang Sword (0_17), and the
+Infinity Gauntlet (0_24), cloned from Dynamic White Tiger Gauntlets (97_88), to a glogic.rcc, and
+apply the server's item rules (every item droppable).
 
   add_items.py <glogic.rcc> [<output glogic.rcc>]      (in place when no output is given)
 
 Only item.isf and ItemStrTable.txt change; every other archive entry is copied as is.
-Idempotent: existing 0_22 / 0_23 records and string entries are replaced. The same file goes to
+Idempotent: existing 0_22 / 0_23 / 0_24 records and string entries are replaced. The same file goes to
 the client (data/glogic/glogic.rcc) and the server (/opt/ran/game-client/data/glogic/glogic.rcc).
 """
 import copy
@@ -19,14 +20,20 @@ from rcc import rewrite_zip, aes
 TEMPLATE = (0, 17)       # ChuWang Sword: last permanent MID-0 sword that has wearing models
 NAMES_AFTER = (0, 21)    # string table entries go after the last MID-0 entry
 ICON_SHEET = 'custom_items.dds'   # textures/gui, built by render_icons.py
+GAUNTLET_TEMPLATE = (97, 88)   # Dynamic White Tiger Gauntlets: brawler (+extreme), needs DEX
 NEW = [
-    # nid, name, description, piece prefix, damage low/high, hit, avoid, icon cell on ICON_SHEET
+    # nid, name, description, piece prefix, damage low/high, hit, avoid, icon cell on ICON_SHEET,
+    # template item
     ((0, 22), 'Samehada',
      'The living shark-skin greatsword of the Seven Swordsmen of the Mist. It shaves and devours chakra.',
-     'SDN9024', 420, 520, 30, 0, (0, 0)),
+     'SDN9024', 420, 520, 30, 0, (0, 0), TEMPLATE),
     ((0, 23), 'Samehada Unleashed',
      'Samehada with its bandages torn away. Its scales bristle and its teeth hunger for every cut.',
-     'SDN9025', 560, 690, 40, 5, (1, 0)),
+     'SDN9025', 560, 690, 40, 5, (1, 0), TEMPLATE),
+    ((0, 24), 'Infinity Gauntlet',
+     'Thanos\'s golden gauntlet, set with all six Infinity Stones. Power, Space, Reality, Soul, Time '
+     'and Mind answer every punch.',
+     'NLN9040', 520, 610, 40, 10, (2, 0), GAUNTLET_TEMPLATE),
 ]
 
 
@@ -55,9 +62,8 @@ def build_isf(raw):
     # Server rule: every item can be dropped on the ground (and so also sold and traded).
     dropped = sum(I.add_flags(i, I.TRADE_THROW) for i in items)
     print(f'{dropped} items made droppable')
-    tpl = by[TEMPLATE]
-    for nid, name, desc, prefix, lo, hi, hit, avoid, cell in NEW:
-        it = copy.deepcopy(tpl)
+    for nid, name, desc, prefix, lo, hi, hit, avoid, cell, template in NEW:
+        it = copy.deepcopy(by[template])
         I.set_basic(it, nid=nid, name='IN_%03d_%03d' % nid)
         set_wearing(it, prefix)
         I.set_icon(it, cell, ICON_SHEET)

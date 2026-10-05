@@ -16,9 +16,10 @@ import make_samehada as M
 CELL = 35
 SS = 8                      # supersampling of the 31x31 interior
 SHEET = 'custom_items'
-ICONS = [                   # (variant index in make_samehada.VARIANTS, cell x, cell y, painted art)
+ICONS = [                   # (variant index in make_samehada.VARIANTS or 'gauntlet', cell x, cell y, painted art)
     (0, 0, 0, 'icon_samehada.png'),              # Samehada
     (1, 1, 0, 'icon_samehada_unleashed.png'),    # Samehada Unleashed
+    ('gauntlet', 2, 0, 'icon_infinity_gauntlet.png'),   # Infinity Gauntlet
 ]
 # Painted art (assets/custom-items, made with nano-banana from the 3D renders + RAN's own sword
 # icons as the style reference) wins over the 3D render when present.
@@ -115,10 +116,25 @@ def painted_icon(path):
     return np.clip(cell, 0, 255).astype(np.uint8)
 
 
+def gauntlet_geometry():
+    """The gauntlet as fitted on the male skeleton, turned so the fingers point along +Y (the
+    sword-blade axis render() lays diagonal) and the back of the hand with the stones faces the
+    viewer."""
+    import make_gauntlet as G
+    from xtree import parse
+    glb, skin, frame, tag, tex, px, scale = G.VARIANTS[0]
+    v, n, uv, idx, bones, png = G.gauntlet_mesh(glb, skin, parse(f'{M.CLIENT}/data/skin/s_m_newc.x'), scale)
+    turn = np.array([[0, 0, 1.0], [-1, 0, 0], [0, -1, 0]])   # fingers (-x) -> +y, then a quarter roll
+    return (v - v.mean(0)) @ turn.T, n @ turn.T, uv, idx, tex
+
+
 def icon(variant):
-    glb, scale, frame, tag, tex, px = M.VARIANTS[variant]
-    M.MODEL, M.SCALE, M.NEW_FRAME = os.path.expanduser(glb), scale, frame
-    v, n, uv, idx, png = M.samehada_geometry()
+    if variant == 'gauntlet':
+        v, n, uv, idx, tex = gauntlet_geometry()
+    else:
+        glb, scale, frame, tag, tex, px = M.VARIANTS[variant]
+        M.MODEL, M.SCALE, M.NEW_FRAME = os.path.expanduser(glb), scale, frame
+        v, n, uv, idx, png = M.samehada_geometry()
     texture = np.asarray(Image.open(f'{M.OUT}/{tex}.png').convert('RGB'), np.float32)
     inner = CELL - 4                                   # inside frame + shadow
     color, alpha = render(v, n, uv, idx.astype(int), texture, inner * SS)
