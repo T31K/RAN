@@ -53,6 +53,11 @@ FREE_GB=$(df -g "$HOME" | awk 'NR==2 {print $4}')
 "$SPARKLE_BIN/generate_appcast" --download-url-prefix "https://github.com/$REPO/releases/download/$FEED_TAG/" \
     --maximum-deltas 3 "$REL"
 rm -rf "$HOME/Library/Caches/Sparkle_generate_appcast"
+# Delta names carry the app name ("RanOdyssey Native129-127.delta"); GitHub stores a space in an
+# asset name as '.', so name the files that way and point the appcast there (the EdDSA
+# signatures cover file contents, not URLs).
+for d in "$REL"/*\ *.delta; do [ -e "$d" ] && mv "$d" "${d// /.}"; done
+sed -i '' 's/RanOdyssey%20Native/RanOdyssey.Native/g' "$REL/appcast.xml"
 grep -o '<sparkle:version>[0-9]*' "$REL/appcast.xml" | head -5 || true
 
 echo "== upload"
