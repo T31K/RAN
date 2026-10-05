@@ -268,7 +268,14 @@ inline BOOL GetExitCodeThread(HANDLE h, LPDWORD code)
 }
 
 inline DWORD GetCurrentThreadId() { return (DWORD)std::hash<std::thread::id>()(std::this_thread::get_id()); }
-inline void Sleep(DWORD ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }
+// Sleep(0) yields the time slice, as on Windows. sleep_for(0ms) is a no-op, which turned the
+// game's `while (flag) Sleep(0);` spin-waits (e.g. DxStaticMeshColor_THREAD::DeleteList) into
+// side-effect-free infinite loops that clang compiled to a trap - every map change crashed.
+inline void Sleep(DWORD ms)
+{
+    if (ms == 0) std::this_thread::yield();
+    else std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+}
 inline DWORD SleepEx(DWORD ms, BOOL) { Sleep(ms); return 0; }
 
 // ---- Timers ----
