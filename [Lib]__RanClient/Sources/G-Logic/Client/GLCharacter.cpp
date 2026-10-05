@@ -924,7 +924,16 @@ HRESULT GLCharacter::UpdateSuit( BOOL bChangeHair, BOOL bChangeFace )
 			if ( pItem ) 
 			{
 				m_pSkinChar->SetPiece ( pItem->GetWearingFile(emIndex), m_pd3dDevice, NULL, ItemCustom.GETGRADE_EFFECT(), TRUE );
+#ifndef _WIN32
+				if ( i == SLOT_VEHICLE )
+					CDebugSet::ToLogFile ( "[VEHDBG] UpdateSuit vehicle item=%d/%d file=[%s] piece=%d", (int)nidITEM.wMainID, (int)nidITEM.wSubID,
+						pItem->GetWearingFile(emIndex), m_pSkinChar->GetPiece(PIECE_VEHICLE) ? 1 : 0 );
+#endif
 			}
+#ifndef _WIN32
+			else if ( i == SLOT_VEHICLE )
+				CDebugSet::ToLogFile ( "[VEHDBG] UpdateSuit vehicle item=%d/%d not in item data", (int)nidITEM.wMainID, (int)nidITEM.wSubID );
+#endif
 		}
 	}
 

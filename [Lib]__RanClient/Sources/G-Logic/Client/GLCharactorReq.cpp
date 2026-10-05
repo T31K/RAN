@@ -6562,6 +6562,11 @@ HRESULT GLCharacter::ReqClubInfoUpdate( bool bUpdate )
 
 HRESULT GLCharacter::SetVehicle ( bool bActive )
 {
+#ifndef _WIN32
+	CDebugSet::ToLogFile ( "[VEHDBG] SetVehicle active=%d m_bVehicle=%d type=%d vehicle=%d/%d skin=%d/%d", (int)bActive, (int)m_bVehicle,
+		(int)m_sVehicle.m_emTYPE, (int)m_sVehicle.m_sVehicleID.wMainID, (int)m_sVehicle.m_sVehicleID.wSubID,
+		(int)m_sVehicle.GetSkinID().wMainID, (int)m_sVehicle.GetSkinID().wSubID );
+#endif
 	// 캐릭터의 현재 상태를 탈것에 관련해서 초기화 한다.
  	if ( bActive )
 	{

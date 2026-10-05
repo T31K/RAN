@@ -3272,6 +3272,9 @@ void GLCharacter::MsgProcess ( NET_MSG_GENERIC* nmg )
 	case NET_MSG_GCTRL_ACTIVE_VEHICLE_FB:
 		{
 			GLMSG::SNETPC_ACTIVE_VEHICLE_FB* pNetMsg = (GLMSG::SNETPC_ACTIVE_VEHICLE_FB*) nmg;
+#ifndef _WIN32
+			CDebugSet::ToLogFile ( "[VEHDBG] ACTIVE_VEHICLE_FB emFB=%d bActive=%d leaveField=%d", (int)pNetMsg->emFB, (int)pNetMsg->bActive, (int)pNetMsg->bLeaveFieldServer );
+#endif
 
 			switch( pNetMsg->emFB)
 			{
