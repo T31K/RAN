@@ -858,7 +858,14 @@ void CBasicWnd::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 	// ·»´õ¸µ Á¦¾î
 	CDebugSet::ToLogFile ( "[INPUTDBG] WM_ACTIVATE nState=%u bMin=%d", nState, (int)bMinimized );
 	LogWindowState ( CWnd::GetSafeHwnd (), nState!=WA_INACTIVE ? "WM_ACTIVATE on" : "WM_ACTIVATE off" );
+#ifdef _WIN32
 	m_pApp->SetActive ( !bMinimized );
+#else
+	//	macOS hands a background window's swapchain images out slowly, so rendering while
+	//	inactive stalls the whole loop (and network processing) until the player comes back.
+	//	Inactive = the minimized path: FrameMove only, no Render.
+	m_pApp->SetActive ( nState!=WA_INACTIVE && !bMinimized );
+#endif
 	//	winemac.drv delivers activation messages out of order on Cmd+Tab back
 	//	(ACTIVATEAPP(1), then a stray NCACTIVATE(0) that drops input), but
 	//	WM_ACTIVATE always arrives last with the true state - let it decide.
