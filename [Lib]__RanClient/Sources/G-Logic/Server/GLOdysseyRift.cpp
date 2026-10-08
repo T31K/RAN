@@ -272,6 +272,14 @@ bool GLOdysseyRift::InOpenZone ( const D3DXVECTOR3& vPos ) const
 
 // --------------------------------------------------------------------------- setup
 
+bool GLOdysseyRift::OnNavi ( GLLandMan* pLand, float x, float z, D3DXVECTOR3& vOut )
+{
+	D3DXVECTOR3 vHit(0,0,0);
+	if ( !pLand->IsCollisionNavi ( D3DXVECTOR3(x,+10000.0f,z), D3DXVECTOR3(x,-10000.0f,z), vHit ) ) return false;
+	vOut = vHit;
+	return true;
+}
+
 void GLOdysseyRift::Setup ( GLLandMan* pLand )
 {
 	m_bSetup = true;
@@ -292,6 +300,37 @@ void GLOdysseyRift::Setup ( GLLandMan* pLand )
 			sSpawn.nZone = ZoneOf ( sSpawn.vPos );
 			m_vecSpawns.push_back ( sSpawn );
 			setNatural.insert ( pSch->m_CrowID.dwID );
+		}
+	}
+
+	// Arenas without schedules: sample the navigation mesh for walkable spawn points.
+	D3DXVECTOR3 vMax(0,0,0), vMin(0,0,0);
+	pLand->GetNaviMeshAABB ( vMax, vMin );
+	if ( !OnNavi ( pLand, m_vNexus.x, m_vNexus.z, m_vNexus ) )
+	{
+		// The configured Nexus is off the mesh: use the walkable point nearest the map centre.
+		const float cx = (vMax.x+vMin.x)*0.5f, cz = (vMax.z+vMin.z)*0.5f;
+		D3DXVECTOR3 vHit; float fBest = FLT_MAX;
+		for ( int i=0; i<3000; ++i )
+		{
+			const float x = vMin.x + (vMax.x-vMin.x) * (rand() / (float) RAND_MAX);
+			const float z = vMin.z + (vMax.z-vMin.z) * (rand() / (float) RAND_MAX);
+			const float d = (x-cx)*(x-cx) + (z-cz)*(z-cz);
+			if ( d < fBest && OnNavi ( pLand, x, z, vHit ) ) { fBest = d; m_vNexus = vHit; }
+		}
+		CDebugSet::ToLogFile ( "[RIFT] nexus off-mesh, moved to %.0f %.0f", m_vNexus.x, m_vNexus.z );
+	}
+	if ( m_vecSpawns.size() < 8 )
+	{
+		for ( int i=0; i<6000 && m_vecSpawns.size() < 80; ++i )
+		{
+			const float x = vMin.x + (vMax.x-vMin.x) * (rand() / (float) RAND_MAX);
+			const float z = vMin.z + (vMax.z-vMin.z) * (rand() / (float) RAND_MAX);
+			if ( Dist2D ( m_vNexus, x, z ) < 250.0f ) continue;	// never spawn on the Nexus
+			SSPAWN sSpawn;
+			if ( !OnNavi ( pLand, x, z, sSpawn.vPos ) ) continue;
+			sSpawn.nZone = ZoneOf ( sSpawn.vPos );
+			m_vecSpawns.push_back ( sSpawn );
 		}
 	}
 

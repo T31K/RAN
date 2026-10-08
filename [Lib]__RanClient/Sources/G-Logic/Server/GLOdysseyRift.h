@@ -94,6 +94,7 @@ private:
 
 	GLLandMan* ArenaLand ();
 	void Setup ( GLLandMan* pLand );
+	bool OnNavi ( GLLandMan* pLand, float x, float z, D3DXVECTOR3& vOut );
 	void SyncPlayers ( GLLandMan* pLand );
 	void EnforceSeals ( GLLandMan* pLand, float fElapsed );
 	void TickCharging ( float fElapsed );
