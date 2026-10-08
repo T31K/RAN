@@ -30,12 +30,12 @@ Assumptions (correct me): squads of 1-6, scaling with player count; enemies are
   rupture ("power trip": one player re-seals the Rune Anchor), side events (escort, hold the
   zone, kill the carrier), per-player contracts, down-not-dead + revive, special mobs with
   mechanics (Mirror Wraith, Leech Totem, Gravemind Caster, Splitter Slime, Rune Hounds).
-- **Season 3 - epic:** doors that open areas, structures (arcane wards, rune towers, sigil
+- **Season 3 - epic:** structures (arcane wards, rune towers, sigil
   traps), skill tiers on walls (≤47 free, 57/67 bought, off-class from the box), level/stat
   normalization with snapshot/restore of the real character, Convergence raid bosses
   (Polyphemus the Cyclops r10 - chained, immune until every player holds an anchor;
   Circe r20 - one copy per player, copies must die together; Scylla & Charybdis r30 - one
-  shared HP bar; the Sirens as a 3-singer mini-boss), the Underworld Easter-egg descent,
+  shared HP bar; the Sirens as a 3-singer mini-boss; the Colossal Titan as a set-piece boss at the edge of the void - CC-BY fan model, e.g. sketchfab `3624c46aabc745fba12e305c527b4635`), the Underworld Easter-egg descent,
   rewards that carry out to the real character, new models, possibly a custom map.
 
 ## MVP (this build)
@@ -77,6 +77,14 @@ Assumptions (correct me): squads of 1-6, scaling with player count; enemies are
   `buy` while standing in a spot buys its item; `shop` lists spots and prices. Items are
   granted with the existing `getitem` path; skills with the existing skill-grant path.
   MVP catalogue: 3 weapons (cheap/mid/top), 2 skill scrolls, a full heal (consumable).
+- **Rift Seals (doors):** the arena is split into zones (start island around the orb, then
+  bridges / side islands). Each chokepoint has a Seal - a stationary marker crow with a
+  price ("Rift Seal: 1,250 Essence"). While a zone is sealed the server checks every
+  player's position each tick; a player inside a sealed zone is moved back to their last
+  valid position with a chat warning. `buy` next to a seal removes the marker, unlocks the
+  zone, announces it, and adds that zone's spawn points to the wave spawner. Better
+  wall-buys sit deeper. Zones are axis-aligned boxes / circles in map coordinates, picked
+  from the minimap during planning. Mobs ignore seals.
 - **Narration:** every state change posts a themed system chat line (Nexus voice), e.g.
   wave incoming, last 3 mobs, Convergence warning, run over.
 - **Character handling (MVP):** players keep their real gear and skills. No stripping in
