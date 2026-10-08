@@ -95,6 +95,7 @@ private:
 	GLLandMan* ArenaLand ();
 	void Setup ( GLLandMan* pLand );
 	bool OnNavi ( GLLandMan* pLand, float x, float z, D3DXVECTOR3& vOut );
+	void SnapToNavi ( GLLandMan* pLand, float& fX, float& fZ );		// nearest walkable point within 400
 	void SyncPlayers ( GLLandMan* pLand );
 	void EnforceSeals ( GLLandMan* pLand, float fElapsed );
 	void TickCharging ( float fElapsed );
@@ -107,6 +108,8 @@ private:
 	void HuntPlayers ( GLLandMan* pLand );
 	bool SpawnOne ( GLLandMan* pLand, int nTier );
 	void PruneMobs ( GLLandMan* pLand );
+	bool SafeDropOut ( GLLandMan* pLand, DWORD dwGlobID, SNATIVEID sID );	// only if the slot still holds sID
+	void DropAllLive ( GLLandMan* pLand );
 
 	int ZoneOf ( const D3DXVECTOR3& vPos ) const;
 	bool InOpenZone ( const D3DXVECTOR3& vPos ) const;
@@ -155,5 +158,8 @@ private:
 	bool					m_bMuseSang;
 	int						m_nGolden;			// spawn index of this leg's golden soul, -1 none
 	std::map<DWORD,SPLAYER>	m_mapPlayers;		// key: GaeaID
+	std::map<DWORD,SPLAYER>	m_mapLeft;			// key: CharID - voyagers who stepped out this voyage
+	std::map<DWORD,float>	m_mapFarTime;		// key: GlobID - seconds a rift mob spent far from everyone
+	float					m_fWaveTime;
 	std::vector<SLIVEMOB>	m_vecLive;
 };

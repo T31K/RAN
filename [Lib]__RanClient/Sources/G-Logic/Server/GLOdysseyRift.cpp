@@ -67,6 +67,7 @@ GLOdysseyRift::GLOdysseyRift ()
 	, m_bRoundDeath(false)
 	, m_bMuseSang(false)
 	, m_nGolden(-1)
+	, m_fWaveTime(0)
 {
 }
 
@@ -221,6 +222,12 @@ bool GLOdysseyRift::Recall ( GLChar* pChar, SNATIVEID sMap, const D3DXVECTOR3& v
 	// Same field server only (this server hosts every map) - mirrors GMCtrolMove2MapPos.
 	GLGaeaServer& gaea = GLGaeaServer::GetInstance();
 	SNATIVEID sCurMap = pChar->m_sMapID;
+
+	// Same cleanup as the bus (RequestBus): pets, summons and vehicles never follow a map move.
+	gaea.DropOutPET ( pChar->m_dwPetGUID, false, true );
+	gaea.DropOutSummon ( pChar->m_dwSummonGUID, false );
+	gaea.SetActiveVehicle ( pChar->m_dwClientID, pChar->m_dwGaeaID, false );
+
 	if ( !gaea.RequestInvenRecallThisSvr ( pChar, sMap, UINT_MAX, vPos ) )
 		return false;
 
@@ -280,6 +287,20 @@ bool GLOdysseyRift::OnNavi ( GLLandMan* pLand, float x, float z, D3DXVECTOR3& vO
 	return true;
 }
 
+void GLOdysseyRift::SnapToNavi ( GLLandMan* pLand, float& fX, float& fZ )
+{
+	D3DXVECTOR3 vHit;
+	if ( OnNavi ( pLand, fX, fZ, vHit ) ) return;
+	const float x0 = fX, z0 = fZ;
+	float fBest = FLT_MAX;
+	for ( int k=0; k<800; ++k )
+	{
+		const float x = x0 + (float)( rand() % 800 - 400 ), z = z0 + (float)( rand() % 800 - 400 );
+		const float d = (x-x0)*(x-x0) + (z-z0)*(z-z0);
+		if ( d < fBest && OnNavi ( pLand, x, z, vHit ) ) { fBest = d; fX = vHit.x; fZ = vHit.z; }
+	}
+}
+
 void GLOdysseyRift::Setup ( GLLandMan* pLand )
 {
 	m_bSetup = true;
@@ -320,6 +341,31 @@ void GLOdysseyRift::Setup ( GLLandMan* pLand )
 		}
 		CDebugSet::ToLogFile ( "[RIFT] nexus off-mesh, moved to %.0f %.0f", m_vNexus.x, m_vNexus.z );
 	}
+	// Seals are only safe if the Nexus (the push-back fallback) stands in a free zone.
+	bool bNexusFree = false;
+	for ( size_t i=0; i<m_vecZones.size(); ++i )
+		if ( m_vecZones[i].dwPrice == 0 && Dist2D ( m_vNexus, m_vecZones[i].fX, m_vecZones[i].fZ ) <= m_vecZones[i].fRadius )
+			bNexusFree = true;
+	if ( !m_vecZones.empty() && !bNexusFree )
+	{
+		CDebugSet::ToLogFile ( "[RIFT] the Nexus is outside every free zone - seals disabled" );
+		m_vecZones.clear();
+	}
+
+	// Seal markers and wares stand on walkable ground near their configured spot.
+	for ( size_t i=0; i<m_vecZones.size(); ++i )
+	{
+		SZONE& z = m_vecZones[i];
+		if ( z.dwPrice == 0 ) continue;
+		SnapToNavi ( pLand, z.fSealX, z.fSealZ );
+		CDebugSet::ToLogFile ( "[RIFT] seal %d at %.0f %.0f", z.nID, z.fSealX, z.fSealZ );
+	}
+	for ( size_t i=0; i<m_vecShops.size(); ++i )
+	{
+		SnapToNavi ( pLand, m_vecShops[i].fX, m_vecShops[i].fZ );
+		CDebugSet::ToLogFile ( "[RIFT] ware %s at %.0f %.0f", m_vecShops[i].strName.c_str(), m_vecShops[i].fX, m_vecShops[i].fZ );
+	}
+
 	if ( m_vecSpawns.size() < 8 )
 	{
 		for ( int i=0; i<6000 && m_vecSpawns.size() < 80; ++i )
@@ -366,7 +412,7 @@ void GLOdysseyRift::SpawnSeals ( GLLandMan* pLand )
 	for ( size_t i=0; i<m_vecZones.size(); ++i )
 	{
 		SZONE& z = m_vecZones[i];
-		if ( z.dwSealGlobID != UINT_MAX ) { pLand->DropOutCrow ( z.dwSealGlobID ); z.dwSealGlobID = UINT_MAX; }
+		if ( z.dwSealGlobID != UINT_MAX ) { SafeDropOut ( pLand, z.dwSealGlobID, m_sSealNpc ); z.dwSealGlobID = UINT_MAX; }
 		z.bOpen = ( z.dwPrice == 0 );
 		if ( !z.bOpen && m_sSealNpc != SNATIVEID(false) )
 			z.dwSealGlobID = pLand->DropCrow ( m_sSealNpc, z.fSealX, z.fSealZ );
@@ -398,6 +444,7 @@ void GLOdysseyRift::FrameMove ( float fElapsed )
 		m_nRound = 0;
 		m_bSecretIthaca = false;
 		m_bMuseSang = false;
+		m_mapLeft.clear();
 		SpawnSeals ( pLand );
 		for ( std::map<DWORD,SPLAYER>::iterator it = m_mapPlayers.begin(); it != m_mapPlayers.end(); ++it )
 		{
@@ -433,10 +480,14 @@ void GLOdysseyRift::SyncPlayers ( GLLandMan* pLand )
 		std::map<DWORD,SPLAYER>::iterator it = m_mapPlayers.find ( pChar->m_dwGaeaID );
 		if ( it == m_mapPlayers.end() || it->second.dwCharID != pChar->m_dwCharID )
 		{
+			// A voyager who left and came back keeps this voyage's Essence and skills.
 			SPLAYER sPlayer;
+			std::map<DWORD,SPLAYER>::iterator itOld = m_mapLeft.find ( pChar->m_dwCharID );
+			if ( itOld != m_mapLeft.end() ) { sPlayer = itOld->second; m_mapLeft.erase ( itOld ); }
+			else sPlayer.dwEssence = m_dwStartEssence;
 			sPlayer.dwCharID = pChar->m_dwCharID;
-			sPlayer.dwEssence = m_dwStartEssence;
 			sPlayer.vLastValid = m_vNexus;
+			sPlayer.bCharged = false;
 			m_mapPlayers[pChar->m_dwGaeaID] = sPlayer;
 			Tell ( pChar, "You step out of the Horse into another world." );
 			Tell ( pChar, "Essence: %u. Type 'shop' for wares, 'buy' near one.", sPlayer.dwEssence );
@@ -448,7 +499,11 @@ void GLOdysseyRift::SyncPlayers ( GLLandMan* pLand )
 
 	for ( std::map<DWORD,SPLAYER>::iterator it = m_mapPlayers.begin(); it != m_mapPlayers.end(); )
 	{
-		if ( setHere.count ( it->first ) == 0 ) m_mapPlayers.erase ( it++ );
+		if ( setHere.count ( it->first ) == 0 )
+		{
+			m_mapLeft[it->second.dwCharID] = it->second;
+			m_mapPlayers.erase ( it++ );
+		}
 		else ++it;
 	}
 }
@@ -517,6 +572,7 @@ void GLOdysseyRift::StartWave ()
 	m_fSpawnTimer = 0;
 	m_fHuntTimer = 0;
 	m_fStateTimer = 0;
+	m_fWaveTime = 0;
 	m_bWarnedLast = false;
 	m_bRoundDeath = false;
 	m_emState = STATE_WAVE;
@@ -524,7 +580,7 @@ void GLOdysseyRift::StartWave ()
 		it->second.bCharged = false;
 
 	// Surprise: one in eight legs from leg 3 hides a golden soul in the horde.
-	m_nGolden = ( m_nRound >= 3 && m_nRound % 10 != 0 && rand() % 8 == 0 ) ? rand() % m_nToSpawn : -1;
+	m_nGolden = ( m_nToSpawn > 0 && m_nRound >= 3 && m_nRound % 10 != 0 && rand() % 8 == 0 ) ? rand() % m_nToSpawn : -1;
 
 	if ( m_nRound % 10 == 0 )
 	{
@@ -595,7 +651,35 @@ void GLOdysseyRift::HuntPlayers ( GLLandMan* pLand )
 			if ( d < fBest ) { fBest = d; pBest = pChar; }
 		}
 		if ( pBest ) pCrow->RiftHunt ( STARGETID ( CROW_PC, pBest->m_dwGaeaID, pBest->m_vPos ) );
+
+		// A mob stranded far from every voyager (unreachable island) is pulled back into the rift
+		// and re-rolled at a fresh spawn point, so no leg can stall on it.
+		float& fFar = m_mapFarTime[m_vecLive[i].dwGlobID];
+		fFar = ( fBest > 1500.0f ) ? fFar + HUNT_INTERVAL : 0.0f;
+		if ( fFar >= 40.0f && m_vecLive[i].nTier != 3 )
+		{
+			SafeDropOut ( pLand, m_vecLive[i].dwGlobID, m_vecLive[i].sID );
+			m_mapFarTime.erase ( m_vecLive[i].dwGlobID );
+			m_vecLive.erase ( m_vecLive.begin() + i );
+			--i;
+			if ( m_nSpawned > 0 ) --m_nSpawned;
+		}
 	}
+}
+
+bool GLOdysseyRift::SafeDropOut ( GLLandMan* pLand, DWORD dwGlobID, SNATIVEID sID )
+{
+	if ( !pLand || dwGlobID == UINT_MAX ) return false;
+	GLCrow* pCrow = pLand->GetCrow ( dwGlobID );
+	if ( !pCrow || pCrow->m_sNativeID != sID ) return false;	// the slot holds someone else now
+	return pLand->DropOutCrow ( dwGlobID ) ? true : false;
+}
+
+void GLOdysseyRift::DropAllLive ( GLLandMan* pLand )
+{
+	for ( size_t i=0; pLand && i<m_vecLive.size(); ++i ) SafeDropOut ( pLand, m_vecLive[i].dwGlobID, m_vecLive[i].sID );
+	m_vecLive.clear();
+	m_mapFarTime.clear();
 }
 
 void GLOdysseyRift::TickWave ( GLLandMan* pLand, float fElapsed )
@@ -631,6 +715,17 @@ void GLOdysseyRift::TickWave ( GLLandMan* pLand, float fElapsed )
 
 	m_fHuntTimer -= fElapsed;
 	if ( m_fHuntTimer <= 0 ) { HuntPlayers ( pLand ); m_fHuntTimer = HUNT_INTERVAL; }
+
+	// Safety net: no leg lasts forever, whatever the mobs got stuck on.
+	m_fWaveTime += fElapsed;
+	if ( m_fWaveTime > 180.0f + 6.0f * m_nToSpawn )
+	{
+		DropAllLive ( pLand );
+		m_nSpawned = m_nToSpawn;
+		Announce ( "[NEXUS] The rift collapses on the stragglers. The leg is yours." );
+		EndRound ();
+		return;
+	}
 
 	const int nLeft = ( m_nToSpawn - m_nSpawned ) + (int) m_vecLive.size();
 	if ( nLeft <= 3 && nLeft > 0 && !m_bWarnedLast && m_nSpawned >= m_nToSpawn )
@@ -682,9 +777,7 @@ void GLOdysseyRift::EndRun ()
 		Announce ( "  %s - %u kills, %u Essence earned", Name ( it->first ), it->second.dwKills, it->second.dwEarned );
 	Announce ( "[NEXUS] Revive and charge the Nexus to sail again." );
 
-	if ( pLand )
-		for ( size_t i=0; i<m_vecLive.size(); ++i ) pLand->DropOutCrow ( m_vecLive[i].dwGlobID );
-	m_vecLive.clear();
+	DropAllLive ( pLand );
 	m_emState = STATE_OVER;
 	m_fStateTimer = OVER_TIME;
 	CDebugSet::ToLogFile ( "[RIFT] run over at leg %d, %d players", m_nRound, (int) m_mapPlayers.size() );
@@ -692,8 +785,8 @@ void GLOdysseyRift::EndRun ()
 
 void GLOdysseyRift::ResetRun ( GLLandMan* pLand )
 {
-	for ( size_t i=0; i<m_vecLive.size(); ++i ) pLand->DropOutCrow ( m_vecLive[i].dwGlobID );
-	m_vecLive.clear();
+	DropAllLive ( pLand );
+	m_mapLeft.clear();
 	m_emState = STATE_IDLE;
 	m_nRound = 0;
 	m_fStateTimer = 0;
@@ -725,8 +818,15 @@ void GLOdysseyRift::OnCrowKilled ( GLCrow* pCrow )
 	}
 
 	const STARGETID& sKiller = pCrow->RiftAssault ();
-	if ( sKiller.emCrow != CROW_PC ) return;
-	std::map<DWORD,SPLAYER>::iterator it = m_mapPlayers.find ( sKiller.dwID );
+	DWORD dwKillerGaea = GAEAID_NULL;
+	if ( sKiller.emCrow == CROW_PC )	dwKillerGaea = sKiller.dwID;
+	else if ( sKiller.emCrow == CROW_SUMMON )
+	{
+		PGLSUMMONFIELD pSummon = GLGaeaServer::GetInstance().GetSummon ( sKiller.dwID );
+		if ( pSummon && pSummon->m_pOwner ) dwKillerGaea = pSummon->m_pOwner->m_dwGaeaID;	// credit the summoner
+	}
+	if ( dwKillerGaea == GAEAID_NULL ) return;
+	std::map<DWORD,SPLAYER>::iterator it = m_mapPlayers.find ( dwKillerGaea );
 	if ( it == m_mapPlayers.end() ) return;
 	GLChar* pChar = GLGaeaServer::GetInstance().GetChar ( it->first );
 	if ( !pChar || pChar->m_dwCharID != it->second.dwCharID ) return;
@@ -783,6 +883,11 @@ BOOL GLOdysseyRift::OnChat ( GLChar* pChar, const char* szMsg )
 			return TRUE;
 		}
 		if ( !IsAlive ( pChar ) ) return TRUE;
+		if ( pChar->m_sCONFTING.IsCONFRONTING() || pChar->m_sTrade.Valid() || pChar->m_sPMarket.IsOpen() )
+		{
+			Tell ( pChar, "Finish your duel, trade or shop before you board the Horse." );
+			return TRUE;
+		}
 		Tell ( pChar, "The hatch creaks open. You climb into the dark belly of the Horse..." );
 		if ( !Recall ( pChar, m_sArenaMap, m_vNexus ) ) Tell ( pChar, "The Horse will not move. (recall failed)" );
 		return TRUE;
@@ -860,7 +965,7 @@ void GLOdysseyRift::CmdBuy ( GLChar* pChar, SPLAYER* pPlayer )
 		pPlayer->dwEssence -= z.dwPrice;
 		z.bOpen = true;
 		GLLandMan* pLand = ArenaLand ();
-		if ( pLand && z.dwSealGlobID != UINT_MAX ) pLand->DropOutCrow ( z.dwSealGlobID );
+		SafeDropOut ( pLand, z.dwSealGlobID, m_sSealNpc );
 		z.dwSealGlobID = UINT_MAX;
 		Announce ( "[NEXUS] %s shatters Rift Seal %d! New ground - and new horrors - open.", pChar->m_szName, z.nID );
 		return;
@@ -883,18 +988,10 @@ void GLOdysseyRift::CmdBuy ( GLChar* pChar, SPLAYER* pPlayer )
 	}
 	else if ( s.strKind == "overclock" )
 	{
-		EMSLOT emSlot = pChar->GetCurRHand ();
-		SITEMCUSTOM& sItem = pChar->m_PutOnItems[emSlot];
-		if ( sItem.sNativeID == NATIVEID_NULL() ) { Tell ( pChar, "Hold a weapon to overclock it." ); return; }
-		if ( sItem.cDAMAGE >= 15 ) { Tell ( pChar, "Your weapon already burns at +15." ); return; }
-		int nGrade = sItem.cDAMAGE + s.nParam;
-		sItem.cDAMAGE = (BYTE) ( nGrade > 15 ? 15 : nGrade );
-		GLMSG::SNETPC_PUTON_UPDATE NetMsg;
-		NetMsg.emSlot = emSlot;
-		NetMsg.sItemCustom = sItem;
-		GLGaeaServer::GetInstance().SENDTOCLIENT ( pChar->m_dwClientID, &NetMsg );
-		pChar->INIT_DATA ( FALSE, FALSE );
-		pChar->MsgSendUpdateState ();
+		// Disabled: it would permanently upgrade a real, tradeable item from a free currency.
+		// Needs a run-scoped upgrade (restore the grade on leaving) before it comes back.
+		Tell ( pChar, "The Forge of Hephaestus is cold. It will burn again in a later voyage." );
+		return;
 	}
 	else { Tell ( pChar, "The ware crumbles. (unknown kind %s)", s.strKind.c_str() ); return; }
 
@@ -923,11 +1020,14 @@ BOOL GLOdysseyRift::CmdGM ( GLChar* pChar, const char* szArgs )
 		if ( m_dwEntryNpcGlobID != UINT_MAX )
 		{
 			GLLandMan* pEntry = GLGaeaServer::GetInstance().GetByMapID ( m_sEntryMap );
-			if ( pEntry ) pEntry->DropOutCrow ( m_dwEntryNpcGlobID );
+			SafeDropOut ( pEntry, m_dwEntryNpcGlobID, m_sEntryNpc );
 			m_dwEntryNpcGlobID = UINT_MAX;
 		}
-		for ( size_t i=0; pLand && i<m_vecZones.size(); ++i )
-			if ( m_vecZones[i].dwSealGlobID != UINT_MAX ) pLand->DropOutCrow ( m_vecZones[i].dwSealGlobID );
+		for ( size_t i=0; i<m_vecZones.size(); ++i )
+		{
+			SafeDropOut ( pLand, m_vecZones[i].dwSealGlobID, m_sSealNpc );
+			m_vecZones[i].dwSealGlobID = UINT_MAX;
+		}
 		m_bSetup = false;
 		const bool bOK = LoadConfig ();
 		Tell ( pChar, "rift config reloaded: %s, %d zones, %d wares", bOK ? "on" : "OFF",
@@ -935,13 +1035,8 @@ BOOL GLOdysseyRift::CmdGM ( GLChar* pChar, const char* szArgs )
 	}
 	else if ( strCmd == "round" && a > 0 )
 	{
-		m_nRound = a - 1;
-		if ( m_emState == STATE_WAVE )
-		{
-			GLLandMan* pLand = ArenaLand ();
-			for ( size_t i=0; pLand && i<m_vecLive.size(); ++i ) pLand->DropOutCrow ( m_vecLive[i].dwGlobID );
-			m_vecLive.clear();
-		}
+		m_nRound = ( a > 200 ? 200 : a ) - 1;
+		if ( m_emState == STATE_WAVE ) DropAllLive ( ArenaLand () );
 		if ( m_emState == STATE_WAVE || m_emState == STATE_CHARGING ) StartWave ();
 		Tell ( pChar, "rift: jumped to leg %d", m_nRound );
 	}
