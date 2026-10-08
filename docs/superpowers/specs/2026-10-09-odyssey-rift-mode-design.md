@@ -1,4 +1,8 @@
-# Arcane Rift — co-op wave survival mode (design)
+# Odyssey Rift — co-op wave survival mode (design)
+
+Theme: arcane energy tears a rift into a mythic other world (the *how*); each run is a
+voyage and each Convergence round a trial from Homer's *Odyssey* (the *what*). Rounds are
+announced as "legs of the Voyage".
 
 Date: 2026-10-09 · Status: draft for review
 
@@ -29,14 +33,16 @@ Assumptions (correct me): squads of 1-6, scaling with player count; enemies are
 - **Season 3 - epic:** doors that open areas, structures (arcane wards, rune towers, sigil
   traps), skill tiers on walls (≤47 free, 57/67 bought, off-class from the box), level/stat
   normalization with snapshot/restore of the real character, Convergence raid bosses
-  (Bound Titan r10, Shattered Witch r20, The Scales r30), the Dawnblade Easter-egg quest,
+  (Polyphemus the Cyclops r10 - chained, immune until every player holds an anchor;
+  Circe r20 - one copy per player, copies must die together; Scylla & Charybdis r30 - one
+  shared HP bar; the Sirens as a 3-singer mini-boss), the Underworld Easter-egg descent,
   rewards that carry out to the real character, new models, possibly a custom map.
 
 ## MVP (this build)
 
 ### Player flow
-1. In **MysticPeakHole (map 6,0)** stands the **Rift Warden** NPC. Talking to it offers
-   "Enter the Arcane Rift", which moves the player to the arena.
+1. In **MysticPeakHole (map 6,0)** stands **the Ferryman** NPC. Talking to it offers
+   "Sail into the Odyssey Rift", which moves the player to the arena.
 2. The arena is a **dedicated map id** (new `mapslist.ini` entry reusing the
    **Another W South** level file `w_ep3_another_1.Lev` - floating crystal islands in a void,
    3215 units across, a glowing orb at the centre), so the real Another World is untouched.
@@ -76,16 +82,26 @@ Assumptions (correct me): squads of 1-6, scaling with player count; enemies are
   Mob scaling uses the squad's average level as an extra multiplier so high levels do not
   trivialise it.
 
+### New monster model (stretch, after the core loop is playable)
+One Sketchfab model goes through a full import pipeline and replaces the common mob:
+candidate "Zombie" (4,824 faces, 10 animations, CC-BY, sketchfab id
+`73ef58af341e46afba1da53366ed79cf`). Pipeline: Sketchfab Data API download (token in
+`~/.config/sketchfab/token`, never committed) → Blender (free, headless) → RAN skinned
+`.x` mesh + skeleton + idle/walk/run/attack/death animations + the char/anim config files
+RAN mobs use → a new crow entry pointing at it. Credit the author (CC-BY) in the repo.
+If the pipeline is not working by the end of the budget, the mode ships with stand-in
+RAN mobs and the pipeline work continues next session.
+
 ### Out of scope for MVP
-Everything under "Full vision"; new UI widgets (all feedback is chat); new models or effects.
+Everything under "Full vision"; new UI widgets (all feedback is chat); new effects.
 
 ## Technical approach
 
-- New server-side module (`GLArcaneRift.{h,cpp}` under `G-Logic/Server`), owned by
+- New server-side module (`GLOdysseyRift.{h,cpp}` under `G-Logic/Server`), owned by
   `GLGaeaServer`, ticked in its frame move; hooks: player enters/leaves land, crow death
   (credit the killer), chat (`buy`, `shop`, `essence`, GM `rift reset`). Built with the
   existing `GLLandMan::DropCrow` for spawns.
-- Rift Warden: an NPC crow whose talk file routes to the arena (exact mechanism - bus-station
+- The Ferryman: an NPC crow whose talk file routes to the arena (exact mechanism - bus-station
   destination vs a new talk action - picked during planning after reading `NpcTalk` and the
   bus-station flow).
 - Data: `mapslist.ini` arena entry on both client and server; NPC placement in Mystic Peak.
