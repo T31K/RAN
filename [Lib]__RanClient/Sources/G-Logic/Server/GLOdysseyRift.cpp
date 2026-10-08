@@ -568,7 +568,7 @@ void GLOdysseyRift::TickWave ( GLLandMan* pLand, float fElapsed )
 	if ( !bAnyAlive ) { EndRun (); return; }
 
 	const int nPlayers = (int) m_mapPlayers.size();
-	const int nCap = std::min ( 8*nPlayers, 30 );
+	const int nCap = ( 8*nPlayers < 30 ) ? 8*nPlayers : 30;
 	m_fSpawnTimer -= fElapsed;
 	if ( m_nSpawned < m_nToSpawn && (int) m_vecLive.size() < nCap && m_fSpawnTimer <= 0 )
 	{
