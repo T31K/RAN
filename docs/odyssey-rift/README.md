@@ -19,8 +19,22 @@ Chat commands (inside the arena): `shop` (list wares + prices), `buy` (buy the w
 Seal you stand next to), `essence`, `ready`.
 
 Skills above **Lv47** are sealed in the arena until you buy them back at a shrine
-(Lv57 shrine, Lv67 shrine). The Forge overclocks your held weapon +3 (max +15 — this is a
-permanent change to the real item).
+(Lv57 shrine near the Nexus, Lv67 shrine beyond Seal 1). The Forge (weapon overclock) is
+**disabled** — it would permanently upgrade a real, tradeable item from a free currency; it
+comes back once it can be run-scoped.
+
+**Rift Seals (doors):** you start within 700 units of the Nexus. Seal 1 (1,000 Essence) opens
+the ground out to 1,400; Seal 2 (2,500) opens the whole island chain. Walking past a closed
+seal pushes you back. Mobs also start spawning from newly opened ground.
+
+## Status (2026-10-09 overnight build)
+
+Verified live: the server loads the config, finds 65 walkable spawn points, the chat hook
+answers (`rift pos` replied in game). **Not yet verified in game:** `sail`, waves hunting you,
+kill Essence, seals, wares, the Convergence boss — automated client input stopped working, so
+the first real run is yours. `[GM]T31K` has been placed on the Nexus via the DB: log in with
+it and the first leg starts after 3 seconds. Watch `rift mobs` and the field errlog
+(`grep RIFT`) if something looks off.
 
 ## GM commands (account level GM3+)
 
