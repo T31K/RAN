@@ -37,10 +37,14 @@ Assumptions (correct me): squads of 1-6, scaling with player count; enemies are
 ### Player flow
 1. In **MysticPeakHole (map 6,0)** stands the **Rift Warden** NPC. Talking to it offers
    "Enter the Arcane Rift", which moves the player to the arena.
-2. The arena is a **dedicated map id** (new `mapslist.ini` entry reusing the Stadium level
-   file `w_SchoolWar_01.lev`), so normal Stadium events are untouched. One run at a time.
-3. Arriving on the arena map joins the player to the run's lobby. The **Nexus beacon** (a
-   stationary marker mob) stands at the arena centre.
+2. The arena is a **dedicated map id** (new `mapslist.ini` entry reusing the
+   **Another W South** level file `w_ep3_another_1.Lev` - floating crystal islands in a void,
+   3215 units across, a glowing orb at the centre), so the real Another World is untouched.
+   The level's own mob schedules must not spawn on the arena id (only rift-spawned mobs
+   live there). Its outward gates are disabled on the arena id. One run at a time.
+   Another W centre (the Director's room) is kept for the Season 3 finale.
+3. Arriving on the arena map joins the player to the run's lobby. The **Nexus beacon** is
+   the glowing orb at the centre (a stationary marker mob placed on it).
 4. A round starts when **every player in the arena stands within the beacon radius** for 3
    seconds. Chat counts it up: `[NEXUS] T31K charges the Nexus. 2 / 3`.
 5. During a round, waves spawn at the arena edges and run at the players. When the last mob
