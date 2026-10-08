@@ -13,6 +13,7 @@ std::set<DWORD> g_setMaxUpgradeChar;
 #include "./GLGuidance.h"
 #include "./GLClubDeathMatch.h"
 #include "./GLSchoolFreePK.h"
+#include "./GLOdysseyRift.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -106,6 +107,9 @@ BOOL GLGaeaServer::ChatMsgProc ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD d
 			PGLCHAR pChar = GetChar ( dwGaeaID );
 			if ( !pChar )			return FALSE;
 			if ( pChar->IsCHATBLOCK() )		return FALSE;
+
+			//	Odyssey Rift chat commands (sail / buy / shop / essence / rift ...).
+			if ( GLOdysseyRift::GetInstance().OnChat ( pChar, pNetMsg->szChatMsg ) )	return TRUE;
 
 			//	[GIVE] GM cheat: "/give <MID> <SID> [count]" spawns item into own inventory.
 			if ( 0 == strncmp ( pNetMsg->szChatMsg, "getitem ", 8 ) )

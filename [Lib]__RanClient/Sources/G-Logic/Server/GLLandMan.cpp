@@ -5,6 +5,7 @@
 #include "./GLItemLMT.h"
 #include "./GLChar.h"
 #include "./GLGaeaServer.h"
+#include "./GLOdysseyRift.h"
 #include "./stl_Func.h"
 
 #include "./DBActionLogic.h"
@@ -2366,7 +2367,9 @@ HRESULT GLLandMan::FrameMove ( float fTime, float fElapsedTime )
 	PROFILE_END("UpdateCrow()");
 
 	PROFILE_BEGIN("m_MobSchMan.FrameMove()");
-		hr = m_MobSchMan.FrameMove ( fTime, fElapsedTime );
+		//	Note : the Odyssey Rift arena has no natural spawns while the mode is on.
+		if ( !GLOdysseyRift::GetInstance().SuppressNaturalSpawns ( this ) )
+			hr = m_MobSchMan.FrameMove ( fTime, fElapsedTime );
 		if ( FAILED(hr) )
 		{
 			PROFILE_END("m_MobSchMan.FrameMove()");

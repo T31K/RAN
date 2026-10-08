@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "./GLCrow.h"
 #include "./GLGaeaServer.h"
+#include "./GLOdysseyRift.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -1256,6 +1257,9 @@ HRESULT GLCrow::FrameMove ( float fTime, float fElapsedTime )
 	{
 		if ( m_dwNowHP==0 )
 		{
+			//	Note : Odyssey Rift kill credit (no-op outside the arena).
+			GLOdysseyRift::GetInstance().OnCrowKilled ( this );
+
 			//	Note : 쓰러질때 보상 발생. ( 경험치 + 아이템 + 금액 )
 			GenerateReward ();
 

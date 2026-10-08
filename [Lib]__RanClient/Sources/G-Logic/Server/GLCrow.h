@@ -213,6 +213,8 @@ public:
 
 	DWORD GetGlobID ()							{ return m_dwGlobID; }
 	const STARGETID& GetTargetID ()				{ return m_TargetID; }
+	void RiftHunt ( const STARGETID &sTargetID )	{ NewTarget ( sTargetID ); }	// Odyssey Rift: chase a voyager
+	const STARGETID& RiftAssault () const		{ return m_sAssault; }			// Odyssey Rift: last attacker
 	EMATT_RGTYPE GetAttackRangeType ()			{ if ( !m_pAttackProp ) return EMATT_SHORT; return m_pAttackProp->emAttRgType; }
 
 	BOOL  IsGroupMember()						{ return (!m_pMobSchedule || m_pMobSchedule->m_strGroupName == "" ) ? FALSE : TRUE; }

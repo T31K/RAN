@@ -19,6 +19,7 @@
 #include "../[Lib]__RanClientUI/Sources/TextUI//UITextControl.h"
 #include "GLGuidance.h"
 #include "GLClubDeathMatch.h"
+#include "GLOdysseyRift.h"
 #include "DxConsoleMsg.h"
 #include "DxMsgServer.h"
 #include "GLAutoLevelMan.h"
@@ -203,6 +204,9 @@ namespace DxFieldInstance
 		//	Note : 클럽 데스매치 로드.
 		GLClubDeathMatchFieldMan::GetInstance().Load ( GLCONST_CHAR::vecClubDM_FILE );
 
+		//	Note : Odyssey Rift co-op mode (odysseyrift.ini next to the exe; absent = off).
+		GLOdysseyRift::GetInstance().LoadConfig ();
+
 		//	Note : pk 모드 설정.
 		GLCONST_CHAR::bPK_MODE = bPK_MODE;
 		GLCONST_CHAR::bPKLESS  = bPKLess;
@@ -262,6 +266,9 @@ namespace DxFieldInstance
 
 		//	Note : 클럽데스매치 갱신.
 		GLClubDeathMatchFieldMan::GetInstance().FrameMove ( fElapsedAppTime );
+
+		//	Note : Odyssey Rift.
+		GLOdysseyRift::GetInstance().FrameMove ( fElapsedAppTime );
 
 		//	Note : 가이아 갱신.
 		hr = GLGaeaServer::GetInstance().FrameMove ( fAppTime, fElapsedAppTime );

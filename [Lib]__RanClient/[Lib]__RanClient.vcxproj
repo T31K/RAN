@@ -247,6 +247,7 @@
     <ClInclude Include="Sources\G-Logic\Server\GLAgentServer.h" />
     <ClInclude Include="Sources\G-Logic\Server\GLAGLandMan.h" />
     <ClInclude Include="Sources\G-Logic\Server\GLAutoLevel.h" />
+    <ClInclude Include="Sources\G-Logic\Server\GLOdysseyRift.h" />
     <ClInclude Include="Sources\G-Logic\Server\GLAutoLevelMan.h" />
     <ClInclude Include="Sources\G-Logic\Server\GLChar.h" />
     <ClInclude Include="Sources\G-Logic\Server\GLCharAG.h" />
@@ -371,6 +372,7 @@
     <ClCompile Include="Sources\G-Logic\Server\GLAGLandMan.cpp" />
     <ClCompile Include="Sources\G-Logic\Server\GLAutoLevel.cpp" />
     <ClCompile Include="Sources\G-Logic\Server\GLAutoLevelMan.cpp" />
+    <ClCompile Include="Sources\G-Logic\Server\GLOdysseyRift.cpp" />
     <ClCompile Include="Sources\G-Logic\Server\GLChar.cpp" />
     <ClCompile Include="Sources\G-Logic\Server\GLCharAG.cpp" />
     <ClCompile Include="Sources\G-Logic\Server\GLCharAGClub.cpp" />
