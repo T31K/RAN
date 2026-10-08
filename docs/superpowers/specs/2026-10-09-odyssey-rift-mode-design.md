@@ -41,8 +41,10 @@ Assumptions (correct me): squads of 1-6, scaling with player count; enemies are
 ## MVP (this build)
 
 ### Player flow
-1. In **MysticPeakHole (map 6,0)** stands **the Ferryman** NPC. Talking to it offers
-   "Sail into the Odyssey Rift", which moves the player to the arena.
+1. In **MP_Campus (map 5,0)**, in the water at the centre of **Mystic Peak Square**,
+   stands a giant **Trojan Horse** (Sketchfab "Low Poly Trojan Horse", 4,015 faces,
+   CC-BY, id `6452304ccd8e4a3786e8f8d644e4e093`, static prop scaled to building size).
+   Clicking it offers "Climb into the Horse", which moves the player to the arena.
 2. The arena is a **dedicated map id** (new `mapslist.ini` entry reusing the
    **Another W South** level file `w_ep3_another_1.Lev` - floating crystal islands in a void,
    3215 units across, a glowing orb at the centre), so the real Another World is untouched.
@@ -101,10 +103,12 @@ Everything under "Full vision"; new UI widgets (all feedback is chat); new effec
   `GLGaeaServer`, ticked in its frame move; hooks: player enters/leaves land, crow death
   (credit the killer), chat (`buy`, `shop`, `essence`, GM `rift reset`). Built with the
   existing `GLLandMan::DropCrow` for spawns.
-- The Ferryman: an NPC crow whose talk file routes to the arena (exact mechanism - bus-station
-  destination vs a new talk action - picked during planning after reading `NpcTalk` and the
-  bus-station flow).
-- Data: `mapslist.ini` arena entry on both client and server; NPC placement in Mystic Peak.
+- The Trojan Horse: an NPC crow (one-bone skin around the static horse mesh) whose talk
+  routes to the arena (exact mechanism - bus-station destination vs a new talk action -
+  picked during planning after reading `NpcTalk` and the bus-station flow). If the horse
+  model is not in game yet, a stock RAN NPC stands in at the same spot.
+- Data: `mapslist.ini` arena entry on both client and server; NPC placement in Mystic Peak
+  Square (MP_Campus 5,0) at coordinates read from the DB after the user stands there.
   Client data changes ship via the native app's update path; server via the VPS payload.
 - Sources are CP949: edit through the iconv round-trip; verify `git diff --numstat`.
 
