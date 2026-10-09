@@ -56,14 +56,15 @@ def fmt_m(m):
     return ','.join('%.6f' % x for x in m) + ';;'
 
 
-def write_x(path, chain, sdn_m, inner_m, v, n, uv, idx, texture):
+def write_x(path, chain, sdn_m, inner_m, v, n, uv, idx, texture, frame=None):
+    frame = frame or NEW_FRAME
     L = ['xof 0303txt 0032', '']
     ind = ''
     for f in chain:   # Scene_Root ... Bip01_R_Hand, gum
         L.append(f'{ind}Frame {f.name} {{')
         L.append(f'{ind} FrameTransformMatrix {{ {fmt_m(matrix(f))} }}')
         ind += ' '
-    L.append(f'{ind}Frame {NEW_FRAME} {{')
+    L.append(f'{ind}Frame {frame} {{')
     L.append(f'{ind} FrameTransformMatrix {{ {fmt_m(sdn_m)} }}')
     L.append(f'{ind} Frame {{')
     L.append(f'{ind}  FrameTransformMatrix {{ {fmt_m(inner_m)} }}')
