@@ -343,8 +343,13 @@ def write_skin_x(roots, kids, local, mesh_frame, v, n, uv, idx, mat_ids, texture
     assert X_NAME.match(mesh_frame)
     ident = fmt_m(np.eye(4))
     L = ['xof 0303txt 0032', SKIN_TEMPLATES]
+    # ONE top-level frame holding the bones and the mesh frame, like stock skins: the engine names
+    # an unnamed mesh frame after its parent, but SFrame::FindParentFrame only searches downward
+    # from the first top-level frame - a mesh frame that is a top-level sibling stays unnamed and
+    # DxSkinMesh9::FindMeshContainer crashes on its NULL name (checked by check_mesh_names.py).
+    L += ['Frame Scene_Root {', f' FrameTransformMatrix {{ {ident} }}']
     for r in roots:
-        write_frames(L, r, kids, local, '')
+        write_frames(L, r, kids, local, ' ')
     L += [f'Frame {mesh_frame} {{', f' FrameTransformMatrix {{ {ident} }}', ' Frame {',
           f'  FrameTransformMatrix {{ {ident} }}', '  Mesh {']
     L.append(f'   {len(v)};')
@@ -387,7 +392,7 @@ def write_skin_x(roots, kids, local, mesh_frame, v, n, uv, idx, mat_ids, texture
         L.append('    ' + ','.join('%.6f' % w[i] for i in ids) + ';')
         L.append(f'    {fmt_m(offsets[bone])}')
         L.append('   }')
-    L += ['  }', ' }', '}']
+    L += ['  }', ' }', '}', '}']      # Mesh, inner frame, mesh frame, Scene_Root
     return '\r\n'.join(L) + '\r\n'
 
 
