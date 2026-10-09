@@ -333,6 +333,7 @@ protected:
 	void GenerateReward_200502();
 	void GenerateReward_20060402();
 	void GenerateReward_20060417();
+	void GenerateRiftReward();		// Odyssey Rift: kill EXP only, no floor drops (gold is paid by the rift)
 	//! 몹이 죽었을때 보상을 발생시킨다 (아이템, 게임머니, ?박스 등등...)
 	//! \param dwOWNER 아이템 소유자
 	void GenerateRewardItem(DWORD dwOWNER = GAEAID_NULL);

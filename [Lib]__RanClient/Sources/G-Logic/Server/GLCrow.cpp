@@ -1258,10 +1258,11 @@ HRESULT GLCrow::FrameMove ( float fTime, float fElapsedTime )
 		if ( m_dwNowHP==0 )
 		{
 			//	Note : Odyssey Rift kill credit (no-op outside the arena).
-			GLOdysseyRift::GetInstance().OnCrowKilled ( this );
+			const bool bRiftMob = GLOdysseyRift::GetInstance().OnCrowKilled ( this );
 
 			//	Note : 쓰러질때 보상 발생. ( 경험치 + 아이템 + 금액 )
-			GenerateReward ();
+			if ( bRiftMob )	GenerateRiftReward ();
+			else			GenerateReward ();
 
 			//	행위 변화.
 			TurnAction ( GLAT_FALLING );

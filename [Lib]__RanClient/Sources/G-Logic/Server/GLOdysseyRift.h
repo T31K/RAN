@@ -64,7 +64,7 @@ public:
 		bool		bCharged;
 		float		fChargeTime;
 		float		fWarnCool;
-		SPLAYER () : dwCharID(0), dwEssence(0), dwEarned(0), dwKills(0), dwSkillTier(47),
+		SPLAYER () : dwCharID(0), dwEssence(0), dwEarned(0), dwKills(0), dwSkillTier(47),	// dwEssence unused: gold is the currency
 			vLastValid(0,0,0), bCharged(false), fChargeTime(0), fWarnCool(0) {}
 	};
 
@@ -94,7 +94,7 @@ public:
 	bool LoadConfig ();							// reads odysseyrift.ini; false = mode off
 	void FrameMove ( float fElapsed );			// every field-server frame
 	BOOL OnChat ( GLChar* pChar, const char* szMsg );	// TRUE = message handled
-	void OnCrowKilled ( GLCrow* pCrow );		// a crow just reached 0 HP
+	bool OnCrowKilled ( GLCrow* pCrow );		// a crow just reached 0 HP; true = rift mob (EXP only, no floor drops)
 	bool CanUseSkill ( GLChar* pChar, const GLSKILL* pSkill );
 	bool IsArenaLand ( const GLLandMan* pLand ) const;
 	bool SuppressNaturalSpawns ( const GLLandMan* pLand ) const	{ return IsArenaLand ( pLand ); }
@@ -130,6 +130,10 @@ private:
 	void Jump ( GLChar* pChar, const D3DXVECTOR3& vPos );
 	bool Recall ( GLChar* pChar, SNATIVEID sMap, const D3DXVECTOR3& vPos );
 
+	void GiveGold ( GLChar* pChar, SPLAYER* pPlayer, LONGLONG lnGold );	// wallet + client update
+	bool TakeGold ( GLChar* pChar, LONGLONG lnGold );					// false = not enough
+	void GiveGoldAll ( LONGLONG lnGold );
+
 	void Tell ( GLChar* pChar, const char* szFormat, ... );
 	void Announce ( const char* szFormat, ... );
 
@@ -149,7 +153,9 @@ private:
 	D3DXVECTOR3				m_vNexus;
 	float					m_fNexusRadius;
 	SNATIVEID				m_sSealNpc;
-	DWORD					m_dwStartEssence;
+	DWORD					m_dwStartEssence;	// unused since gold is the currency (kept for old configs)
+	DWORD					m_dwGoldKill;		// gold per common kill, straight into the wallet
+	DWORD					m_dwGoldRound;		// gold per voyager per survived leg
 
 	std::vector<SMOBDEF>	m_vecMobs;
 	std::vector<SZONE>		m_vecZones;

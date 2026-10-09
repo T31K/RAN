@@ -24,8 +24,6 @@ namespace
 	const float	CHARGE_HOLD		= 3.0f;
 	const float	OVER_TIME		= 15.0f;
 	const float	BUY_RANGE		= 120.0f;
-	const DWORD	KILL_ESSENCE	= 50;
-	const DWORD	ROUND_ESSENCE	= 250;
 
 	float Dist2D ( const D3DXVECTOR3& a, float x, float z )
 	{
@@ -55,6 +53,8 @@ GLOdysseyRift::GLOdysseyRift ()
 	, m_fNexusRadius(150.0f)
 	, m_sSealNpc(false)
 	, m_dwStartEssence(500)
+	, m_dwGoldKill(2000)
+	, m_dwGoldRound(10000)
 	, m_emState(STATE_IDLE)
 	, m_nRound(0)
 	, m_nToSpawn(0)
@@ -116,6 +116,8 @@ bool GLOdysseyRift::LoadConfig ()
 		else if ( strKey == "nexus_radius" )	m_fNexusRadius = (float) atof ( pVal );
 		else if ( strKey == "seal_npc" && sscanf ( pVal, "%d %d", &a, &b ) == 2 )	m_sSealNpc = SNATIVEID ( (WORD)a, (WORD)b );
 		else if ( strKey == "start_essence" )	m_dwStartEssence = (DWORD) atoi ( pVal );
+		else if ( strKey == "gold_kill" )		m_dwGoldKill = (DWORD) atoi ( pVal );
+		else if ( strKey == "gold_round" )		m_dwGoldRound = (DWORD) atoi ( pVal );
 		else if ( strKey == "mob" && sscanf ( pVal, "%d %d %d", &a, &b, &c ) == 3 )
 		{
 			SMOBDEF sMob; sMob.sID = SNATIVEID ( (WORD)a, (WORD)b ); sMob.nTier = c;
@@ -219,6 +221,34 @@ void GLOdysseyRift::Announce ( const char* szFormat, ... )
 	StringCchCopy ( NetMsg.szName, CHR_ID_LENGTH+1, "" );
 	StringCchCopy ( NetMsg.szChatMsg, CHAT_MSG_SIZE+1, szBuf );
 	GLGaeaServer::GetInstance().SENDTOCLIENT_ONMAP ( m_sArenaMap.dwID, &NetMsg );
+}
+
+void GLOdysseyRift::GiveGold ( GLChar* pChar, SPLAYER* pPlayer, LONGLONG lnGold )
+{
+	if ( !pChar || lnGold <= 0 ) return;
+	pChar->m_lnMoney += lnGold;
+	if ( pPlayer ) pPlayer->dwEarned += (DWORD) lnGold;
+
+	GLMSG::SNETPC_UPDATE_MONEY NetMsg;
+	NetMsg.lnMoney = pChar->m_lnMoney;
+	GLGaeaServer::GetInstance().SENDTOCLIENT ( pChar->m_dwClientID, &NetMsg );
+}
+
+bool GLOdysseyRift::TakeGold ( GLChar* pChar, LONGLONG lnGold )
+{
+	if ( !pChar || pChar->m_lnMoney < lnGold ) return false;
+	pChar->m_lnMoney -= lnGold;
+
+	GLMSG::SNETPC_UPDATE_MONEY NetMsg;
+	NetMsg.lnMoney = pChar->m_lnMoney;
+	GLGaeaServer::GetInstance().SENDTOCLIENT ( pChar->m_dwClientID, &NetMsg );
+	return true;
+}
+
+void GLOdysseyRift::GiveGoldAll ( LONGLONG lnGold )
+{
+	for ( std::map<DWORD,SPLAYER>::iterator it = m_mapPlayers.begin(); it != m_mapPlayers.end(); ++it )
+		GiveGold ( GLGaeaServer::GetInstance().GetChar ( it->first ), &it->second, lnGold );
 }
 
 const char* GLOdysseyRift::Name ( DWORD dwGaeaID )
@@ -493,7 +523,7 @@ void GLOdysseyRift::FrameMove ( float fElapsed )
 		SpawnSeals ( pLand );
 		for ( std::map<DWORD,SPLAYER>::iterator it = m_mapPlayers.begin(); it != m_mapPlayers.end(); ++it )
 		{
-			it->second.dwEssence = m_dwStartEssence; it->second.dwEarned = 0;
+			it->second.dwEarned = 0;
 			it->second.dwKills = 0; it->second.dwSkillTier = 47; it->second.bCharged = false;
 		}
 		Announce ( "[NEXUS] The rift stirs. Gather at the Nexus to begin the Voyage." );
@@ -525,17 +555,17 @@ void GLOdysseyRift::SyncPlayers ( GLLandMan* pLand )
 		std::map<DWORD,SPLAYER>::iterator it = m_mapPlayers.find ( pChar->m_dwGaeaID );
 		if ( it == m_mapPlayers.end() || it->second.dwCharID != pChar->m_dwCharID )
 		{
-			// A voyager who left and came back keeps this voyage's Essence and skills.
+			// A voyager who left and came back keeps this voyage's skills and score.
 			SPLAYER sPlayer;
 			std::map<DWORD,SPLAYER>::iterator itOld = m_mapLeft.find ( pChar->m_dwCharID );
 			if ( itOld != m_mapLeft.end() ) { sPlayer = itOld->second; m_mapLeft.erase ( itOld ); }
-			else sPlayer.dwEssence = m_dwStartEssence;
 			sPlayer.dwCharID = pChar->m_dwCharID;
 			sPlayer.vLastValid = m_vNexus;
 			sPlayer.bCharged = false;
 			m_mapPlayers[pChar->m_dwGaeaID] = sPlayer;
 			Tell ( pChar, "You step out of the Horse into another world." );
-			Tell ( pChar, "Essence: %u. Type 'shop' for wares, 'buy' near one.", sPlayer.dwEssence );
+			Tell ( pChar, "Kills pay gold straight to your wallet. Click the terminals to shop." );
+			Tell ( pChar, "Type 'shop' for shrines and seals, 'buy' next to one." );
 			if ( m_emState == STATE_WAVE )
 				Tell ( pChar, "Leg %d of the Voyage is under way. Fight!", m_nRound );
 		}
@@ -569,7 +599,7 @@ void GLOdysseyRift::EnforceSeals ( GLLandMan* pLand, float fElapsed )
 		Jump ( pChar, vBack );
 		if ( sPlayer.fWarnCool <= 0 )
 		{
-			Tell ( pChar, "A Rift Seal repels you. Break it with Essence to pass." );
+			Tell ( pChar, "A Rift Seal repels you. Break it with gold to pass." );
 			sPlayer.fWarnCool = 3.0f;
 		}
 	}
@@ -782,15 +812,14 @@ void GLOdysseyRift::TickWave ( GLLandMan* pLand, float fElapsed )
 
 void GLOdysseyRift::EndRound ()
 {
+	// Deeper legs pay more: +20% of the base per leg survived.
+	const LONGLONG lnRoundGold = (LONGLONG) m_dwGoldRound * ( 5 + m_nRound ) / 5;
 	for ( std::map<DWORD,SPLAYER>::iterator it = m_mapPlayers.begin(); it != m_mapPlayers.end(); ++it )
-	{
-		it->second.dwEssence += ROUND_ESSENCE;
-		it->second.dwEarned += ROUND_ESSENCE;
 		it->second.bCharged = false;
-	}
+	GiveGoldAll ( lnRoundGold );
 	m_emState = STATE_CHARGING;
 	m_fStateTimer = 0;
-	Announce ( "[NEXUS] Leg %d survived. +%u Essence each. The Nexus dims...", m_nRound, ROUND_ESSENCE );
+	Announce ( "[NEXUS] Leg %d survived. +%I64d gold each. The Nexus dims...", m_nRound, lnRoundGold );
 
 	// Surprise: survive leg 7 with nobody falling and the muse sings.
 	if ( m_nRound >= 7 && !m_bRoundDeath && !m_bMuseSang )
@@ -801,16 +830,12 @@ void GLOdysseyRift::EndRound ()
 		{
 			SPLAYER& s = it->second;
 			s.dwSkillTier = s.dwSkillTier < 57 ? 57 : ( s.dwSkillTier < 67 ? 67 : 999 );
-			s.dwEssence += 777; s.dwEarned += 777;
 		}
-		Announce ( "[THE MUSE] Your skills awaken one step further. +777 Essence." );
+		GiveGoldAll ( 77777 );
+		Announce ( "[THE MUSE] Your skills awaken one step further. +77,777 gold." );
 	}
 
-	for ( std::map<DWORD,SPLAYER>::iterator it = m_mapPlayers.begin(); it != m_mapPlayers.end(); ++it )
-	{
-		GLChar* pChar = GLGaeaServer::GetInstance().GetChar ( it->first );
-		Tell ( pChar, "Essence: %u. Spend it, then charge the Nexus together.", it->second.dwEssence );
-	}
+	Announce ( "[NEXUS] Spend your gold at the terminals, then charge the Nexus together." );
 }
 
 void GLOdysseyRift::EndRun ()
@@ -818,7 +843,7 @@ void GLOdysseyRift::EndRun ()
 	GLLandMan* pLand = ArenaLand ();
 	Announce ( "[NEXUS] The rift swallows the last of you. The Voyage ends at leg %d.", m_nRound );
 	for ( std::map<DWORD,SPLAYER>::iterator it = m_mapPlayers.begin(); it != m_mapPlayers.end(); ++it )
-		Announce ( "  %s - %u kills, %u Essence earned", Name ( it->first ), it->second.dwKills, it->second.dwEarned );
+		Announce ( "  %s - %u kills, %u gold earned", Name ( it->first ), it->second.dwKills, it->second.dwEarned );
 	Announce ( "[NEXUS] Revive and charge the Nexus to sail again." );
 
 	DropAllLive ( pLand );
@@ -838,9 +863,9 @@ void GLOdysseyRift::ResetRun ( GLLandMan* pLand )
 
 // --------------------------------------------------------------------------- hooks
 
-void GLOdysseyRift::OnCrowKilled ( GLCrow* pCrow )
+bool GLOdysseyRift::OnCrowKilled ( GLCrow* pCrow )
 {
-	if ( !pCrow || !IsArenaLand ( pCrow->m_pLandMan ) ) return;
+	if ( !pCrow || !IsArenaLand ( pCrow->m_pLandMan ) ) return false;
 
 	int nTier = 0;
 	for ( size_t i=0; i<m_vecLive.size(); ++i )
@@ -852,13 +877,12 @@ void GLOdysseyRift::OnCrowKilled ( GLCrow* pCrow )
 			break;
 		}
 	}
-	if ( nTier == 0 ) return;	// not a rift mob
+	if ( nTier == 0 ) return false;	// not a rift mob: normal rewards
 
 	if ( nTier == 9 )
 	{
-		Announce ( "[NEXUS] A GOLDEN SOUL shatters! +1500 Essence to every voyager!" );
-		for ( std::map<DWORD,SPLAYER>::iterator it = m_mapPlayers.begin(); it != m_mapPlayers.end(); ++it )
-		{ it->second.dwEssence += 1500; it->second.dwEarned += 1500; }
+		Announce ( "[NEXUS] A GOLDEN SOUL shatters! +30,000 gold to every voyager!" );
+		GiveGoldAll ( 30000 );
 	}
 
 	const STARGETID& sKiller = pCrow->RiftAssault ();
@@ -869,18 +893,19 @@ void GLOdysseyRift::OnCrowKilled ( GLCrow* pCrow )
 		PGLSUMMONFIELD pSummon = GLGaeaServer::GetInstance().GetSummon ( sKiller.dwID );
 		if ( pSummon && pSummon->m_pOwner ) dwKillerGaea = pSummon->m_pOwner->m_dwGaeaID;	// credit the summoner
 	}
-	if ( dwKillerGaea == GAEAID_NULL ) return;
+	if ( dwKillerGaea == GAEAID_NULL ) return true;
 	std::map<DWORD,SPLAYER>::iterator it = m_mapPlayers.find ( dwKillerGaea );
-	if ( it == m_mapPlayers.end() ) return;
+	if ( it == m_mapPlayers.end() ) return true;
 	GLChar* pChar = GLGaeaServer::GetInstance().GetChar ( it->first );
-	if ( !pChar || pChar->m_dwCharID != it->second.dwCharID ) return;
+	if ( !pChar || pChar->m_dwCharID != it->second.dwCharID ) return true;
 
-	const DWORD dwGain = KILL_ESSENCE * ( nTier == 3 ? 20 : ( nTier == 2 ? 2 : 1 ) );
-	it->second.dwEssence += dwGain;
-	it->second.dwEarned += dwGain;
+	// Gold straight into the killer's wallet; deeper legs pay more (+10% per leg).
+	const LONGLONG lnGain = (LONGLONG) m_dwGoldKill * ( nTier == 3 ? 20 : ( nTier == 2 ? 2 : 1 ) ) * ( 10 + m_nRound ) / 10;
+	GiveGold ( pChar, &it->second, lnGain );
 	it->second.dwKills += 1;
 	if ( nTier == 3 )
 		Announce ( "[NEXUS] %s fells the Convergence! The rift screams.", pChar->m_szName );
+	return true;
 }
 
 bool GLOdysseyRift::CanUseSkill ( GLChar* pChar, const GLSKILL* pSkill )
@@ -941,7 +966,8 @@ BOOL GLOdysseyRift::OnChat ( GLChar* pChar, const char* szMsg )
 	SPLAYER* pPlayer = FindPlayer ( pChar );
 	if ( !pPlayer ) return FALSE;
 
-	if ( strcmp ( szMsg, "essence" ) == 0 )	{ Tell ( pChar, "Essence: %u  Kills: %u  Leg: %d", pPlayer->dwEssence, pPlayer->dwKills, m_nRound ); return TRUE; }
+	if ( strcmp ( szMsg, "essence" ) == 0 || strcmp ( szMsg, "score" ) == 0 )
+	{ Tell ( pChar, "Gold: %I64d  Earned here: %u  Kills: %u  Leg: %d", pChar->m_lnMoney, pPlayer->dwEarned, pPlayer->dwKills, m_nRound ); return TRUE; }
 	if ( strcmp ( szMsg, "shop" ) == 0 )	{ CmdShop ( pChar ); return TRUE; }
 	if ( strcmp ( szMsg, "buy" ) == 0 )		{ CmdBuy ( pChar, pPlayer ); return TRUE; }
 	if ( strcmp ( szMsg, "ready" ) == 0 )
@@ -956,13 +982,13 @@ BOOL GLOdysseyRift::OnChat ( GLChar* pChar, const char* szMsg )
 	{
 		m_bSecretIthaca = true;
 		Announce ( "[ATHENA] %s remembers the way home. I will light it for you.", pChar->m_szName );
+		GiveGoldAll ( 20000 );
 		for ( std::map<DWORD,SPLAYER>::iterator it = m_mapPlayers.begin(); it != m_mapPlayers.end(); ++it )
 		{
-			it->second.dwEssence += 1000; it->second.dwEarned += 1000;
 			GLChar* p = GLGaeaServer::GetInstance().GetChar ( it->first );
 			if ( IsAlive ( p ) ) { p->m_sHP.TO_FULL(); p->m_sMP.TO_FULL(); p->m_sSP.TO_FULL(); p->MsgSendUpdateState (); }
 		}
-		Announce ( "[ATHENA] +1000 Essence and full strength to every voyager." );
+		Announce ( "[ATHENA] +20,000 gold and full strength to every voyager." );
 		return FALSE;	// still shows as normal chat
 	}
 	return FALSE;
@@ -975,10 +1001,11 @@ void GLOdysseyRift::CmdShop ( GLChar* pChar )
 	{
 		const SSHOP& s = m_vecShops[i];
 		const bool bOpen = s.nZone < 0 || s.nZone >= (int) m_vecZones.size() || m_vecZones[s.nZone].bOpen;
-		Tell ( pChar, "%s - %u Essence%s", s.strName.c_str(), s.dwPrice, bOpen ? "" : " (beyond a seal)" );
+		Tell ( pChar, "%s - %u gold%s", s.strName.c_str(), s.dwPrice, bOpen ? "" : " (beyond a seal)" );
 	}
 	for ( size_t i=0; i<m_vecZones.size(); ++i )
-		if ( !m_vecZones[i].bOpen ) Tell ( pChar, "Rift Seal %d - %u Essence", m_vecZones[i].nID, m_vecZones[i].dwPrice );
+		if ( !m_vecZones[i].bOpen ) Tell ( pChar, "Rift Seal %d - %u gold", m_vecZones[i].nID, m_vecZones[i].dwPrice );
+	Tell ( pChar, "Weapons, potions and skill books: click the terminals." );
 }
 
 void GLOdysseyRift::CmdBuy ( GLChar* pChar, SPLAYER* pPlayer )
@@ -1005,8 +1032,7 @@ void GLOdysseyRift::CmdBuy ( GLChar* pChar, SPLAYER* pPlayer )
 	if ( nSeal >= 0 )
 	{
 		SZONE& z = m_vecZones[nSeal];
-		if ( pPlayer->dwEssence < z.dwPrice ) { Tell ( pChar, "The seal needs %u Essence. You have %u.", z.dwPrice, pPlayer->dwEssence ); return; }
-		pPlayer->dwEssence -= z.dwPrice;
+		if ( !TakeGold ( pChar, z.dwPrice ) ) { Tell ( pChar, "The seal needs %u gold. You have %I64d.", z.dwPrice, pChar->m_lnMoney ); return; }
 		z.bOpen = true;
 		GLLandMan* pLand = ArenaLand ();
 		SafeDropOut ( pLand, z.dwSealGlobID, m_sSealNpc );
@@ -1018,29 +1044,26 @@ void GLOdysseyRift::CmdBuy ( GLChar* pChar, SPLAYER* pPlayer )
 	SSHOP& s = m_vecShops[nShop];
 	if ( s.nZone >= 0 && s.nZone < (int) m_vecZones.size() && !m_vecZones[s.nZone].bOpen )
 	{ Tell ( pChar, "That ware lies beyond a Rift Seal." ); return; }
-	if ( pPlayer->dwEssence < s.dwPrice ) { Tell ( pChar, "%s costs %u Essence. You have %u.", s.strName.c_str(), s.dwPrice, pPlayer->dwEssence ); return; }
+	// Validate first, charge second, apply last.
+	if ( s.strKind == "overclock" )
+	{
+		// Disabled: it would permanently upgrade a real, tradeable item.
+		// Needs a run-scoped upgrade (restore the grade on leaving) before it comes back.
+		Tell ( pChar, "The Forge of Hephaestus is cold. It will burn again in a later voyage." );
+		return;
+	}
+	if ( s.strKind != "heal" && s.strKind != "skills" ) { Tell ( pChar, "The ware crumbles. (unknown kind %s)", s.strKind.c_str() ); return; }
+	if ( s.strKind == "skills" && pPlayer->dwSkillTier >= (DWORD) s.nParam ) { Tell ( pChar, "You already command those skills." ); return; }
+	if ( !TakeGold ( pChar, s.dwPrice ) ) { Tell ( pChar, "%s costs %u gold. You have %I64d.", s.strName.c_str(), s.dwPrice, pChar->m_lnMoney ); return; }
 
 	if ( s.strKind == "heal" )
 	{
 		pChar->m_sHP.TO_FULL(); pChar->m_sMP.TO_FULL(); pChar->m_sSP.TO_FULL();
 		pChar->MsgSendUpdateState ();
 	}
-	else if ( s.strKind == "skills" )
-	{
-		if ( pPlayer->dwSkillTier >= (DWORD) s.nParam ) { Tell ( pChar, "You already command those skills." ); return; }
-		pPlayer->dwSkillTier = (DWORD) s.nParam;
-	}
-	else if ( s.strKind == "overclock" )
-	{
-		// Disabled: it would permanently upgrade a real, tradeable item from a free currency.
-		// Needs a run-scoped upgrade (restore the grade on leaving) before it comes back.
-		Tell ( pChar, "The Forge of Hephaestus is cold. It will burn again in a later voyage." );
-		return;
-	}
-	else { Tell ( pChar, "The ware crumbles. (unknown kind %s)", s.strKind.c_str() ); return; }
+	else pPlayer->dwSkillTier = (DWORD) s.nParam;
 
-	pPlayer->dwEssence -= s.dwPrice;
-	Tell ( pChar, "Bought %s. Essence left: %u.", s.strName.c_str(), pPlayer->dwEssence );
+	Tell ( pChar, "Bought %s. Gold left: %I64d.", s.strName.c_str(), pChar->m_lnMoney );
 }
 
 BOOL GLOdysseyRift::CmdGM ( GLChar* pChar, const char* szArgs )
@@ -1089,7 +1112,7 @@ BOOL GLOdysseyRift::CmdGM ( GLChar* pChar, const char* szArgs )
 	else if ( strCmd == "essence" )
 	{
 		SPLAYER* pPlayer = FindPlayer ( pChar );
-		if ( pPlayer ) { pPlayer->dwEssence += (DWORD) a; Tell ( pChar, "Essence: %u", pPlayer->dwEssence ); }
+		if ( pPlayer ) { GiveGold ( pChar, pPlayer, (LONGLONG) a ); Tell ( pChar, "Gold: %I64d", pChar->m_lnMoney ); }
 	}
 	else if ( strCmd == "reset" )
 	{
