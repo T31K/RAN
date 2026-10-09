@@ -1,6 +1,8 @@
 // Stand-in for glibc <endian.h> (native macOS build; Apple Silicon is little-endian).
 #pragma once
+#ifdef __APPLE__
 #include <machine/endian.h>
+#endif
 #ifndef __LITTLE_ENDIAN
 #define __LITTLE_ENDIAN 1234
 #endif

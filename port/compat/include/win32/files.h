@@ -229,11 +229,15 @@ inline DWORD GetModuleFileName(HMODULE, char* buf, DWORD size)
     if (const char* dir = std::getenv("RAN_GAME_DIR")) {
         path = std::string(dir) + "/Game.exe";
     } else {
+#ifdef __EMSCRIPTEN__
+        path = "/game/Game.exe";
+#else
         char tmp[4096];
         uint32_t len = sizeof(tmp);
         if (_NSGetExecutablePath(tmp, &len) != 0) return 0;
         char real[4096];
         path = ::realpath(tmp, real) ? real : tmp;
+#endif
     }
     for (char& c : path) if (c == '/') c = '\\';
     const size_t n = path.size();

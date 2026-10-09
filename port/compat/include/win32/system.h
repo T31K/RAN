@@ -6,8 +6,10 @@
 #include "win32/files.h"
 #include "win32/user_types.h"
 #include "win32/gdi_types.h"
+#ifdef __APPLE__
 #include <mach/mach.h>
 #include <sys/sysctl.h>
+#endif
 
 // ---- DLLs: the game probes for Windows DLLs (ddraw, d3d8, dinput, imm32, version, IMEs) and
 // falls back when they are missing. No Windows DLL exists here.
@@ -85,6 +87,10 @@ inline BOOL GetProcessMemoryInfo(HANDLE, PPROCESS_MEMORY_COUNTERS pmc, DWORD cb)
     if (!pmc || cb < sizeof(*pmc)) return FALSE;
     std::memset(pmc, 0, sizeof(*pmc));
     pmc->cb = sizeof(*pmc);
+#ifdef __EMSCRIPTEN__
+    pmc->WorkingSetSize = pmc->PeakWorkingSetSize = pmc->PagefileUsage = (SIZE_T)__builtin_wasm_memory_size(0) * 65536;
+    return TRUE;
+#else
     mach_task_basic_info info;
     mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
     if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &count) != KERN_SUCCESS) return FALSE;
@@ -92,6 +98,7 @@ inline BOOL GetProcessMemoryInfo(HANDLE, PPROCESS_MEMORY_COUNTERS pmc, DWORD cb)
     pmc->PeakWorkingSetSize = (SIZE_T)info.resident_size_max;
     pmc->PagefileUsage = (SIZE_T)info.virtual_size;
     return TRUE;
+#endif
 }
 // Other processes (the game's process-list diagnostics): not inspectable natively.
 #define PROCESS_QUERY_INFORMATION 0x0400
@@ -103,8 +110,12 @@ inline BOOL GlobalMemoryStatusEx(LPMEMORYSTATUSEX m)
 {
     if (!m) return FALSE;
     uint64_t total = 0;
+#ifdef __EMSCRIPTEN__
+    total = 4ull << 30;   // the wasm32 address space
+#else
     size_t len = sizeof(total);
     ::sysctlbyname("hw.memsize", &total, &len, nullptr, 0);
+#endif
     m->ullTotalPhys = total;
     m->ullAvailPhys = total / 2;   // rough; only used for diagnostics
     m->ullTotalVirtual = m->ullAvailVirtual = total;
@@ -311,7 +322,11 @@ typedef GUID UUID;
 inline long UuidCreate(UUID* u)
 {
     if (!u) return 1;
+#ifdef __EMSCRIPTEN__
+    getentropy(u, sizeof(*u));
+#else
     arc4random_buf(u, sizeof(*u));
+#endif
     u->Data3 = (WORD)((u->Data3 & 0x0FFF) | 0x4000);                   // version 4
     u->Data4[0] = (BYTE)((u->Data4[0] & 0x3F) | 0x80);                 // RFC 4122 variant
     return 0;   // RPC_S_OK

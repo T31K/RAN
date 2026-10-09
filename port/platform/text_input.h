@@ -10,6 +10,7 @@
 #include <imm.h>
 #include <SDL3/SDL_keycode.h>
 #include <string>
+#include <typeinfo>
 
 namespace ran_platform {
 
@@ -66,7 +67,7 @@ inline CWnd* TextTarget()
 {
     CWnd* w = CWnd::GetFocus() ? CWnd::GetFocus() : CWnd::MainWindow();
     static const bool trace = std::getenv("RAN_TRACE_INPUT") != nullptr;   // diagnostics
-    if (trace) std::fprintf(stderr, "[input] target %p (main %p)\n", (void*)w, (void*)CWnd::MainWindow());
+    if (trace) std::fprintf(stderr, "[input] target %p %s (main %p)\n", (void*)w, w ? typeid(*w).name() : "-", (void*)CWnd::MainWindow());
     return w;
 }
 

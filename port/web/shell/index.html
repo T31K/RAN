@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RanOdyssey</title>
+<style>
+  :root { --bg: #07080c; --fg: #e9e4d6; --muted: #8d8778; --accent: #c9a24a; --error: #e0675a; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden;
+               font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #canvas { display: block; position: fixed; inset: 0; outline: none; }
+  #overlay { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
+             justify-content: center; gap: 18px; padding: 16px; text-align: center;
+             background: radial-gradient(ellipse at 50% 40%, #1a1712 0%, var(--bg) 70%); }
+  #overlay[hidden] { display: none; }
+  h1 { margin: 0; font: 600 34px/1.1 Georgia, "Times New Roman", serif; letter-spacing: .06em; color: var(--accent); }
+  #status { max-width: 560px; color: var(--muted); min-height: 1.5em; }
+  #status.error { color: var(--error); }
+  #bar { width: min(420px, 90vw); height: 6px; border-radius: 3px; background: #22201b; overflow: hidden; }
+  #bar[hidden] { display: none; }
+  #fill { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+</style>
+</head>
+<body>
+<canvas id="canvas" tabindex="0"></canvas>
+<div id="overlay">
+  <h1>RanOdyssey</h1>
+  <div id="bar" hidden><div id="fill"></div></div>
+  <div id="status">Loading…</div>
+</div>
+<script src="loader.js"></script>
+</body>
+</html>
