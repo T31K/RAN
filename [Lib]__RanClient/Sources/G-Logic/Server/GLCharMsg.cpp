@@ -229,9 +229,44 @@ inline HRESULT GLChar::MsgGoto ( NET_MSG_GENERIC* nmg )
 		else				ReSetSTATE(EM_ACT_RUN);
 	}
 
+	// The server walks its own copy of the character towards the targets the client sends. That
+	// copy lags the client's: it waits at the last target until the next request arrives and never
+	// moves faster, so the gap only grows - at high speed past 60 units within a second, and the
+	// character was snapped back to where it had been (rubber-banding). Each request now carries
+	// the server's copy to the position the client reports, when that position is on the
+	// navigation mesh, reachable in a straight walkable line, and within what the character can
+	// cover since the previous request (plus network slack). The gap cannot build up; a position
+	// that walking could not reach (a speed or wall hack) is still snapped back as before.
+	const float fGotoElapsed = m_fGotoElapsed;
+	m_fGotoElapsed = 0.0f;
+
 	D3DXVECTOR3 vDist = m_vPos - pNetMsg->vCurPos;
 	float fDist = D3DXVec3Length(&vDist);
-	if ( fDist > 60.0f )
+
+	BOOL bResync = FALSE;
+	if ( fDist > 1.0f && m_Action != GLAT_TALK && m_Action != GLAT_GATHERING )
+	{
+		const float fWindow = ( fGotoElapsed < 2.0f ? fGotoElapsed : 2.0f ) + 0.5f;
+		const float fReach = GetMoveVelo() * fWindow + 30.0f;
+		NavigationMesh* pNavi = m_actorMove.GetParentMesh();
+		const DWORD dwFromCell = m_actorMove.CurrentCellID();
+		if ( fDist <= fReach && pNavi && dwFromCell != (DWORD)-1 )
+		{
+			D3DXVECTOR3 vOnMesh;
+			DWORD dwToCell = 0;
+			BOOL bOnMesh = FALSE;
+			pNavi->IsCollision ( pNetMsg->vCurPos + D3DXVECTOR3(0,20,0), pNetMsg->vCurPos + D3DXVECTOR3(0,-20,0), vOnMesh, dwToCell, bOnMesh );
+			if ( bOnMesh && pNavi->LineOfSightTest ( dwFromCell, m_vPos, dwToCell, vOnMesh ) )
+			{
+				m_actorMove.SetPosition ( vOnMesh, dwToCell );
+				if ( m_actorMove.PathIsActive() )	m_actorMove.Stop();
+				m_vPos = m_actorMove.Position();
+				bResync = TRUE;
+			}
+		}
+	}
+
+	if ( !bResync && fDist > 60.0f )
 	{
 		// 제스쳐 중이면 제스쳐 끝내고 ( 댄스중 순간이동 방지 )
 		if ( m_Action == GLAT_TALK || m_Action == GLAT_GATHERING )
