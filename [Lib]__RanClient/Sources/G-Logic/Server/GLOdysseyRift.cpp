@@ -90,7 +90,7 @@ bool GLOdysseyRift::LoadConfig ()
 		return false;
 	}
 
-	m_vecMobs.clear(); m_vecZones.clear(); m_vecShops.clear();
+	m_vecMobs.clear(); m_vecZones.clear(); m_vecShops.clear(); m_vecNpcs.clear();
 	m_bEnabled = false;
 
 	char szLine[512];
@@ -131,6 +131,34 @@ bool GLOdysseyRift::LoadConfig ()
 				sZone.bOpen = ( nPrice == 0 );
 				m_vecZones.push_back ( sZone );
 			}
+		}
+		else if ( strKey == "zonebox" )
+		{
+			// zonebox = id x1 z1 x2 z2 price seal_x seal_z ; repeat an id to add more rooms to it
+			float x1=0, z1=0, x2=0, z2=0; unsigned int nPrice = 0;
+			if ( sscanf ( pVal, "%d %f %f %f %f %u %f %f", &a, &x1, &z1, &x2, &z2, &nPrice, &sx, &sz ) >= 6 )
+			{
+				SBOX sBox; sBox.fX1 = x1 < x2 ? x1 : x2; sBox.fX2 = x1 < x2 ? x2 : x1;
+				sBox.fZ1 = z1 < z2 ? z1 : z2; sBox.fZ2 = z1 < z2 ? z2 : z1;
+				SZONE* pZone = NULL;
+				for ( size_t i=0; i<m_vecZones.size(); ++i ) if ( m_vecZones[i].nID == a ) pZone = &m_vecZones[i];
+				if ( !pZone )
+				{
+					SZONE sZone; sZone.nID = a; sZone.fRadius = 0;
+					sZone.fX = (sBox.fX1+sBox.fX2)*0.5f; sZone.fZ = (sBox.fZ1+sBox.fZ2)*0.5f;
+					sZone.dwPrice = nPrice; sZone.fSealX = sx; sZone.fSealZ = sz;
+					sZone.bOpen = ( nPrice == 0 );
+					m_vecZones.push_back ( sZone );
+					pZone = &m_vecZones.back();
+				}
+				pZone->vecBox.push_back ( sBox );
+			}
+		}
+		else if ( strKey == "npc" && sscanf ( pVal, "%d %d %f %f", &a, &b, &x, &z ) == 4 )
+		{
+			// npc = mid sid x z : a vendor / terminal standing in the arena (click = its normal shop)
+			SNPC sNpc; sNpc.sID = SNATIVEID ( (WORD)a, (WORD)b ); sNpc.fX = x; sNpc.fZ = z; sNpc.dwGlobID = UINT_MAX;
+			m_vecNpcs.push_back ( sNpc );
 		}
 		else if ( strKey == "shop" )
 		{
@@ -248,17 +276,25 @@ bool GLOdysseyRift::Recall ( GLChar* pChar, SNATIVEID sMap, const D3DXVECTOR3& v
 
 // --------------------------------------------------------------------------- zones
 
+bool GLOdysseyRift::ZoneHas ( const SZONE& z, const D3DXVECTOR3& vPos )
+{
+	if ( z.fRadius > 0 && Dist2D ( vPos, z.fX, z.fZ ) <= z.fRadius ) return true;
+	for ( size_t i=0; i<z.vecBox.size(); ++i )
+	{
+		const SBOX& b = z.vecBox[i];
+		if ( vPos.x >= b.fX1 && vPos.x <= b.fX2 && vPos.z >= b.fZ1 && vPos.z <= b.fZ2 ) return true;
+	}
+	return false;
+}
+
 int GLOdysseyRift::ZoneOf ( const D3DXVECTOR3& vPos ) const
 {
-	int nBest = -1; float fBest = FLT_MAX;
+	// The first zone (config order) that holds the point; concentric rings rely on this order.
 	for ( size_t i=0; i<m_vecZones.size(); ++i )
-	{
-		const SZONE& z = m_vecZones[i];
-		const float d = Dist2D ( vPos, z.fX, z.fZ );
-		if ( d <= z.fRadius && d < fBest ) { fBest = d; nBest = (int) i; }
-	}
-	if ( nBest >= 0 ) return nBest;
-	for ( size_t i=0; i<m_vecZones.size(); ++i )	// outside every circle: nearest centre
+		if ( ZoneHas ( m_vecZones[i], vPos ) ) return (int) i;
+
+	int nBest = -1; float fBest = FLT_MAX;
+	for ( size_t i=0; i<m_vecZones.size(); ++i )	// outside every zone: nearest centre
 	{
 		const float d = Dist2D ( vPos, m_vecZones[i].fX, m_vecZones[i].fZ ) - m_vecZones[i].fRadius;
 		if ( d < fBest ) { fBest = d; nBest = (int) i; }
@@ -272,7 +308,7 @@ bool GLOdysseyRift::InOpenZone ( const D3DXVECTOR3& vPos ) const
 	for ( size_t i=0; i<m_vecZones.size(); ++i )
 	{
 		const SZONE& z = m_vecZones[i];
-		if ( z.bOpen && Dist2D ( vPos, z.fX, z.fZ ) <= z.fRadius ) return true;
+		if ( z.bOpen && ZoneHas ( z, vPos ) ) return true;
 	}
 	return false;
 }
@@ -344,7 +380,7 @@ void GLOdysseyRift::Setup ( GLLandMan* pLand )
 	// Seals are only safe if the Nexus (the push-back fallback) stands in a free zone.
 	bool bNexusFree = false;
 	for ( size_t i=0; i<m_vecZones.size(); ++i )
-		if ( m_vecZones[i].dwPrice == 0 && Dist2D ( m_vNexus, m_vecZones[i].fX, m_vecZones[i].fZ ) <= m_vecZones[i].fRadius )
+		if ( m_vecZones[i].dwPrice == 0 && ZoneHas ( m_vecZones[i], m_vNexus ) )
 			bNexusFree = true;
 	if ( !m_vecZones.empty() && !bNexusFree )
 	{
@@ -395,6 +431,15 @@ void GLOdysseyRift::Setup ( GLLandMan* pLand )
 	for ( DWORD i=0; i<MAXCROW; ++i )
 		if ( pLand->GetCrow ( i ) ) vecDrop.push_back ( i );
 	for ( size_t i=0; i<vecDrop.size(); ++i ) pLand->DropOutCrow ( vecDrop[i] );
+
+	// Vendors and terminals inside the arena.
+	for ( size_t i=0; i<m_vecNpcs.size(); ++i )
+	{
+		SnapToNavi ( pLand, m_vecNpcs[i].fX, m_vecNpcs[i].fZ );
+		m_vecNpcs[i].dwGlobID = pLand->DropCrow ( m_vecNpcs[i].sID, m_vecNpcs[i].fX, m_vecNpcs[i].fZ );
+		CDebugSet::ToLogFile ( "[RIFT] npc %d %d at %.0f %.0f -> %u", m_vecNpcs[i].sID.wMainID, m_vecNpcs[i].sID.wSubID,
+			m_vecNpcs[i].fX, m_vecNpcs[i].fZ, m_vecNpcs[i].dwGlobID );
+	}
 
 	// The entry NPC in Mystic Peak Square.
 	if ( m_sEntryNpc != SNATIVEID(false) )
@@ -601,12 +646,11 @@ bool GLOdysseyRift::SpawnOne ( GLLandMan* pLand, int nTier )
 			if ( m_vecMobs[i].nTier == t ) vecPick.push_back ( &m_vecMobs[i] );
 	if ( vecPick.empty() ) return false;
 
+	// COD-style: the horde crawls in from the sealed rooms around the voyagers, never pops up
+	// inside the ground they hold. Without zones, any spawn point will do.
 	std::vector<const SSPAWN*> vecAt;
 	for ( size_t i=0; i<m_vecSpawns.size(); ++i )
-	{
-		const int nZone = m_vecSpawns[i].nZone;
-		if ( nZone < 0 || m_vecZones.empty() || m_vecZones[nZone].bOpen ) vecAt.push_back ( &m_vecSpawns[i] );
-	}
+		if ( m_vecZones.empty() || !InOpenZone ( m_vecSpawns[i].vPos ) ) vecAt.push_back ( &m_vecSpawns[i] );
 	if ( vecAt.empty() )
 		for ( size_t i=0; i<m_vecSpawns.size(); ++i ) vecAt.push_back ( &m_vecSpawns[i] );
 	if ( vecAt.empty() ) return false;
@@ -1028,6 +1072,8 @@ BOOL GLOdysseyRift::CmdGM ( GLChar* pChar, const char* szArgs )
 			SafeDropOut ( pLand, m_vecZones[i].dwSealGlobID, m_sSealNpc );
 			m_vecZones[i].dwSealGlobID = UINT_MAX;
 		}
+		for ( size_t i=0; i<m_vecNpcs.size(); ++i )
+			SafeDropOut ( pLand, m_vecNpcs[i].dwGlobID, m_vecNpcs[i].sID );
 		m_bSetup = false;
 		const bool bOK = LoadConfig ();
 		Tell ( pChar, "rift config reloaded: %s, %d zones, %d wares", bOK ? "on" : "OFF",

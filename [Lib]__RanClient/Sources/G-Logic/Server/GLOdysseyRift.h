@@ -22,10 +22,13 @@ class GLOdysseyRift
 public:
 	enum EMSTATE { STATE_IDLE, STATE_CHARGING, STATE_WAVE, STATE_OVER };
 
+	struct SBOX { float fX1, fZ1, fX2, fZ2; };	// axis-aligned room in world x/z
+
 	struct SZONE
 	{
 		int			nID;
-		float		fX, fZ, fRadius;	// zone = circle in world x/z
+		float		fX, fZ, fRadius;	// circle in world x/z (radius 0 = boxes only; x/z = first box centre)
+		std::vector<SBOX> vecBox;		// rooms that also belong to this zone
 		DWORD		dwPrice;			// 0 = open from the start
 		float		fSealX, fSealZ;		// where the seal marker stands
 		bool		bOpen;
@@ -72,6 +75,13 @@ public:
 		int			nTier;
 	};
 
+	struct SNPC
+	{
+		SNATIVEID	sID;
+		float		fX, fZ;
+		DWORD		dwGlobID;
+	};
+
 	struct SSPAWN
 	{
 		D3DXVECTOR3	vPos;
@@ -112,6 +122,7 @@ private:
 	void DropAllLive ( GLLandMan* pLand );
 
 	int ZoneOf ( const D3DXVECTOR3& vPos ) const;
+	static bool ZoneHas ( const SZONE& z, const D3DXVECTOR3& vPos );
 	bool InOpenZone ( const D3DXVECTOR3& vPos ) const;
 	SPLAYER* FindPlayer ( GLChar* pChar );
 	const char* Name ( DWORD dwGaeaID );
@@ -144,6 +155,7 @@ private:
 	std::vector<SZONE>		m_vecZones;
 	std::vector<SSHOP>		m_vecShops;
 	std::vector<SSPAWN>		m_vecSpawns;
+	std::vector<SNPC>		m_vecNpcs;
 
 	EMSTATE					m_emState;
 	int						m_nRound;
