@@ -10,7 +10,8 @@
 extern "C" {
 // green.js
 void ran_green_js_spawn(int id, uintptr_t stackTop);
-void ran_green_js_yield(int kind, double ms, int thread);   // async (JSPI): 0 = yield, 1 = sleep, 2 = frame
+void ran_green_js_yield(int kind, double ms, int thread);   // async (JSPI): 0 = yield, 1 = sleep, 2 = frame, 3 = block
+void ran_green_js_wake();
 double ran_green_js_now();
 // emscripten stack helpers
 void _emscripten_stack_restore(uintptr_t);
@@ -104,6 +105,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void ran_green_entry(int id)
     if (Trace()) std::fprintf(stderr, "[green] thread %d returns %u\n", id, code);
     Threads()[id].code = code;
     Threads()[id].finished = true;
+    ran_green_js_wake();   // threads waiting for this one
 }
 
 namespace ran_green {
@@ -141,6 +143,8 @@ void SetCurrent(int thread) { g_current = thread; }
 void Yield() { Suspend(0, 0); }
 void Sleep(unsigned ms) { Suspend(ms ? 1 : 0, ms); }
 void WaitFrame() { Suspend(2, 0); }
+void Block(double maxMs) { Suspend(3, maxMs); }
+void WakeAll() { ran_green_js_wake(); }
 double NowMs() { return ran_green_js_now(); }
 
 } // namespace ran_green

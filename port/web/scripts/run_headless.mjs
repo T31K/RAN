@@ -113,6 +113,17 @@ if (actions.length) {
         await page.keyboard.type(a.args.join(' '), { delay: 60 });
       } else if (a.op === 'key') {
         await page.keyboard.press(a.args[0]);
+      } else if (a.op === 'profile') {
+        // "profile <seconds> <out.cpuprofile>": a V8 CPU profile (wasm functions by name) -
+        // open in Chrome DevTools > Performance, or summarize with profile_summary.mjs.
+        const cdp = await context.newCDPSession(page);
+        await cdp.send('Profiler.enable');
+        await cdp.send('Profiler.setSamplingInterval', { interval: 200 });
+        await cdp.send('Profiler.start');
+        await new Promise((r) => setTimeout(r, Number(a.args[0]) * 1000));
+        const { profile: prof } = await cdp.send('Profiler.stop');
+        fs.writeFileSync(a.args[1], JSON.stringify(prof));
+        console.log('[harness] cpu profile ' + a.args[1]);
       } else if (a.op === 'shot') {
         await page.screenshot({ path: a.args[0] });
         console.log('[harness] screenshot ' + a.args[0]);

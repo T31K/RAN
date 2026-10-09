@@ -23,7 +23,9 @@ addToLibrary({
     return id;
   },
 
-  ran_ws_connect__deps: ['$RanWs'],
+  // Every socket event wakes the game threads blocked in a wait (green.js), so the network
+  // thread sees new data at once instead of at its next timeout.
+  ran_ws_connect__deps: ['$RanWs', '$RanGreen'],
   ran_ws_connect: (id, ipNet, port) => {
     const s = RanWs.socks.get(id);
     if (!s || s.state !== 0) return -1;
@@ -41,19 +43,21 @@ addToLibrary({
     s.ws = ws;
     s.state = 1;
     out(`[net] connecting ${host}:${port}`);
-    ws.onopen = () => { s.state = 2; out(`[net] connected ${host}:${port}`); };
+    ws.onopen = () => { s.state = 2; out(`[net] connected ${host}:${port}`); RanGreen.wake(); };
     ws.onmessage = (ev) => {
       const b = new Uint8Array(ev.data);
       if (!b.length) return;
       if (RanWs.tracing()) out(`[net] ${host}:${port} <-${b.length} bytes: ${Array.from(b.subarray(0, 16), (x) => x.toString(16).padStart(2, '0')).join(' ')}`);
       s.chunks.push(b);
       s.avail += b.length;
+      RanGreen.wake();
     };
-    ws.onerror = () => { if (s.state < 2) s.state = 4; };
+    ws.onerror = () => { if (s.state < 2) s.state = 4; RanGreen.wake(); };
     ws.onclose = (ev) => {
       out(`[net] closed ${host}:${port} (${ev.code})`);
       if (s.state === 1) s.state = 4;
       else if (s.state === 2) s.state = 3;
+      RanGreen.wake();
     };
     return 0;
   },

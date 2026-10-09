@@ -59,7 +59,18 @@ addToLibrary({
       RanGreen.armTimer();
     },
     enqueue(job) { RanGreen.ready.push(job); RanGreen.post(); },
+    // Threads in ran_green::Block: each resumes once, on wake() or its timeout, whichever first.
+    blocked: [],
+    wake() {
+      if (!RanGreen.blocked.length) return;
+      const b = RanGreen.blocked;
+      RanGreen.blocked = [];
+      for (const r of b) r();
+    },
   },
+
+  ran_green_js_wake__deps: ['$RanGreen'],
+  ran_green_js_wake: () => RanGreen.wake(),
 
   ran_green_js_spawn__deps: ['$RanGreen', '_emscripten_stack_restore'],
   ran_green_js_spawn: (id, stackTop) => {
@@ -91,7 +102,19 @@ addToLibrary({
       w.n++;
       if (w.n % 50 === 1) w.stack = new Error().stack.split('\n').slice(3, 14).join('\n');
     }
-    if (kind === 1 && ms > 1) {
+    if (kind === 3) {
+      let done = false;
+      const once = () => { if (!done) { done = true; RanGreen.enqueue(resolve); } };
+      RanGreen.blocked.push(once);
+      RanGreen.timers.push({ at: performance.now() + Math.max(1, ms), job: () => {
+        if (done) return;
+        done = true;
+        const i = RanGreen.blocked.indexOf(once);
+        if (i >= 0) RanGreen.blocked.splice(i, 1);
+        resolve();
+      } });
+      RanGreen.armTimer();
+    } else if (kind === 1 && ms >= 1) {
       RanGreen.timers.push({ at: performance.now() + ms, job: resolve });
       RanGreen.armTimer();
     } else if (kind === 2 && typeof requestAnimationFrame === 'function') {

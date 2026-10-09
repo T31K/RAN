@@ -638,18 +638,27 @@ private:
     bool m_boundDepth = false;
     bool m_hasAniso = false;
     unsigned m_frames = 0;
-    struct Stats { unsigned draws, skipShader, skipNoPos, offscreen, indexed, up; unsigned byFvf[0x400]; } m_stats = {};   // ?gltrace
+    struct Stats { unsigned draws, skipShader, skipNoPos, offscreen, indexed, up, uploads; unsigned byFvf[0x400]; } m_stats = {};   // ?gltrace, ?perf
     std::string m_frameLog;
     bool LogFrame() const;
     void FrameLog(const char* fmt, ...) __attribute__((format(printf, 2, 3)));
 
-    // streaming buffers for DrawPrimitiveUP / DrawIndexedPrimitiveUP
-    GLuint m_upVertices = 0, m_upIndices = 0;
-    UINT m_upVertexPos = 0, m_upIndexPos = 0;
-    static constexpr UINT kUpVertexSize = 8u << 20, kUpIndexSize = 2u << 20;
+    // Per-draw data (the constants, DrawPrimitiveUP vertices and indices) goes to buffers the GPU
+    // is done with. Rewriting a buffer an earlier draw still reads makes the browser's GL (ANGLE
+    // on Metal/D3D) copy the whole buffer or stall, on every draw - that was most of the frame
+    // time. So each upload takes its own buffer from the pool of the current frame; a frame's
+    // pool is reused three frames later, after the GPU finished it.
+    enum TransientKind { kTransientUniform, kTransientVertex, kTransientIndex, kTransientKinds };
+    static constexpr unsigned kTransientFrames = 3;
+    struct TransientPool { std::vector<std::pair<GLuint, UINT>> buffers; size_t next = 0; };
+    TransientPool m_transient[kTransientFrames][kTransientKinds];
+    GLuint Transient(TransientKind kind, const void* data, UINT size);
+    static constexpr UINT kUpVertexSize = 8u << 20, kUpIndexSize = 2u << 20;   // largest UP draw
 
     // fixed-function programs and their constants (uniform buffer)
-    GLuint m_ubo = 0;
+    GLuint m_ubo = 0;                 // bound at binding 0, holding m_uploadedConstants
+    FfpConstants m_uploadedConstants;
+    bool m_constantsValid = false;
     std::unordered_map<std::string, FfpProgram> m_programs;
     std::map<std::vector<uint32_t>, GLuint> m_samplerObjects;
     std::vector<uint32_t> m_vsKey, m_psKey;
@@ -663,7 +672,6 @@ private:
     bool PrepareDraw(GLuint vbo, uintptr_t base, UINT stride);
     void ApplyTextures(int stages);
     void SetupAttributes(const VertexLayout& layout, GLuint vbo, uintptr_t base, UINT stride);
-    uintptr_t StreamUp(GLuint buf, UINT& pos, UINT size, const void* data, UINT bufSize, UINT align, GLenum target);
     GLuint SamplerFor(int stage);
     const FfpProgram& ProgramFor(const std::vector<uint32_t>& vsKey, const std::vector<uint32_t>& psKey);
 

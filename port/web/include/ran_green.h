@@ -41,6 +41,13 @@ void Yield();
 void Sleep(unsigned ms);
 // Suspend until the next requestAnimationFrame.
 void WaitFrame();
+// Suspend until something may have changed for a waiter - WakeAll(), a WebSocket event - or
+// `maxMs` passed. Wait loops (events, critical sections, file loads) block here and re-check
+// their condition; spinning on Yield would hand the browser thousands of empty batches a second.
+void Block(double maxMs);
+// Resume every thread in Block (they re-check their conditions). Called whenever a waitable
+// state changes: event set, mutex/section released, thread ended, file loaded.
+void WakeAll();
 // Milliseconds since start (performance.now based).
 double NowMs();
 

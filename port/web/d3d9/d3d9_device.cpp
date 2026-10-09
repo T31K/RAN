@@ -189,16 +189,6 @@ void Device::InitGl()
     m_hasS3tc = HasS3tc();
     const EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();
     m_hasAniso = ctx && emscripten_webgl_enable_extension(ctx, "EXT_texture_filter_anisotropic");
-    glGenBuffers(1, &m_ubo);
-    glBindBuffer(GL_UNIFORM_BUFFER, m_ubo);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(FfpConstants), nullptr, GL_DYNAMIC_DRAW);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_ubo);
-    glGenBuffers(1, &m_upVertices);
-    BindArrayBuffer(m_upVertices);
-    glBufferData(GL_ARRAY_BUFFER, kUpVertexSize, nullptr, GL_STREAM_DRAW);
-    glGenBuffers(1, &m_upIndices);
-    BindElementBuffer(m_upIndices);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, kUpIndexSize, nullptr, GL_STREAM_DRAW);
     // D3D decides winding in screen space (y down). With the clip-space y negation, GL's window
     // coordinates equal D3D's screen coordinates numerically; GL reads them y-up, so D3D's
     // clockwise front faces are counter-clockwise here.
@@ -588,10 +578,17 @@ bool Device::PrepareDraw(GLuint vbo, uintptr_t base, UINT stride)
     }
     const FfpProgram& p = ProgramFor(m_vsKey, m_psKey);
     if (m_gl.program != p.program) { glUseProgram(p.program); m_gl.program = p.program; }
-    FfpConstants c;
+    // Consecutive draws often share every constant (UI, batches of one mesh): those keep the
+    // buffer already bound. (Zeroed: fields a state does not use must compare equal too.)
+    FfpConstants c = {};
     FillFfpConstants(m_state, c);
-    glBindBuffer(GL_UNIFORM_BUFFER, m_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(c), &c);
+    if (!m_constantsValid || std::memcmp(&c, &m_uploadedConstants, sizeof(c)) != 0) {
+        m_ubo = Transient(kTransientUniform, &c, sizeof(c));
+        glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_ubo);
+        m_uploadedConstants = c;
+        m_constantsValid = true;
+        ++m_stats.uploads;
+    }
     ApplyTextures((int)(m_psKey[0] & 15));
     SetupAttributes(layout, vbo, base, stride);
     return true;
@@ -654,18 +651,28 @@ HRESULT Device::DrawIndexedPrimitive(D3DPRIMITIVETYPE type, INT baseVertex, UINT
     return D3D_OK;
 }
 
-uintptr_t Device::StreamUp(GLuint buf, UINT& pos, UINT size, const void* data, UINT bufSize, UINT align, GLenum target)
+GLuint Device::Transient(TransientKind kind, const void* data, UINT size)
 {
-    pos = (pos + align - 1) / align * align;
-    if (pos + size > bufSize) {
-        glBufferData(target, bufSize, nullptr, GL_STREAM_DRAW);   // orphan: new storage
-        pos = 0;
+    TransientPool& pool = m_transient[m_frames % kTransientFrames][kind];
+    const GLenum target = kind == kTransientUniform ? GL_UNIFORM_BUFFER : kind == kTransientVertex ? GL_ARRAY_BUFFER : GL_ELEMENT_ARRAY_BUFFER;
+    if (pool.next == pool.buffers.size()) {
+        GLuint b = 0;
+        glGenBuffers(1, &b);
+        pool.buffers.push_back({ b, 0 });
     }
-    glBufferSubData(target, pos, size, data);
-    const uintptr_t at = pos;
-    pos += size;
-    (void)buf;
-    return at;
+    std::pair<GLuint, UINT>& b = pool.buffers[pool.next++];
+    if (kind == kTransientVertex) BindArrayBuffer(b.first);
+    else if (kind == kTransientIndex) BindElementBuffer(b.first);
+    else glBindBuffer(GL_UNIFORM_BUFFER, b.first);
+    if (b.second < size) {
+        // Grow in powers of two (from 4 KB), so a reused buffer mostly fits the next upload.
+        UINT cap = 4096;
+        while (cap < size) cap *= 2;
+        glBufferData(target, cap, nullptr, GL_DYNAMIC_DRAW);
+        b.second = cap;
+    }
+    glBufferSubData(target, 0, size, data);
+    return b.first;
 }
 
 HRESULT Device::DrawPrimitiveUP(D3DPRIMITIVETYPE type, UINT count, const void* data, UINT stride)
@@ -676,14 +683,12 @@ HRESULT Device::DrawPrimitiveUP(D3DPRIMITIVETYPE type, UINT count, const void* d
     const GLenum mode = GlPrimitive(type, count, n);
     const UINT size = (UINT)n * stride;
     if (size > kUpVertexSize) return D3D_OK;
-    BindArrayBuffer(m_upVertices);
-    const uintptr_t at = StreamUp(m_upVertices, m_upVertexPos, size, data, kUpVertexSize, std::max(4u, stride), GL_ARRAY_BUFFER);
+    const GLuint vbo = Transient(kTransientVertex, data, size);
     // D3D9: the UP call leaves stream 0 unset.
     Assign(m_state.streams[0].buffer, (VertexBuffer*)nullptr);
     m_state.streams[0].offset = m_state.streams[0].stride = 0;
-    if (!PrepareDraw(m_upVertices, 0, stride)) return D3D_OK;
-    // Start the draw at the copied vertices (offsets in the attribute pointers stay 0-based).
-    glDrawArrays(mode, (GLint)(at / stride), n);
+    if (!PrepareDraw(vbo, 0, stride)) return D3D_OK;
+    glDrawArrays(mode, 0, n);
     return D3D_OK;
 }
 
@@ -696,16 +701,14 @@ HRESULT Device::DrawIndexedPrimitiveUP(D3DPRIMITIVETYPE type, UINT minIndex, UIN
     const UINT isize = fmt == D3DFMT_INDEX32 ? 4 : 2;
     const UINT vbytes = (minIndex + numVertices) * stride, ibytes = (UINT)n * isize;
     if (vbytes > kUpVertexSize || ibytes > kUpIndexSize) return D3D_OK;
-    BindArrayBuffer(m_upVertices);
-    const uintptr_t vat = StreamUp(m_upVertices, m_upVertexPos, vbytes, data, kUpVertexSize, std::max(4u, stride), GL_ARRAY_BUFFER);
-    BindElementBuffer(m_upIndices);
-    const uintptr_t iat = StreamUp(m_upIndices, m_upIndexPos, ibytes, indices, kUpIndexSize, 4, GL_ELEMENT_ARRAY_BUFFER);
+    const GLuint vbo = Transient(kTransientVertex, data, vbytes);
+    const GLuint ibo = Transient(kTransientIndex, indices, ibytes);
     Assign(m_state.streams[0].buffer, (VertexBuffer*)nullptr);
     m_state.streams[0].offset = m_state.streams[0].stride = 0;
     Assign(m_state.indices, (IndexBuffer*)nullptr);
-    if (!PrepareDraw(m_upVertices, vat, stride)) return D3D_OK;
-    BindElementBuffer(m_upIndices);
-    glDrawElements(mode, n, isize == 4 ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, (const void*)iat);
+    if (!PrepareDraw(vbo, 0, stride)) return D3D_OK;
+    BindElementBuffer(ibo);
+    glDrawElements(mode, n, isize == 4 ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, nullptr);
     return D3D_OK;
 }
 
@@ -772,6 +775,9 @@ HRESULT Device::Present(const RECT*, const RECT*, HWND, const RGNDATA*)
         m_frameLog.clear();
     }
     ++m_frames;
+    // The next frame takes buffers from the pool its frame number picks, last used three frames ago.
+    for (TransientPool& p : m_transient[m_frames % kTransientFrames]) p.next = 0;
+    m_constantsValid = false;   // the bound constants' buffer belongs to an older frame's pool
     if (g_traceGl && m_frames % 120 == 0) {
         std::printf("[d3d9] frame %u: %u draws (%u skipped: shader %u, no position %u), %u offscreen, %u indexed, %u UP, fvf %#x\n",
                     m_frames, m_stats.draws, m_stats.skipShader + m_stats.skipNoPos, m_stats.skipShader, m_stats.skipNoPos,
@@ -781,9 +787,37 @@ HRESULT Device::Present(const RECT*, const RECT*, HWND, const RGNDATA*)
             if (m_stats.byFvf[f]) { char b[32]; std::snprintf(b, sizeof(b), " %x:%u", f, m_stats.byFvf[f]); hist += b; }
         std::printf("[d3d9]   draws by fvf (this frame):%s\n", hist.c_str());
     }
+    // ?perf: frame rate, and how much of each frame the game's own work took (Present to the
+    // next Present, minus the wait for the browser's frame), every 2 s.
+    static const bool perf = EM_ASM_INT({ return location.search.indexOf('perf') >= 0 ? 1 : 0; }) != 0;
+    static double perfStart = 0, workMs = 0, worstMs = 0, lastResume = 0, waitMs = 0;
+    static unsigned perfFrames = 0, perfDraws = 0, perfUploads = 0;
+    const double now = ran_green::NowMs();
+    if (perf) {
+        if (lastResume) { const double w = now - lastResume; workMs += w; worstMs = std::max(worstMs, w); }
+        ++perfFrames;
+        perfDraws += m_stats.draws;
+        perfUploads += m_stats.uploads;
+        if (!perfStart) {
+            perfStart = now;
+            EM_ASM({
+                const gl = document.getElementById('canvas').getContext('webgl2');
+                const ext = gl && gl.getExtension('WEBGL_debug_renderer_info');
+                out('[perf] renderer: ' + (ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : 'unknown'));
+            });
+        }
+        if (now - perfStart >= 2000) {
+            std::printf("[perf] %.1f fps, game work %.1f ms/frame (worst %.1f), browser frame wait %.1f ms, %u draws/frame (%u constant uploads)\n",
+                        perfFrames * 1000.0 / (now - perfStart), workMs / perfFrames, worstMs, waitMs / perfFrames, perfDraws / perfFrames,
+                        perfUploads / perfFrames);
+            perfStart = now; workMs = worstMs = waitMs = 0; perfFrames = perfDraws = perfUploads = 0;
+        }
+    }
     m_stats = {};
     // The browser shows the canvas once this task ends: wait for the next frame.
     ran_green::WaitFrame();
+    lastResume = ran_green::NowMs();
+    waitMs += lastResume - now;
     return D3D_OK;
 }
 

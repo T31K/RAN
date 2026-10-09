@@ -65,7 +65,7 @@ private:
     // Brings the contents in from OPFS. Other green threads asking meanwhile wait for the load.
     bool Ensure()
     {
-        while (loading) ran_green::Yield();
+        while (loading) ran_green::Block(50);
         if (loaded) return true;
         loading = true;
         data.resize((size_t)size);
@@ -75,6 +75,7 @@ private:
             rc = ran_gamefs_load(path.c_str(), data.data(), (int)size);
         }
         loading = false;
+        ran_green::WakeAll();   // threads waiting for this file
         if (rc != 0) {
             std::fprintf(stderr, "[gamefs] cannot read %s\n", path.c_str());
             data.clear();

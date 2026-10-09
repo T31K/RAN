@@ -118,10 +118,16 @@ namespace ran_compat {
         ~KThread() override { if (thread.joinable()) thread.detach(); }
     };
 
+#ifdef __EMSCRIPTEN__
+    inline void Signal() { ran_green::WakeAll(); }
+#else
     inline void Signal() { KernelCond().notify_all(); }
+#endif
 
 #ifdef __EMSCRIPTEN__
-    // No other thread can signal while this one runs, so a wait checks, yields, checks again.
+    // No other thread can signal while this one runs, so a wait checks, blocks until something
+    // signals (or a WebSocket event arrives), checks again. The 50 ms cap re-polls the sockets
+    // (WaitPollHook) even if a wake was missed.
     inline DWORD Wait(DWORD count, const HANDLE* handles, bool waitAll, DWORD ms)
     {
         const double deadline = ran_green::NowMs() + (double)ms;
@@ -141,8 +147,9 @@ namespace ran_compat {
                 }
             }
             if (ms == 0) return WAIT_TIMEOUT;
-            if (ms != INFINITE && ran_green::NowMs() >= deadline) return WAIT_TIMEOUT;
-            ran_green::Yield();
+            const double left = ms == INFINITE ? 50.0 : deadline - ran_green::NowMs();
+            if (left <= 0) return WAIT_TIMEOUT;
+            ran_green::Block(left < 50.0 ? left : 50.0);
         }
     }
 #else
@@ -217,8 +224,11 @@ inline BOOL TryEnterCriticalSection(LPCRITICAL_SECTION cs)
     ++cs->count;
     return TRUE;
 }
-inline void EnterCriticalSection(LPCRITICAL_SECTION cs) { while (!TryEnterCriticalSection(cs)) ran_green::Yield(); }
-inline void LeaveCriticalSection(LPCRITICAL_SECTION cs) { if (cs->count > 0) --cs->count; }
+inline void EnterCriticalSection(LPCRITICAL_SECTION cs) { while (!TryEnterCriticalSection(cs)) ran_green::Block(50); }
+inline void LeaveCriticalSection(LPCRITICAL_SECTION cs)
+{
+    if (cs->count > 0 && --cs->count == 0) ran_green::WakeAll();   // threads waiting to enter
+}
 #else
 typedef struct RAN_CRITICAL_SECTION { std::recursive_mutex* m; } CRITICAL_SECTION, *LPCRITICAL_SECTION;
 #endif
