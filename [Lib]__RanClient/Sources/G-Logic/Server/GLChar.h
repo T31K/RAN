@@ -78,6 +78,7 @@ protected:
 	float				m_fQUEST_TIMER;			//	퀘스트 정보 갱신.
 	float				m_fattTIMER;			//	공격 프래임.
 	float				m_fMoveDelay;			//	이동 딜래이.
+	float				m_fGotoElapsed;			//	seconds since the last move request (MsgGoto position resync)
 	float				m_fITEM_TIMER;			//	아이템 제한시간 점검.
 	float				m_fSAVEDB_TIMER;		//	DB 저장 시간.
 	float				m_fBRIGHT_TIMER;		//	속성수치 갱신 시간.
