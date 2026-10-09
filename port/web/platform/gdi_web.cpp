@@ -4,6 +4,7 @@
 // nothing is shipped. Text is rendered white on black into a coverage mask and blended into the
 // DIB here, exactly as the CoreText version does.
 #include "ran_compat.h"
+#include <emscripten.h>
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -12,6 +13,7 @@
 
 extern "C" {
 // gdi.js
+int ran_gdi_mac_font();
 void ran_gdi_font_metrics(const char* css, float* out);   // out: ascent, descent, xWidth, maxWidth (px)
 float ran_gdi_measure(const char* css, const char16_t* text, int len);
 void ran_gdi_draw(const char* css, const char16_t* text, int len, int w, int h, float x, float baseline, unsigned char* mask);
@@ -78,15 +80,25 @@ bool IsKoreanFace(const std::u16string& f)
 
 std::string FontCss(const std::u16string& face, double em, bool bold, bool italic)
 {
+    // On a Mac, text looks like the Mac app's: the game asks for Tahoma, which the Mac app's
+    // CoreText lookup does not resolve, so it shows Apple SD Gothic Neo. The canvas draws that
+    // font heavier than CoreText (antialiased, no smoothing) does: Light (+ the coverage lift in
+    // gdi.js) matches its Regular, and the canvas Regular its Bold (measured ink: 0.99x, 1.05x).
+    // Elsewhere (no Apple SD Gothic Neo) the requested face, as the original Windows client.
+    static const bool mac = ran_gdi_mac_font() != 0;
     std::string family;
-    if (!IsKoreanFace(face)) {
+    const char* weight = bold ? "bold " : "";
+    if (mac) {
+        family = "\"Apple SD Gothic Neo\", \"AppleSDGothicNeo\", ";
+        weight = bold ? "" : "300 ";
+    } else if (!IsKoreanFace(face)) {
         family = "\"";
         for (char16_t c : face) if (c < 0x80 && c != '"') family += (char)c;
         family += "\", ";
     }
     family += kKoreanStack;
     char head[64];
-    std::snprintf(head, sizeof(head), "%s%s%.2fpx ", italic ? "italic " : "", bold ? "bold " : "", em);
+    std::snprintf(head, sizeof(head), "%s%s%.2fpx ", italic ? "italic " : "", weight, em);
     return head + family;
 }
 
@@ -104,6 +116,8 @@ Font* MakeFont(LONG height, LONG weight, bool italic, const std::u16string& face
     }
     Font* f = new Font();
     f->css = FontCss(face, em, bold, italic);
+    static const bool trace = EM_ASM_INT({ return location.search.indexOf('fonttrace') >= 0 ? 1 : 0; }) != 0;
+    if (trace) std::printf("[gdi] font height %ld -> %s\n", (long)height, f->css.c_str());
     float m[4] = {};
     ran_gdi_font_metrics(f->css.c_str(), m);
     f->em = (LONG)std::lround(em);
@@ -265,6 +279,31 @@ BOOL DeleteObject(HGDIOBJ obj)
     Object* o = static_cast<Object*>(obj);
     if (!o || (o->kind != Kind::Bitmap && o->kind != Kind::Font)) return FALSE;
     if (o->kind == Kind::Font && o == DefaultFont()) return TRUE;
+    // ?gdidump: text bitmaps (the game's glyph atlases, 256+ wide) are logged as PNG data URLs
+    // when the game frees them - what the font textures are cut from.
+    if (o->kind == Kind::Bitmap) {
+        Bitmap* b = static_cast<Bitmap*>(o);
+        if (b->width >= 256 && b->bpp == 32 && EM_ASM_INT({ return location.search.indexOf('gdidump') >= 0 ? 1 : 0; }))
+            EM_ASM({
+                const w = $1;
+                const h = $2;
+                const c = new OffscreenCanvas(w, h);
+                const ctx = c.getContext('2d');
+                const img = ctx.createImageData(w, h);
+                for (let y = 0; y < h; y++)
+                    for (let x = 0; x < w; x++) {
+                        const s = $0 + ($4 ? y : h - 1 - y) * $3 + x * 4;
+                        const d = (y * w + x) * 4;
+                        img.data[d] = HEAPU8[s + 2]; img.data[d + 1] = HEAPU8[s + 1]; img.data[d + 2] = HEAPU8[s]; img.data[d + 3] = 255;
+                    }
+                ctx.putImageData(img, 0, 0);
+                c.convertToBlob().then((blob) => {
+                    const r = new FileReader();
+                    r.onload = () => out('[gdidump] ' + w + 'x' + h + ' ' + r.result);
+                    r.readAsDataURL(blob);
+                });
+            }, b->bits.data(), b->width, b->height, b->stride, b->topDown ? 1 : 0);
+    }
     delete o;
     return TRUE;
 }

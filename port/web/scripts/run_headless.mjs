@@ -65,12 +65,15 @@ const url = `http://127.0.0.1:${port}/${page0}${page0.includes('?') ? '&' : '?'}
 
 const launchArgs = ['--enable-features=WebAssemblyJSPI', '--use-angle=metal', '--enable-unsafe-swiftshader',
                     '--ignore-gpu-blocklist', '--enable-gpu'];
+// --viewport 1512x900 --dpr 2: a page size and device pixel ratio like a Retina MacBook's.
+const [vw, vh] = (opt('--viewport') || '1024x768').split('x').map(Number);
+const ctxOpts = { viewport: { width: vw, height: vh }, deviceScaleFactor: Number(opt('--dpr') || 1) };
 let browser, context;
 if (profile) {
-  context = await chromium.launchPersistentContext(profile, { headless: true, args: launchArgs, viewport: { width: 1024, height: 768 } });
+  context = await chromium.launchPersistentContext(profile, { headless: true, args: launchArgs, ...ctxOpts });
 } else {
   browser = await chromium.launch({ headless: true, args: launchArgs });
-  context = await browser.newContext({ viewport: { width: 1024, height: 768 } });
+  context = await browser.newContext(ctxOpts);
 }
 const page = await context.newPage();
 let finished = false;

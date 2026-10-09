@@ -24,12 +24,29 @@ addToLibrary({
     },
   },
 
+  // Does this system have Apple SD Gothic Neo (a Mac)? Then text is drawn to look like the Mac
+  // app's (gdi_web.cpp FontCss).
+  ran_gdi_mac_font__deps: ['$RanGdi'],
+  ran_gdi_mac_font: () => {
+    if (RanGdi.macFont === undefined) {
+      const ctx = RanGdi.get();
+      ctx.font = '20px monospace';
+      const plain = ctx.measureText('가나다 abcWi').width;
+      ctx.font = '20px "Apple SD Gothic Neo", monospace';
+      RanGdi.macFont = ctx.measureText('가나다 abcWi').width !== plain;
+    }
+    return RanGdi.macFont ? 1 : 0;
+  },
+
   ran_gdi_font_metrics__deps: ['$RanGdi', '$UTF8ToString'],
   ran_gdi_font_metrics: (cssPtr, out) => {
     const ctx = RanGdi.get();
     ctx.font = UTF8ToString(cssPtr);
     const m = ctx.measureText('가Hgjy');   // a Hangul syllable and Latin ascenders/descenders
     const x = ctx.measureText('x').width;
+    // The font box, as the Mac app's CoreText reports it (Apple SD Gothic Neo 12px: 10.8 + 3.6,
+    // which both round up to 11 + 4): the game cuts glyphs out of its font texture and centres
+    // labels by these numbers.
     const ascent = m.fontBoundingBoxAscent ?? m.actualBoundingBoxAscent;
     const descent = m.fontBoundingBoxDescent ?? m.actualBoundingBoxDescent;
     const wide = ctx.measureText('가W').width;
@@ -57,6 +74,18 @@ addToLibrary({
     ctx.fillStyle = '#fff';
     ctx.fillText(RanGdi.str(textPtr, len), x, baseline);
     const px = ctx.getImageData(0, 0, w, h).data;
-    for (let i = 0, n = w * h; i < n; i++) HEAPU8[mask + i] = px[i * 4];
+    // Regular text on a Mac is drawn in the Light weight (see FontCss) with its coverage lifted
+    // (gamma 0.7): together they put down the same ink as the Mac app's CoreText Regular (0.99x;
+    // the canvas' own Regular is 1.5x, visibly bolder).
+    if (/(^|\s)300\s/.test(ctx.font)) {
+      if (!RanGdi.lightLut) {
+        RanGdi.lightLut = new Uint8Array(256);
+        for (let v = 0; v < 256; v++) RanGdi.lightLut[v] = Math.round(255 * Math.pow(v / 255, 0.7));
+      }
+      const lut = RanGdi.lightLut;
+      for (let i = 0, n = w * h; i < n; i++) HEAPU8[mask + i] = lut[px[i * 4]];
+    } else {
+      for (let i = 0, n = w * h; i < n; i++) HEAPU8[mask + i] = px[i * 4];
+    }
   },
 });
