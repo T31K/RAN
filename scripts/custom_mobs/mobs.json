@@ -60,7 +60,7 @@
     "id": [66, 5], "name": "Colossal Titan",
     "desc": "It screams, and the sky over the Rift cracks.",
     "crow": "mob", "template": [44, 11],
-    "height": 20, "chf_scale": 4.5, "body_radius": 24, "attack_range": 40,
+    "height": 20, "chf_scale": 2.0, "body_radius": 12, "attack_range": 25,
     "clips": {"idle": "mixamo.com", "attack": "mixamo.com"},
     "strikes": [0.5]
   }
