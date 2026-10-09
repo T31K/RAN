@@ -2,12 +2,16 @@
 // the Origin Private File System (downloading it on the first visit or after an update), then
 // starts the wasm client (ran.js) on the canvas.
 'use strict';
+Error.stackTraceLimit = 60;   // game crash stacks are deep
 
 const cfg = Object.assign({
   manifest: 'game.json',                       // data manifest: {version, bytes, parts:[...]}
   relay: 'wss://api.kaleidoscopical.com/ran/ws', // WebSocket -> TCP relay to the game servers
 }, window.RAN_CONFIG || {});
 const params = new URLSearchParams(location.search);
+// Served locally (serve_local.mjs) or from the backend itself: the relay is on the same host.
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.pathname.startsWith('/ran/play'))
+  cfg.relay = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ran/ws';
 if (params.get('relay')) cfg.relay = params.get('relay');
 if (params.get('manifest')) cfg.manifest = params.get('manifest');
 

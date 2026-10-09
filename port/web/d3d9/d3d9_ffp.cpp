@@ -226,7 +226,7 @@ void BuildFfpKeys(const State& s, const VertexLayout& layout, std::vector<uint32
 
     // ---- vertex stage
     const bool lighting = Rs(s, D3DRS_LIGHTING) != 0 && !layout.rhw;
-    DWORD fogMode = 0;   // vertex-computed fog: 0 from specular alpha, 1 linear, 2 exp, 3 exp2
+    DWORD fogMode = 0;   // D3DFOGMODE: 0 none (fog factor from specular alpha), 1 EXP, 2 EXP2, 3 LINEAR
     bool tableFog = false;
     if (fogOn) {
         if (Rs(s, D3DRS_FOGTABLEMODE) != D3DFOG_NONE) { fogMode = Rs(s, D3DRS_FOGTABLEMODE); tableFog = true; }
@@ -399,9 +399,9 @@ std::string GenerateVertexShader(const std::vector<uint32_t>& k)
         if (fogOn) {
             s += rangeFog ? "  float fd = length(Pc);\n" : "  float fd = abs(Pc.z);\n";
             switch (fogMode) {
-            case 1: s += "  v_fog = clamp((u_fogParams.y - fd) * u_fogParams.w, 0.0, 1.0);\n"; break;
-            case 2: s += "  v_fog = clamp(exp(-u_fogParams.z * fd), 0.0, 1.0);\n"; break;
-            case 3: s += "  v_fog = clamp(exp(-(u_fogParams.z * fd) * (u_fogParams.z * fd)), 0.0, 1.0);\n"; break;
+            case D3DFOG_LINEAR: s += "  v_fog = clamp((u_fogParams.y - fd) * u_fogParams.w, 0.0, 1.0);\n"; break;
+            case D3DFOG_EXP: s += "  v_fog = clamp(exp(-u_fogParams.z * fd), 0.0, 1.0);\n"; break;
+            case D3DFOG_EXP2: s += "  v_fog = clamp(exp(-(u_fogParams.z * fd) * (u_fogParams.z * fd)), 0.0, 1.0);\n"; break;
             default: s += "  v_fog = v_specular.a;\n"; break;
             }
         } else {

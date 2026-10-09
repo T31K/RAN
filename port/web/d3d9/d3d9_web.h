@@ -169,6 +169,13 @@ public:
     // Levels (index face*levels+level) whose CPU copy is newer than the GL texture.
     std::vector<bool> m_dirty;
     std::vector<RECT> m_dirtyRect;
+    // Locked levels and their rectangles. A lock can span suspensions (the game reads a file
+    // into locked memory, and other green threads draw meanwhile), so a locked level is never
+    // uploaded or released; its changes count once it is unlocked.
+    std::vector<int> m_locks;
+    std::vector<RECT> m_lockRect;
+    void Lock(UINT index, const RECT& r, bool readOnly);
+    void Unlock(UINT index);
     std::vector<Surface*> m_surfaces;
     bool m_anyDirty = false;
     Device* m_device = nullptr;
@@ -253,9 +260,10 @@ public:
     UINT m_dirtyLo = 0, m_dirtyHi = 0;   // byte range not yet uploaded
     bool m_discarded = false;
     bool m_uploadedOnce = false;
+    int m_locks = 0;   // see BaseTexture::m_locks
     void Flush();
     void Lock(UINT offset, UINT size, void** out, DWORD flags);
-    void Unlock() {}
+    void Unlock() { if (m_locks > 0) --m_locks; }
     void CreateGl();
     void DestroyGl();
 };
@@ -269,7 +277,7 @@ public:
     ULONG STDMETHODCALLTYPE Release() override { const ULONG r = --m_ref; if (!r) delete this; return r; }
     D3D9WEB_RESOURCE_IMPL(D3DRTYPE_VERTEXBUFFER)
     HRESULT STDMETHODCALLTYPE Lock(UINT off, UINT size, void** out, DWORD flags) override { Buffer::Lock(off, size, out, flags); return D3D_OK; }
-    HRESULT STDMETHODCALLTYPE Unlock() override { return D3D_OK; }
+    HRESULT STDMETHODCALLTYPE Unlock() override { Buffer::Unlock(); return D3D_OK; }
     HRESULT STDMETHODCALLTYPE GetDesc(D3DVERTEXBUFFER_DESC* d) override;
     Device* m_device;
     DWORD m_fvf;
@@ -289,7 +297,7 @@ public:
     ULONG STDMETHODCALLTYPE Release() override { const ULONG r = --m_ref; if (!r) delete this; return r; }
     D3D9WEB_RESOURCE_IMPL(D3DRTYPE_INDEXBUFFER)
     HRESULT STDMETHODCALLTYPE Lock(UINT off, UINT size, void** out, DWORD flags) override { Buffer::Lock(off, size, out, flags); return D3D_OK; }
-    HRESULT STDMETHODCALLTYPE Unlock() override { return D3D_OK; }
+    HRESULT STDMETHODCALLTYPE Unlock() override { Buffer::Unlock(); return D3D_OK; }
     HRESULT STDMETHODCALLTYPE GetDesc(D3DINDEXBUFFER_DESC* d) override;
     Device* m_device;
     D3DFORMAT m_format;
@@ -630,6 +638,10 @@ private:
     bool m_boundDepth = false;
     bool m_hasAniso = false;
     unsigned m_frames = 0;
+    struct Stats { unsigned draws, skipShader, skipNoPos, offscreen, indexed, up; unsigned byFvf[0x400]; } m_stats = {};   // ?gltrace
+    std::string m_frameLog;
+    bool LogFrame() const;
+    void FrameLog(const char* fmt, ...) __attribute__((format(printf, 2, 3)));
 
     // streaming buffers for DrawPrimitiveUP / DrawIndexedPrimitiveUP
     GLuint m_upVertices = 0, m_upIndices = 0;

@@ -386,8 +386,25 @@ int main(int argc, char** argv)
     app->m_lpCmdLine = const_cast<char*>(cmdLine.c_str());
 
     int rc = 1;
+#ifdef __EMSCRIPTEN__
+    // Out of memory: say where (the wasm32 heap tops out at 4 GB, browsers often below).
+    std::set_new_handler([] {
+        emscripten_log(EM_LOG_CONSOLE | EM_LOG_ERROR | EM_LOG_C_STACK, "[platform] out of memory (wasm memory %u MB)",
+                       (unsigned)(__builtin_wasm_memory_size(0) / 16));
+        std::set_new_handler(nullptr);
+        throw std::bad_alloc();
+    });
+    try {
+#endif
     if (app->InitInstance()) rc = app->Run();
     else std::fprintf(stderr, "[platform] InitInstance failed (is RAN_GAME_DIR set to the client folder?)\n");
+#ifdef __EMSCRIPTEN__
+    } catch (const std::exception& e) {
+        std::fprintf(stderr, "[platform] uncaught exception: %s (wasm memory %u MB)\n", e.what(),
+                     (unsigned)(__builtin_wasm_memory_size(0) / 16));
+        throw;
+    }
+#endif
     if (g_window) SDL_DestroyWindow(g_window);
     SDL_Quit();
     // The game has saved and shut down in ExitInstance (inside Run). Static destructors across

@@ -20,6 +20,11 @@
 #include <cstddef>
 #include <cstdint>
 
+extern "C" {
+uintptr_t emscripten_stack_get_current(void);   // emscripten/stack.h
+void _emscripten_stack_restore(uintptr_t sp);   // emscripten's stackRestore
+}
+
 namespace ran_green {
 
 typedef unsigned (*ThreadFn)(void*);
@@ -38,5 +43,27 @@ void Sleep(unsigned ms);
 void WaitFrame();
 // Milliseconds since start (performance.now based).
 double NowMs();
+
+// Every other async (suspending) JS import must be called inside an AsyncScope: other threads
+// run while the caller is suspended, and they move the C stack pointer (one wasm global) and
+// the current-thread id. The scope saves both and restores them when the call returns.
+//     { ran_green::AsyncScope s; rc = some_async_js_import(...); }
+// (Inline on purpose: the restore must run in the caller's frame, before anything else uses the
+// stack pointer.)
+void SetCurrent(int thread);
+class AsyncScope {
+public:
+    AsyncScope() : m_thread(Current()), m_sp(emscripten_stack_get_current()) {}
+    ~AsyncScope()
+    {
+        _emscripten_stack_restore(m_sp);
+        SetCurrent(m_thread);
+    }
+    AsyncScope(const AsyncScope&) = delete;
+    AsyncScope& operator=(const AsyncScope&) = delete;
+private:
+    int m_thread;
+    uintptr_t m_sp;
+};
 
 } // namespace ran_green

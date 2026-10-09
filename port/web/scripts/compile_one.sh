@@ -28,6 +28,7 @@ while IFS= read -r d; do INCS+=("-I$d"); done < "$CACHE"
 # ODBC headers (types only, for server-side DbAction code living in RanClient). Searched last.
 INCS+=("-idirafter" "$ROOT/port/web/third_party/odbc-include")
 OPT=(-O2 -g0)
+[ -n "${RAN_WEB_ASAN:-}" ] && OPT+=(-fsanitize=address -fsanitize-recover=address)
 [ -n "${RAN_WEB_DEBUG:-}" ] && OPT=(-O1 -g)
 MODE=(-fsyntax-only)
 [ -n "${RAN_OBJ_OUT:-}" ] && MODE=(-c -o "$RAN_OBJ_OUT" "${OPT[@]}" -DNDEBUG -D_LIB)

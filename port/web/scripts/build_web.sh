@@ -12,7 +12,9 @@ ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 cd "$ROOT"
 source "$HOME/emsdk/emsdk_env.sh" >/dev/null 2>&1
 DEBUG=0; [ "${1:-}" = "--debug" ] && DEBUG=1
-B="$ROOT/port/build/web"; mkdir -p "$B/obj" "$B/lib" "$B/out" "$B/deps"
+# RAN_WEB_ASAN=1: AddressSanitizer build (memory errors reported with stacks) in its own folder.
+B="$ROOT/port/build/web"; [ -n "${RAN_WEB_ASAN:-}" ] && B="$ROOT/port/build/web-asan"
+mkdir -p "$B/obj" "$B/lib" "$B/out" "$B/deps"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 export ROOT B
 [ $DEBUG = 1 ] && export RAN_WEB_DEBUG=1
@@ -61,11 +63,14 @@ done
 
 # ---- port + web sources
 OPT=(-O2 -g0); [ $DEBUG = 1 ] && OPT=(-O1 -g)
+[ -n "${RAN_WEB_ASAN:-}" ] && OPT+=(-fsanitize=address -fsanitize-recover=address)
 EXC=(-fwasm-exceptions)
 port_compile() {   # file  extra-flags...
   local f="$1"; shift
   local o="$B/port_$(echo "${f#port/}" | tr '/' '_' | sed 's/\.cpp$//').o"
-  if [ ! "$o" -nt "$f" ] || [ -n "$(find port/web/include port/compat/include -newer "$o" -name '*.h' 2>/dev/null | head -1)" ]; then
+  # Rebuilt when the source or any port header is newer (a stale object with an old class
+  # layout - e.g. d3d9_web.h's Device - corrupts the heap at run time).
+  if [ ! "$o" -nt "$f" ] || [ -n "$(find port/web/include port/compat/include port/web/d3d9 port/web/platform port/platform port/d3dx -newer "$o" -name '*.h' 2>/dev/null | head -1)" ]; then
     RAN_OBJ_OUT="$o" RAN_WARN="$*" port/web/scripts/compile_one.sh "$f" 10 || { echo "FAIL $f"; return 1; }
   fi
   echo "$o"
@@ -100,6 +105,7 @@ LINK=(-sJSPI -sJSPI_EXPORTS=ran_green_entry -sWASMFS -sFORCE_FILESYSTEM
       -Wl,--error-limit=0 "${EXC[@]}")
 # Function names stay in the wasm (name section): crash stacks in the console are readable.
 [ $DEBUG = 1 ] && LINK+=(-sASSERTIONS=1 -g) || LINK+=(-O2 --profiling-funcs)
+[ -n "${RAN_WEB_ASAN:-}" ] && LINK+=(-fsanitize=address -sINITIAL_MEMORY=1GB)
 em++ -o "$B/out/ran.js" "${PORT_OBJS[@]}" "${LIBS[@]}" "$B/deps/liblzo2.a" "${JSLIBS[@]}" "${LINK[@]}" 2> "$TMP/link.err"
 if [ $? -ne 0 ]; then
   grep -a "undefined symbol" "$TMP/link.err" | sed -E 's/.*undefined symbol: //; s/ \(referenced by.*//' | sort -u > "$B/link-gaps.txt"

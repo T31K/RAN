@@ -170,12 +170,33 @@ void BaseTexture::MarkDirty(UINT index, const RECT& r)
     m_anyDirty = true;
 }
 
+void BaseTexture::Lock(UINT index, const RECT& r, bool readOnly)
+{
+    if (index >= m_locks.size()) return;
+    ++m_locks[index];
+    if (readOnly) return;
+    RECT& lr = m_lockRect[index];
+    if (m_locks[index] == 1) lr = r;
+    else { lr.left = std::min(lr.left, r.left); lr.top = std::min(lr.top, r.top); lr.right = std::max(lr.right, r.right); lr.bottom = std::max(lr.bottom, r.bottom); }
+}
+
+void BaseTexture::Unlock(UINT index)
+{
+    if (index >= m_locks.size() || m_locks[index] == 0) return;
+    if (--m_locks[index] == 0 && m_lockRect[index].right > m_lockRect[index].left) {
+        MarkDirty(index, m_lockRect[index]);
+        m_lockRect[index] = RECT{};
+    }
+}
+
 void BaseTexture::CreateStorage()
 {
     const UINT faces = Faces();
     m_data.resize(faces * m_levels);
     m_dirty.assign(faces * m_levels, false);
     m_dirtyRect.assign(faces * m_levels, RECT{});
+    m_locks.assign(faces * m_levels, 0);
+    m_lockRect.assign(faces * m_levels, RECT{});
     if (m_pool == D3DPOOL_SYSTEMMEM || m_pool == D3DPOOL_SCRATCH) return;
     const FormatInfo* fi = GetFormatInfo(m_format);
     GLenum internal = fi ? fi->internalFormat : GL_RGBA8;
@@ -220,6 +241,7 @@ void BaseTexture::Flush()
     const FormatInfo* fi = GetFormatInfo(m_format);
     for (UINT i = 0; i < m_dirty.size(); ++i) {
         if (!m_dirty[i]) continue;
+        if (m_locks[i]) { m_anyDirty = true; continue; }   // still being written: upload after unlock
         m_dirty[i] = false;
         const UINT face = i / m_levels, level = i % m_levels;
         const GLenum target = m_target == GL_TEXTURE_CUBE_MAP ? GL_TEXTURE_CUBE_MAP_POSITIVE_X + face : GL_TEXTURE_2D;
@@ -330,13 +352,14 @@ HRESULT Texture::LockRect(UINT level, D3DLOCKED_RECT* lr, const RECT* r, DWORD f
     if (fi && fi->compressed) lr->pBits = base + (size_t)(rect.top / 4) * pitch + (size_t)(rect.left / 4) * fi->blockBytes;
     else lr->pBits = base + (size_t)rect.top * pitch + (size_t)rect.left * (fi ? fi->bytesPerPixel : 4);
     lr->Pitch = (INT)pitch;
-    if (!(flags & D3DLOCK_READONLY)) MarkDirty(level, rect);
+    Lock(level, rect, (flags & D3DLOCK_READONLY) != 0);
     return D3D_OK;
 }
 
 HRESULT Texture::UnlockRect(UINT level)
 {
     if (level >= m_levels) return D3DERR_INVALIDCALL;
+    Unlock(level);
     return D3D_OK;
 }
 
@@ -411,11 +434,16 @@ HRESULT CubeTexture::LockRect(D3DCUBEMAP_FACES face, UINT level, D3DLOCKED_RECT*
     if (fi && fi->compressed) lr->pBits = base + (size_t)(rect.top / 4) * pitch + (size_t)(rect.left / 4) * fi->blockBytes;
     else lr->pBits = base + (size_t)rect.top * pitch + (size_t)rect.left * (fi ? fi->bytesPerPixel : 4);
     lr->Pitch = (INT)pitch;
-    if (!(flags & D3DLOCK_READONLY)) MarkDirty(idx, rect);
+    Lock(idx, rect, (flags & D3DLOCK_READONLY) != 0);
     return D3D_OK;
 }
 
-HRESULT CubeTexture::UnlockRect(D3DCUBEMAP_FACES, UINT) { return D3D_OK; }
+HRESULT CubeTexture::UnlockRect(D3DCUBEMAP_FACES face, UINT level)
+{
+    if (level >= m_levels || (UINT)face >= 6) return D3DERR_INVALIDCALL;
+    Unlock((UINT)face * m_levels + level);
+    return D3D_OK;
+}
 
 // ---- buffers ---------------------------------------------------------------------------------
 
@@ -441,6 +469,7 @@ void Buffer::Lock(UINT offset, UINT size, void** out, DWORD flags)
     if (offset > m_size) offset = m_size;
     if (size == 0 || offset + size > m_size) size = m_size - offset;
     if (out) *out = m_data.data() + offset;
+    ++m_locks;
     if (flags & D3DLOCK_READONLY) return;
     if (flags & D3DLOCK_DISCARD) m_discarded = true;
     if (m_dirtyHi > m_dirtyLo) {
@@ -454,7 +483,7 @@ void Buffer::Lock(UINT offset, UINT size, void** out, DWORD flags)
 
 void Buffer::Flush()
 {
-    if (!m_gl || m_dirtyHi <= m_dirtyLo) return;
+    if (!m_gl || m_dirtyHi <= m_dirtyLo || m_locks > 0) return;   // locked: upload after unlock
     if (m_target == GL_ELEMENT_ARRAY_BUFFER) m_dev->BindElementBuffer(m_gl);
     else m_dev->BindArrayBuffer(m_gl);
     const GLenum hint = (m_usage & D3DUSAGE_DYNAMIC) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;

@@ -13,7 +13,9 @@
 #include "file.h"
 #include "wasmfs.h"
 #include "ran_green.h"
+#include <emscripten.h>
 #include <algorithm>
+#include <list>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -37,8 +39,12 @@ using namespace wasmfs;
 
 backend_t g_backend = nullptr;
 size_t g_cachedBytes = 0;
-const size_t kKeepSmall = 256 * 1024;        // files up to this size stay cached after close
-const size_t kCacheBudget = 96u << 20;       // ... up to this many bytes in total
+// Closed files keep their bytes, least recently used dropped first beyond this budget: the game
+// reopens its archives (.rcc zip files) for every entry it reads.
+const size_t kCacheBudget = 256u << 20;
+
+class GameFile;
+std::list<GameFile*>& Lru() { static std::list<GameFile*> l; return l; }   // front = most recent
 
 class GameFile : public DataFile {
 public:
@@ -63,7 +69,11 @@ private:
         if (loaded) return true;
         loading = true;
         data.resize((size_t)size);
-        const int rc = size ? ran_gamefs_load(path.c_str(), data.data(), (int)size) : 0;
+        int rc = 0;
+        if (size) {
+            ran_green::AsyncScope scope;   // other threads run while this one waits for the file
+            rc = ran_gamefs_load(path.c_str(), data.data(), (int)size);
+        }
         loading = false;
         if (rc != 0) {
             std::fprintf(stderr, "[gamefs] cannot read %s\n", path.c_str());
@@ -80,15 +90,28 @@ private:
     {
         if (!dirty || !loaded) return;
         dirty = false;   // cleared first: a write during the store marks it dirty again
-        const int rc = ran_gamefs_store(path.c_str(), data.data(), (int)data.size());
+        int rc;
+        {
+            ran_green::AsyncScope scope;
+            rc = ran_gamefs_store(path.c_str(), data.data(), (int)data.size());
+        }
         if (rc == 2) pinned = true;   // not stored (development mode): the memory copy is the file
         else if (rc != 0) std::fprintf(stderr, "[gamefs] cannot store %s\n", path.c_str());
     }
 
-    void Release()
+    bool inLru = false;
+    std::list<GameFile*>::iterator lruPos;
+
+    void LeaveLru()
     {
-        if (!loaded || dirty || opens > 0 || loading || pinned) return;
-        if (data.size() <= kKeepSmall && g_cachedBytes <= kCacheBudget) return;
+        if (!inLru) return;
+        Lru().erase(lruPos);
+        inLru = false;
+    }
+
+    void Drop()
+    {
+        LeaveLru();
         g_cachedBytes -= data.size();
         size = (off_t)data.size();
         data.clear();
@@ -96,7 +119,19 @@ private:
         loaded = false;
     }
 
-    int open(oflags_t) override { ++opens; return 0; }
+    // A closed, clean file becomes the most recently used cache entry; the oldest entries are
+    // dropped while the cache is over budget.
+    void Release()
+    {
+        if (!loaded || dirty || opens > 0 || loading || pinned) return;
+        LeaveLru();
+        Lru().push_front(this);
+        lruPos = Lru().begin();
+        inLru = true;
+        while (g_cachedBytes > kCacheBudget && !Lru().empty()) Lru().back()->Drop();
+    }
+
+    int open(oflags_t) override { ++opens; LeaveLru(); return 0; }
     int close() override
     {
         if (opens > 0) --opens;
@@ -115,6 +150,15 @@ private:
     ssize_t write(const uint8_t* buf, size_t len, off_t offset) override
     {
         if (!Ensure()) return -EIO;
+        if (std::getenv("RAN_FS_TRACE") && data.size() < (1u << 20) && (uint64_t)offset + len >= (1u << 20))
+            emscripten_log(EM_LOG_CONSOLE | EM_LOG_C_STACK, "[gamefs] %s passes 1 MB", path.c_str());
+        if ((uint64_t)offset + len > (64u << 20) && (uint64_t)offset + len > data.size()) {
+            static int reported = 0;
+            if (reported++ < 3)
+                emscripten_log(EM_LOG_CONSOLE | EM_LOG_ERROR | EM_LOG_C_STACK, "[gamefs] refusing to grow %s to %llu bytes (write of %zu at %lld)",
+                               path.c_str(), (unsigned long long)offset + len, len, (long long)offset);
+            return -EFBIG;
+        }
         if ((size_t)offset + len > data.size()) {
             g_cachedBytes += (size_t)offset + len - data.size();
             data.resize((size_t)offset + len);

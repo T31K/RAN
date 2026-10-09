@@ -63,7 +63,8 @@ addToLibrary({
 
   ran_green_js_spawn__deps: ['$RanGreen', '_emscripten_stack_restore'],
   ran_green_js_spawn: (id, stackTop) => {
-    if (typeof location !== 'undefined' && location.search.indexOf('greentrace') >= 0) out(`[green] spawn thread ${id}`);
+    if (typeof location !== 'undefined' && location.search.indexOf('greentrace') >= 0)
+      out(`[green] spawn thread ${id}\n` + new Error().stack.split('\n').slice(2, 7).join('\n'));
     RanGreen.enqueue(() => {
       // The new JSPI stack starts on the thread's own C stack region.
       __emscripten_stack_restore(stackTop);
@@ -75,7 +76,21 @@ addToLibrary({
 
   ran_green_js_yield__deps: ['$RanGreen'],
   ran_green_js_yield__async: true,
-  ran_green_js_yield: (kind, ms) => new Promise((resolve) => {
+  ran_green_js_yield: (kind, ms, thread) => new Promise((resolve) => {
+    // ?greentrace: where each thread last waited, dumped every 10 s (hang diagnosis).
+    if (RanGreen.tracing === undefined) {
+      RanGreen.tracing = typeof location !== 'undefined' && location.search.indexOf('greentrace') >= 0;
+      RanGreen.where = {};
+      if (RanGreen.tracing) setInterval(() => {
+        for (const [t, w] of Object.entries(RanGreen.where)) out(`[green] thread ${t} waits (${w.n} waits/10s):\n${w.stack}`);
+        for (const w of Object.values(RanGreen.where)) w.n = 0;
+      }, 10000);
+    }
+    if (RanGreen.tracing) {
+      const w = RanGreen.where[thread] || (RanGreen.where[thread] = { n: 0 });
+      w.n++;
+      if (w.n % 50 === 1) w.stack = new Error().stack.split('\n').slice(3, 14).join('\n');
+    }
     if (kind === 1 && ms > 1) {
       RanGreen.timers.push({ at: performance.now() + ms, job: resolve });
       RanGreen.armTimer();

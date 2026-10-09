@@ -51,6 +51,9 @@ addToLibrary({
   ran_gamefs_load__async: true,
   ran_gamefs_load: async (pathPtr, dst, size) => {
     const path = UTF8ToString(pathPtr);
+    const trace = typeof location !== 'undefined' && location.search.indexOf('fstrace') >= 0;
+    const t0 = performance.now();
+    if (trace) out(`[gamefs] load ${path} (${size} bytes)...`);
     try {
       let buf;
       if (Module['ranDevData']) {
@@ -64,6 +67,7 @@ addToLibrary({
       }
       if (buf.length < size) { err(`[gamefs] ${path}: ${buf.length} bytes, expected ${size}`); return 1; }
       HEAPU8.set(buf.subarray(0, size), dst);   // HEAPU8 is re-read here: memory may have grown
+      if (trace) out(`[gamefs] loaded ${path} in ${(performance.now() - t0).toFixed(0)} ms`);
       return 0;
     } catch (e) {
       err(`[gamefs] load ${path}: ${e}`);

@@ -6,6 +6,7 @@
 #include <emscripten/html5.h>
 #include <algorithm>
 #include <cmath>
+#include <cstdarg>
 #include <cstdio>
 
 namespace d3d9web {
@@ -97,6 +98,21 @@ bool g_traceGl = false;
 
 } // namespace
 
+// ?gltrace: one frame in every 600 is logged call by call (render targets, clears, draws).
+bool Device::LogFrame() const { return g_traceGl && m_frames % 600 == 300; }
+
+void Device::FrameLog(const char* fmt, ...)
+{
+    char line[512];
+    va_list ap;
+    va_start(ap, fmt);
+    std::vsnprintf(line, sizeof(line), fmt, ap);
+    va_end(ap);
+    m_frameLog += "  ";
+    m_frameLog += line;
+    m_frameLog += '\n';
+}
+
 // ---- construction ----------------------------------------------------------------------------
 
 Device::Device(Direct3D* d3d, HWND window, DWORD behavior, D3DPRESENT_PARAMETERS* pp, int glContext)
@@ -183,7 +199,10 @@ void Device::InitGl()
     glGenBuffers(1, &m_upIndices);
     BindElementBuffer(m_upIndices);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, kUpIndexSize, nullptr, GL_STREAM_DRAW);
-    glFrontFace(GL_CCW);   // D3D's clockwise front faces, seen through the y flip
+    // D3D decides winding in screen space (y down). With the clip-space y negation, GL's window
+    // coordinates equal D3D's screen coordinates numerically; GL reads them y-up, so D3D's
+    // clockwise front faces are counter-clockwise here.
+    glFrontFace(GL_CCW);
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_DITHER);
     CreateBackBuffer();
@@ -545,14 +564,28 @@ void Device::SetupAttributes(const VertexLayout& l, GLuint vbo, uintptr_t base, 
 
 bool Device::PrepareDraw(GLuint vbo, uintptr_t base, UINT stride)
 {
-    if (m_vs || m_ps) return false;   // shaders are never reported; nothing to run them with
+    ++m_stats.draws;
+    ++m_stats.byFvf[m_state.decl ? 0x3FF : (m_state.fvf & 0x3FE)];
+    if (m_vs || m_ps) { ++m_stats.skipShader; return false; }   // shaders are never reported; nothing to run them with
     BindFramebuffer();
     ApplyRasterState();
     ApplyViewport();
     const VertexLayout layout = m_state.decl ? LayoutFromDecl(m_state.decl) : LayoutFromFvf(m_state.fvf);
-    if (!layout.attr[kAttrPos].present) return false;
+    if (!layout.attr[kAttrPos].present) { ++m_stats.skipNoPos; return false; }
+    if (m_rt != m_backBuffer) ++m_stats.offscreen;
     if (!stride) stride = layout.stride;
     BuildFfpKeys(m_state, layout, m_vsKey, m_psKey);
+    if (LogFrame()) {
+        const DWORD* rs = m_state.rs;
+        FrameLog("Draw fvf %lx%s rhw %d tex0 %d op %lu/%lu light %lu fog %lu(%lx) z %lu/%lu blend %lu %lu>%lu cull %lu atest %lu vp %lux%lu+%lu+%lu",
+                 (unsigned long)m_state.fvf, m_state.decl ? " decl" : "", layout.rhw ? 1 : 0, m_state.textures[0] ? 1 : 0,
+                 (unsigned long)m_state.tss[0][D3DTSS_COLOROP], (unsigned long)m_state.tss[1][D3DTSS_COLOROP],
+                 (unsigned long)rs[D3DRS_LIGHTING], (unsigned long)rs[D3DRS_FOGENABLE], (unsigned long)rs[D3DRS_FOGCOLOR],
+                 (unsigned long)rs[D3DRS_ZENABLE], (unsigned long)rs[D3DRS_ZWRITEENABLE], (unsigned long)rs[D3DRS_ALPHABLENDENABLE],
+                 (unsigned long)rs[D3DRS_SRCBLEND], (unsigned long)rs[D3DRS_DESTBLEND], (unsigned long)rs[D3DRS_CULLMODE],
+                 (unsigned long)rs[D3DRS_ALPHATESTENABLE], (unsigned long)m_state.viewport.Width, (unsigned long)m_state.viewport.Height,
+                 (unsigned long)m_state.viewport.X, (unsigned long)m_state.viewport.Y);
+    }
     const FfpProgram& p = ProgramFor(m_vsKey, m_psKey);
     if (m_gl.program != p.program) { glUseProgram(p.program); m_gl.program = p.program; }
     FfpConstants c;
@@ -580,7 +613,14 @@ HRESULT Device::DrawIndexedPrimitive(D3DPRIMITIVETYPE type, INT baseVertex, UINT
 {
     VertexBuffer* vb = m_state.streams[0].buffer;
     IndexBuffer* ib = m_state.indices;
-    if (!vb || !ib || !count) return D3D_OK;
+    ++m_stats.indexed;
+    if (!vb || !ib || !count) {
+        static int reported = 0;
+        if (g_traceGl && reported++ < 10)
+            std::printf("[d3d9] indexed draw dropped: vb %p ib %p count %u recording %p fvf %lx\n", (void*)vb, (void*)ib, count,
+                        (void*)m_recording, (unsigned long)m_state.fvf);
+        return D3D_OK;
+    }
     vb->Flush();
     ib->Flush();
     const UINT stride = m_state.streams[0].stride;
@@ -591,6 +631,25 @@ HRESULT Device::DrawIndexedPrimitive(D3DPRIMITIVETYPE type, INT baseVertex, UINT
     GLsizei n;
     const GLenum mode = GlPrimitive(type, count, n);
     const bool i32 = ib->m_format == D3DFMT_INDEX32;
+    if (LogFrame() && m_state.fvf == 0x112) {
+        // Where the first vertex lands (CPU), and the buffers' state.
+        const UINT idx = i32 ? ((const uint32_t*)ib->m_data.data())[startIndex] : ((const uint16_t*)ib->m_data.data())[startIndex];
+        const float* p = (const float*)(vb->m_data.data() + base + (size_t)idx * stride);
+        FfpConstants c;
+        FillFfpConstants(m_state, c);
+        float clip[4];
+        for (int j = 0; j < 4; ++j) clip[j] = p[0] * c.wvp[j] + p[1] * c.wvp[4 + j] + p[2] * c.wvp[8 + j] + c.wvp[12 + j];
+        FrameLog("  idx %u/%u v %.1f %.1f %.1f -> clip %.1f %.1f %.1f %.1f; vb %u bytes locks %d dirty %u-%u gl %u, ib locks %d, base %ld stride %u count %u",
+                 idx, (unsigned)(ib->m_size / (i32 ? 4 : 2)), p[0], p[1], p[2], clip[0], clip[1], clip[2], clip[3], vb->m_size, vb->m_locks,
+                 vb->m_dirtyLo, vb->m_dirtyHi, vb->m_gl, ib->m_locks, (long)base, stride, count);
+        const DWORD* rs = m_state.rs;
+        FrameLog("    fog %lu table %lu vertex %lu start %.1f end %.1f range %lu | blend %lu %lu>%lu op %lu | atest %lu func %lu ref %lu | colorwrite %lx | pskey %08x vskey %08x tf %08lx mat a %.2f",
+                 (unsigned long)rs[D3DRS_FOGENABLE], (unsigned long)rs[D3DRS_FOGTABLEMODE], (unsigned long)rs[D3DRS_FOGVERTEXMODE],
+                 c.fogParams[0], c.fogParams[1], (unsigned long)rs[D3DRS_RANGEFOGENABLE], (unsigned long)rs[D3DRS_ALPHABLENDENABLE],
+                 (unsigned long)rs[D3DRS_SRCBLEND], (unsigned long)rs[D3DRS_DESTBLEND], (unsigned long)rs[D3DRS_BLENDOP],
+                 (unsigned long)rs[D3DRS_ALPHATESTENABLE], (unsigned long)rs[D3DRS_ALPHAFUNC], (unsigned long)rs[D3DRS_ALPHAREF],
+                 (unsigned long)rs[D3DRS_COLORWRITEENABLE], m_psKey[0], m_vsKey[0], (unsigned long)rs[D3DRS_TEXTUREFACTOR], m_state.material.Diffuse.a);
+    }
     glDrawElements(mode, n, i32 ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, (const void*)(uintptr_t)(startIndex * (i32 ? 4 : 2)));
     return D3D_OK;
 }
@@ -611,6 +670,7 @@ uintptr_t Device::StreamUp(GLuint buf, UINT& pos, UINT size, const void* data, U
 
 HRESULT Device::DrawPrimitiveUP(D3DPRIMITIVETYPE type, UINT count, const void* data, UINT stride)
 {
+    ++m_stats.up;
     if (!data || !count || !stride) return D3D_OK;
     GLsizei n;
     const GLenum mode = GlPrimitive(type, count, n);
@@ -653,6 +713,7 @@ HRESULT Device::DrawIndexedPrimitiveUP(D3DPRIMITIVETYPE type, UINT minIndex, UIN
 
 HRESULT Device::Clear(DWORD count, const D3DRECT* rects, DWORD flags, D3DCOLOR color, float z, DWORD stencil)
 {
+    if (LogFrame()) FrameLog("Clear flags %lx color %08lx z %.2f rects %lu", (unsigned long)flags, (unsigned long)color, z, (unsigned long)count);
     BindFramebuffer();
     GLbitfield mask = 0;
     if (flags & D3DCLEAR_TARGET) {
@@ -706,7 +767,21 @@ HRESULT Device::Present(const RECT*, const RECT*, HWND, const RGNDATA*)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     m_gl.fbo = ~0u;
     m_fboDirty = true;
+    if (!m_frameLog.empty()) {
+        std::printf("[d3d9] frame %u log:\n%s", m_frames, m_frameLog.c_str());
+        m_frameLog.clear();
+    }
     ++m_frames;
+    if (g_traceGl && m_frames % 120 == 0) {
+        std::printf("[d3d9] frame %u: %u draws (%u skipped: shader %u, no position %u), %u offscreen, %u indexed, %u UP, fvf %#x\n",
+                    m_frames, m_stats.draws, m_stats.skipShader + m_stats.skipNoPos, m_stats.skipShader, m_stats.skipNoPos,
+                    m_stats.offscreen, m_stats.indexed, m_stats.up, (unsigned)m_state.fvf);
+        std::string hist;
+        for (unsigned f = 0; f < 0x400; ++f)
+            if (m_stats.byFvf[f]) { char b[32]; std::snprintf(b, sizeof(b), " %x:%u", f, m_stats.byFvf[f]); hist += b; }
+        std::printf("[d3d9]   draws by fvf (this frame):%s\n", hist.c_str());
+    }
+    m_stats = {};
     // The browser shows the canvas once this task ends: wait for the next frame.
     ran_green::WaitFrame();
     return D3D_OK;
@@ -717,6 +792,7 @@ HRESULT Device::StretchRect(IDirect3DSurface9* srcI, const RECT* srcRect, IDirec
     Surface* src = AsSurface(srcI);
     Surface* dst = AsSurface(dstI);
     if (!src || !dst) return D3DERR_INVALIDCALL;
+    if (LogFrame()) FrameLog("StretchRect %ux%u -> %ux%u", src->m_width, src->m_height, dst->m_width, dst->m_height);
     const RECT sr = srcRect ? *srcRect : RECT{ 0, 0, (LONG)src->m_width, (LONG)src->m_height };
     const RECT dr = dstRect ? *dstRect : RECT{ 0, 0, (LONG)dst->m_width, (LONG)dst->m_height };
     if (!src->IsRenderTarget()) {
@@ -919,6 +995,7 @@ HRESULT Device::SetRenderTarget(DWORD index, IDirect3DSurface9* rtI)
     Surface* rt = AsSurface(rtI);
     if (!rt) return D3DERR_INVALIDCALL;
     if (!rt->IsRenderTarget()) return D3DERR_INVALIDCALL;
+    if (LogFrame()) FrameLog("RT %s %ux%u fmt %u", rt == m_backBuffer ? "backbuffer" : "texture", rt->m_width, rt->m_height, (unsigned)rt->m_format);
     Assign(m_rt, rt);
     m_fboDirty = true;
     // D3D9: a new render target resets the viewport to cover it.
