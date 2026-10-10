@@ -62,6 +62,8 @@ addToLibrary({
         if (!res.ok) throw new Error('HTTP ' + res.status);
         buf = new Uint8Array(await res.arrayBuffer());
       } else {
+        // Not downloaded yet (the page streams the game in): fetch it first (loader.js).
+        if (Module['ranEnsure']) await Module['ranEnsure'](path);
         const f = await (await RanFs.file(path, false)).getFile();
         buf = new Uint8Array(await f.arrayBuffer());
       }
@@ -85,6 +87,7 @@ addToLibrary({
       const w = await (await RanFs.file(path, true)).createWritable();
       await w.write(bytes);
       await w.close();
+      if (Module['ranLocal']) Module['ranLocal'](path);   // keep the game's copy (loader.js)
       const idx = Module['ranGameIndex'];
       if (idx && idx.get(path) !== len) { idx.set(path, len); RanFs.saveIndex(); }
       return 0;

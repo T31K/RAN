@@ -43,7 +43,14 @@ addToLibrary({
     s.ws = ws;
     s.state = 1;
     out(`[net] connecting ${host}:${port}`);
-    ws.onopen = () => { s.state = 2; out(`[net] connected ${host}:${port}`); RanGreen.wake(); };
+    ws.onopen = () => {
+      s.state = 2;
+      out(`[net] connected ${host}:${port}`);
+      RanGreen.wake();
+      // The login server's connection opens when the Server Select window shows: the page's
+      // loading screen hands over to the game (loader.js).
+      if (port === 5001 && typeof window !== 'undefined') window.dispatchEvent(new Event('ran-login-ready'));
+    };
     ws.onmessage = (ev) => {
       const b = new Uint8Array(ev.data);
       if (!b.length) return;

@@ -59,7 +59,8 @@ const server = http.createServer((req, res) => {
 // servers - so a local run logs in like the deployed page.
 const relayModule = process.env.RAN_RELAY_MODULE || (process.env.HOME + '/Projects/main/main-server/routes/ran-web.js');
 if (fs.existsSync(relayModule)) require(relayModule).attachRanRelay(server);
-await new Promise((r) => server.listen(0, '127.0.0.1', r));
+// --port N: a fixed origin, so browser storage (OPFS) carries over between --profile runs.
+await new Promise((r) => server.listen(Number(opt('--port') || 0), '127.0.0.1', r));
 const port = server.address().port;
 const url = `http://127.0.0.1:${port}/${page0}${page0.includes('?') ? '&' : '?'}relay=ws://127.0.0.1:${port}/ran/ws`;
 
@@ -95,8 +96,9 @@ const actions = (opt('--actions') || '').split(';').map((s) => s.trim()).filter(
   const [op, ...rest] = s.slice(colon + 1).trim().split(' ');
   return { at: Number(s.slice(0, colon)), op, args: rest };
 });
+// --from-start: action times count from page load (loading-screen tests), not the first frame.
 if (actions.length) {
-  await new Promise((resolve) => {
+  if (!args.includes('--from-start')) await new Promise((resolve) => {
     const check = (m) => { if (m.text().includes('[d3d9] WebGL2 device')) { page.off('console', check); resolve(); } };
     page.on('console', check);
   });
@@ -127,6 +129,33 @@ if (actions.length) {
         const { profile: prof } = await cdp.send('Profiler.stop');
         fs.writeFileSync(a.args[1], JSON.stringify(prof));
         console.log('[harness] cpu profile ' + a.args[1]);
+      } else if (a.op === 'export') {
+        // "export <opfs folder> <local folder>": copies files the game wrote into browser
+        // storage (e.g. game/cache, its font caches) out to disk.
+        const files = await page.evaluate(async (dirPath) => {
+          let d = await navigator.storage.getDirectory();
+          for (const part of dirPath.split('/')) d = await d.getDirectoryHandle(part);
+          const out = [];
+          const walk = async (dir, rel) => {
+            for await (const [name, h] of dir.entries()) {
+              if (h.kind === 'directory') await walk(h, rel + name + '/');
+              else {
+                const buf = new Uint8Array(await (await h.getFile()).arrayBuffer());
+                let s = '';
+                for (let i = 0; i < buf.length; i += 32768) s += String.fromCharCode.apply(null, buf.subarray(i, i + 32768));
+                out.push([rel + name, btoa(s)]);
+              }
+            }
+          };
+          await walk(d, '');
+          return out;
+        }, a.args[0]);
+        for (const [rel, b64] of files) {
+          const p = path.join(a.args[1], rel);
+          fs.mkdirSync(path.dirname(p), { recursive: true });
+          fs.writeFileSync(p, Buffer.from(b64, 'base64'));
+        }
+        console.log(`[harness] exported ${files.length} files from ${a.args[0]} to ${a.args[1]}`);
       } else if (a.op === 'shot') {
         await page.screenshot({ path: a.args[0] });
         console.log('[harness] screenshot ' + a.args[0]);

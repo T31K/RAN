@@ -1,0 +1,11 @@
+# Cloudflare Pages headers for the browser client (port/web/scripts/deploy_pages.sh).
+# Game files are named by their content hash: cached for good. The manifest, page and client are
+# checked on every visit (an update is a new manifest / client).
+/data/d/*
+  Cache-Control: public, max-age=31536000, immutable
+/data/p/*
+  Cache-Control: public, max-age=31536000, immutable
+/data/manifest.json
+  Cache-Control: no-cache
+/*
+  Cache-Control: no-cache

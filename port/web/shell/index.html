@@ -4,32 +4,79 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RanOdyssey</title>
+<link rel="preload" href="login-bg.jpg" as="image">
 <style>
-  :root { --bg: #07080c; --fg: #f1e9e4; --muted: #d8c6bf; --accent: #e0322c; --error: #ff8a7a; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden;
-               font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  /* The loading screen is the game's own Server Select screen (login-bg.jpg is a capture of it at
+     1440x900), with the window showing the loading steps: when the game is ready its real Server
+     Select appears in the same place. Everything below is laid out in that 1440x900 stage, scaled
+     to cover the page like the game's view. */
+  :root { --text: #e9e9e9; --muted: #b9bcc2; --ok: #9fd07a; --error: #ff8a7a; }
+  html, body { margin: 0; height: 100%; background: #000; color: var(--text); overflow: hidden;
+               font: 12px/1.35 "Apple SD Gothic Neo", "AppleSDGothicNeo", Tahoma, "Malgun Gothic", sans-serif; }
   #canvas { display: block; position: fixed; inset: 0; outline: none; }
-  #overlay { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
-             justify-content: flex-end; gap: 14px; padding: 16px 16px 7vh; text-align: center;
-             background: linear-gradient(to top, rgba(7,8,12,.92) 0%, rgba(7,8,12,0) 38%),
-                         url(splash.jpg) center 30% / cover no-repeat, var(--bg); }
+  #overlay { position: fixed; inset: 0; overflow: hidden; background: #000; transition: opacity .35s; }
   #overlay[hidden] { display: none; }
-  /* The art carries the logo; the heading stays for screen readers and the tab. */
-  h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); margin: 0; }
-  #status { max-width: 560px; color: var(--muted); min-height: 1.5em; text-shadow: 0 1px 3px #000; }
-  #status.error { color: var(--error); }
-  #bar { width: min(420px, 90vw); height: 6px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
-  #bar[hidden] { display: none; }
-  #fill { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  #overlay.leaving { opacity: 0; pointer-events: none; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1440px; height: 900px;
+           background: url(login-bg.jpg) center / 100% 100% no-repeat; transform-origin: 50% 50%;
+           transform: translate(-50%, -50%) scale(var(--s, 1)); }
+
+  /* the Server Select window: 200 x 415, centred */
+  .win { position: absolute; left: 620px; top: 243px; width: 200px; height: 415px; box-sizing: border-box;
+         border: 1px solid #c9ccd1; border-top: 0; border-bottom: 0;
+         background: linear-gradient(rgba(24, 28, 36, .9), rgba(30, 34, 42, .86) 40%, rgba(34, 37, 44, .88)); }
+  .win .title { height: 13px; padding: 0 0 0 7px; font-size: 12px; line-height: 15px; color: #f2f2f2;
+                text-shadow: 0 0 1px #000, 1px 1px 0 #000;
+                background: linear-gradient(#f4f4f4 0, #c9c9c9 2px, #6f7277 3px, rgba(60,64,72,.85) 4px, rgba(32,36,44,0) 13px); }
+  .win .foot { position: absolute; left: -1px; right: -1px; bottom: 0; height: 6px;
+               background: linear-gradient(#e9e9e9, #8f9297 60%, #4a4d52); }
+  #now { position: absolute; left: 10px; right: 10px; top: 182px; text-align: center; min-height: 32px; }
+  #now.error { color: var(--error); }
+  ol { list-style: none; margin: 0; padding: 0; position: absolute; left: 14px; right: 14px; top: 40px; }
+  ol li { display: flex; justify-content: space-between; gap: 6px; padding: 3px 0; color: var(--muted); }
+  ol li .detail { color: #8f939a; white-space: nowrap; }
+  ol li[data-state="active"] { color: #fff; }
+  ol li[data-state="active"] .detail { color: #dfe3ea; }
+  ol li[data-state="done"] .detail { color: var(--ok); }
+  ol li[data-state="done"]::after { content: ""; }
+  /* the progress bar sits where the window's Exit button is */
+  .btn { position: absolute; left: 108px; top: 374px; width: 83px; height: 17px; box-sizing: border-box;
+         border: 1px solid #1d1f23; border-radius: 3px; overflow: hidden;
+         background: linear-gradient(#7d8086, #4b4e54 50%, #3b3e43 51%, #55585e); }
+  #fill { height: 100%; width: 0; background: linear-gradient(#e7e9ec, #b5b8bd 50%, #9da0a5 51%, #c7cacf); transition: width .2s; }
+
+  #bgload { position: fixed; left: 10px; bottom: 8px; font-size: 11px; color: #e9e9e9; opacity: .75;
+            text-shadow: 0 0 2px #000, 1px 1px 0 #000; pointer-events: none; }
+  #bgload[hidden] { display: none; }
 </style>
 </head>
 <body>
 <canvas id="canvas" tabindex="0"></canvas>
 <div id="overlay">
-  <h1>RanOdyssey</h1>
-  <div id="bar" hidden><div id="fill"></div></div>
-  <div id="status">Loading…</div>
+  <div id="stage">
+    <div class="win" role="status" aria-live="polite">
+      <div class="title">Loading</div>
+      <ol>
+        <li id="step-check"><span>Updates</span><span class="detail"></span></li>
+        <li id="step-ui"><span>Interface</span><span class="detail"></span></li>
+        <li id="step-start"><span>Game</span><span class="detail"></span></li>
+        <li id="step-connect"><span>Server</span><span class="detail"></span></li>
+      </ol>
+      <div id="now">Loading…</div>
+      <div class="btn"><div id="fill"></div></div>
+      <div class="foot"></div>
+    </div>
+  </div>
 </div>
+<div id="bgload" hidden></div>
+<script>
+  // Scale the 1440x900 stage to cover the page, as the game's view does.
+  (function fit() {
+    const s = Math.max(innerWidth / 1440, innerHeight / 900);
+    document.getElementById('stage').style.setProperty('--s', s);
+    addEventListener('resize', fit, { once: true });
+  })();
+</script>
 <script src="loader.js"></script>
 </body>
 </html>
