@@ -22,7 +22,7 @@ fi
 echo "== stage"
 rm -rf "$B/deploy"
 mkdir -p "$B/deploy"
-cp port/web/shell/index.html port/web/shell/loader.js port/web/shell/login-bg.jpg port/web/shell/_headers "$B/deploy/"
+cp port/web/shell/index.html port/web/shell/loader.js port/web/shell/login-bg.jpg port/web/shell/ui-*.png port/web/shell/_headers "$B/deploy/"
 cp "$B/out/ran.js" "$B/out/ran.wasm" "$B/deploy/"
 cp -Rc "$B/site" "$B/deploy/data" 2>/dev/null || cp -R "$B/site" "$B/deploy/data"   # APFS clone: no extra disk
 

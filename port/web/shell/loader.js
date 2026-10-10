@@ -258,7 +258,7 @@ const Data = {
     const total = need.reduce((n, p) => n + p.bytes, 0);
     let got = 0;
     ui.step('ui', 'active');
-    ui.now(`Downloading the interface (${fmtMB(total)})…`);
+    ui.now('Downloading the interface…');
     this.started = false;
     const tick = setInterval(() => ui.bar(got / total), 100);
     try {

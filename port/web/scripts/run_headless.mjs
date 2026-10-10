@@ -62,7 +62,8 @@ if (fs.existsSync(relayModule)) require(relayModule).attachRanRelay(server);
 // --port N: a fixed origin, so browser storage (OPFS) carries over between --profile runs.
 await new Promise((r) => server.listen(Number(opt('--port') || 0), '127.0.0.1', r));
 const port = server.address().port;
-const url = `http://127.0.0.1:${port}/${page0}${page0.includes('?') ? '&' : '?'}relay=ws://127.0.0.1:${port}/ran/ws`;
+// --url <page>: test a deployed page (its own relay) instead of the local folder.
+const url = opt('--url') || `http://127.0.0.1:${port}/${page0}${page0.includes('?') ? '&' : '?'}relay=ws://127.0.0.1:${port}/ran/ws`;
 
 const launchArgs = ['--enable-features=WebAssemblyJSPI', '--use-angle=metal', '--enable-unsafe-swiftshader',
                     '--ignore-gpu-blocklist', '--enable-gpu'];
