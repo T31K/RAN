@@ -75,6 +75,12 @@ void CBasicTreeNode::CreateButton ( char* szKeyword, char* szFlipKeyword )
 	m_pButton = pButton;
 }
 
+void CBasicTreeNode::ToggleBranch ()
+{
+	SetBranchVisible ( !m_bBranchVisible );
+	if ( m_pButton ) m_pButton->SetFlip ( m_bBranchVisible );
+}
+
 void CBasicTreeNode::InsertChildNode ( CBasicTreeNode* pChild )
 {
 	m_ChildList.push_back ( pChild );

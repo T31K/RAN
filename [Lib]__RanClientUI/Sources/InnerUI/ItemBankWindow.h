@@ -9,6 +9,7 @@ class	CItemSlot;
 class	CBasicTextBox;
 class	CBasicTextButton;
 class	CBasicTreeEx;
+class	CBasicTreeNode;
 class	CBasicScrollBarEx;
 class	CUIEditBox;
 
@@ -68,6 +69,7 @@ private:
 	DWORD	ClassMask ( int nClass );
 	WORD	Amount ();
 	void	EndEdits ();
+	void	UpdateGroupLabels ();
 
 	CUIControl*	CreateControl ( const char* szControl );
 
@@ -83,6 +85,14 @@ private:
 
 	std::vector<SCATEGORY>	m_vecCategory;
 	std::vector<SNATIVEID>	m_vecShown;
+
+	struct SGROUPNODE
+	{
+		CBasicTreeNode*	pNode;
+		int				nGroup;
+		BOOL			bOpen;
+	};
+	std::vector<SGROUPNODE>	m_vecGroupNode;		//	the tree's top level: shown as [+] / [-] Name
 
 	int			m_nClass;			//	0 = all classes, 1..5 = brawler, swordsman, archer, shaman, extreme
 	int			m_nCategory;		//	index into m_vecCategory, -1 = none picked yet

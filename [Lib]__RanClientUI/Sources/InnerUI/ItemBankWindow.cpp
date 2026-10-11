@@ -6,6 +6,7 @@
 #include "ItemSlot.h"
 #include "BasicScrollBarEx.h"
 #include "BasicTreeEx.h"
+#include "../[Lib]__EngineUI/Sources/BasicTreeNode.h"
 #include "BasicLineBox.h"
 #include "BasicTextButton.h"
 #include "../[Lib]__EngineUI/Sources/BasicButton.h"
@@ -301,10 +302,31 @@ void CItemBankWindow::LoadCatalog ()
 			{
 				pGroupNode = m_pTree->InsertNode ( NULL, szGROUP[g] );
 				pGroupNode->SetNodeData ( DWORD_PTR(0) );
+				SGROUPNODE sGroup = { pGroupNode, g, -1 };
+				m_vecGroupNode.push_back ( sGroup );
 			}
 			CBasicTreeNode* pNode = m_pTree->InsertNode ( pGroupNode, m_vecCategory[i].strName.c_str() );
 			pNode->SetNodeData ( DWORD_PTR(i + 1) );
 		}
+	}
+	UpdateGroupLabels ();
+}
+
+//	Groups read "[+] Weapons" closed and "[-] Weapons" open, in gold, so they look like what
+//	they are: headers to click open (the tree's own expand arrow is a tiny dark glyph).
+void CItemBankWindow::UpdateGroupLabels ()
+{
+	for ( size_t i = 0; i < m_vecGroupNode.size(); ++i )
+	{
+		SGROUPNODE& sGroup = m_vecGroupNode[i];
+		const BOOL bOpen = sGroup.pNode->IsBranchVisible ();
+		if ( bOpen == sGroup.bOpen )	continue;
+		sGroup.bOpen = bOpen;
+
+		CString strLabel;
+		strLabel.Format ( "%s %s", bOpen ? "[-]" : "[+]", szGROUP[sGroup.nGroup] );
+		sGroup.pNode->SetLabel ( strLabel, NS_UITEXTCOLOR::GOLD );
+		sGroup.pNode->SetNodeData ( DWORD_PTR(0) );
 	}
 }
 
@@ -529,6 +551,12 @@ void CItemBankWindow::TranslateUIMessage ( UIGUID ControlID, DWORD dwMsg )
 				m_strSearch.Empty ();
 				Refilter ();
 			}
+			else if ( pNode && (dwMsg & UIMSG_LB_UP) && !(dwMsg & UIMSG_LB_DUP) )
+			{
+				//	A group: one click opens or closes it (the tree alone wants a double click).
+				pNode->ToggleBranch ();
+			}
+			UpdateGroupLabels ();
 		}
 		return;
 
