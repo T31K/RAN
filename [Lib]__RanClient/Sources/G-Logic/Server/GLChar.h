@@ -26,6 +26,16 @@ typedef SFIELDCROW* PSFIELDCROW;
 class GLQUEST;
 class GLGaeaServer;
 
+//	Who may use the item browser (B window): itembrowser.ini next to the exe -
+//	"default = on|off" and "<account or character name> = on|off" lines (GLCharInvenMsg.cpp).
+namespace ITEMBROWSER
+{
+	bool	IsAllowed ( const char* szAccount, const char* szCharName );
+	//	szName "default" sets the default. Returns false if the file could not be written.
+	bool	SetAccess ( const char* szName, bool bOn );
+	void	Describe ( std::string& strOut );
+};
+
 
 //	Note : 캐릭터.
 //
@@ -78,6 +88,7 @@ protected:
 	float				m_fQUEST_TIMER;			//	퀘스트 정보 갱신.
 	float				m_fattTIMER;			//	공격 프래임.
 	float				m_fMoveDelay;			//	이동 딜래이.
+	float				m_fGotoElapsed;			//	seconds since the last move request (MsgGoto position resync)
 	float				m_fITEM_TIMER;			//	아이템 제한시간 점검.
 	float				m_fSAVEDB_TIMER;		//	DB 저장 시간.
 	float				m_fBRIGHT_TIMER;		//	속성수치 갱신 시간.
@@ -580,6 +591,7 @@ protected:
 	HRESULT MsgReqInvenCleanser ( NET_MSG_GENERIC* nmg );
 	
 	HRESULT MsgReqInvenChargedItem ( NET_MSG_GENERIC* nmg );
+	HRESULT MsgReqItemBrowserGet ( NET_MSG_GENERIC* nmg );
 
 	HRESULT MsgReqSkill ( NET_MSG_GENERIC* nmg );
 	HRESULT MsgReqSkillCancel ( NET_MSG_GENERIC* nmg );

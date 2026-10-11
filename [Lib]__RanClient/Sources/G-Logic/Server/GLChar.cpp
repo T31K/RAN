@@ -28,6 +28,7 @@ GLChar::GLChar () :
 	m_fSAVEDB_TIMER(0.0f),
 	m_fattTIMER(0.0f),
 	m_fMoveDelay(0.0f),
+	m_fGotoElapsed(0.0f),
 	m_fBRIGHT_TIMER(0.0f),
 
 	m_sAssault(CROW_PC,GAEAID_NULL),
@@ -3697,6 +3698,7 @@ HRESULT GLChar::FrameMove ( float fTime, float fElapsedTime )
 	}
 
 	m_fMoveDelay += fElapsedTime;
+	m_fGotoElapsed += fElapsedTime;
 
 	if ( m_sQITEMFACT.IsACTIVE() )
 	{
