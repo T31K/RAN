@@ -134,6 +134,19 @@ template <class Stream, class T> BOOL WriteImage(Stream& s, const T* p, DWORD si
         }                                                                                                              \
     };
 
+// Declares the Windows image of a struct whose only member is a std::string: MSVC x86's
+// 24-byte string (see ReadMsvcString). Read as raw bytes, the string would take the native
+// std::string's size instead (12 bytes in the browser's wasm32, so every following byte of the
+// file was read from the wrong offset) and overwrite its internals.
+#define RAN_WIN32_IMAGE_MSVC_STRING(T, member)                                                                        \
+    template <> struct ran_compat::Win32Image<T>                                                                      \
+    {                                                                                                                  \
+        static const bool kConverts = true;                                                                            \
+        static const size_t kSize = 24;                                                                                \
+        static void Read(const BYTE* s, T& d) { d.member = ran_compat::ReadMsvcString(s); }                           \
+        static void Write(const T& d, BYTE* s) { ran_compat::WriteMsvcString(d.member, s); }                          \
+    };
+
 // The typed overloads every game stream class declares in the native build.
 #define RAN_STREAM_IMAGE_OVERLOADS                                                                                     \
     template <class T> BOOL ReadBuffer(T* p, DWORD size) { return ran_compat::ReadImage(*this, p, size); }            \

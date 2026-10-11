@@ -1127,7 +1127,8 @@ bool CRijndael::ComputeKeyString(int nVer, int nYear, int nLength, char const* d
 	char* tokenSecond = NULL;
 	char* nxtTok = NULL;
 
-	memcpy(strKeyData, data, 32);
+	const size_t nDataLen = strlen(data);	// the key strings are shorter than 32: copy the string only
+	memcpy(strKeyData, data, nDataLen < 31 ? nDataLen : 31);
 
 	tokenFirst = strtok_s(strKeyData, "_", &nxtTok);
 	tokenSecond = strtok_s(0, "_", &nxtTok);

@@ -27,6 +27,11 @@ struct TILE_TEX
 	std::string	szTexture;
 };
 
+#ifndef _WIN32
+// Native build: map files hold MSVC x86's 24-byte std::string image (win32/file_image.h).
+RAN_WIN32_IMAGE_MSVC_STRING ( TILE_TEX, szTexture )
+#endif
+
 struct VERTEX_XT2
 {
 	D3DXVECTOR3			vPos;

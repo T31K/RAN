@@ -2751,6 +2751,19 @@ HRESULT GLCharacter::ReqChargedItemTo ( WORD wPosX, WORD wPosY )
 	return S_OK;
 }
 
+//	Item browser (B window): ask the server to spawn an item into the inventory.
+HRESULT GLCharacter::ReqItemBrowserGet ( SNATIVEID nidITEM, WORD wCount )
+{
+	if ( !GLItemMan::GetInstance().GetItem ( nidITEM ) )	return E_FAIL;
+
+	GLMSG::SNET_ITEMBROWSER_GET NetMsg;
+	NetMsg.nidITEM = nidITEM;
+	NetMsg.wCount = wCount ? wCount : 1;
+	NETSENDTOFIELD ( &NetMsg );
+
+	return S_OK;
+}
+
 void GLCharacter::ReqLevelUp ()
 {
 	GLMSG::SNETPC_REQ_LEVELUP NetMsg;

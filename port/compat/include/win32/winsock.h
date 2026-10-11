@@ -213,6 +213,143 @@ namespace ran_compat {
         }
     }
 
+#ifdef __EMSCRIPTEN__
+}
+// ---- Browser build: TCP through WebSockets ----
+// A page cannot open TCP connections. Every client socket is a WebSocket to the game's
+// WebSocket->TCP relay, which dials the IP:port the game asked for (port/web/runtime/ws.js
+// holds the sockets; the relay URL comes from the page). The Winsock event model is kept:
+// WSAEventSelect registers the socket here, and every wait loop polls (ran_compat::WaitPollHook)
+// so FD_CONNECT/FD_READ/FD_WRITE/FD_CLOSE are posted with the same rules as SocketWatcher below.
+extern "C" {
+int ran_ws_socket();
+int ran_ws_connect(int s, uint32_t ipv4NetOrder, int port);   // 0 = started
+int ran_ws_state(int s);              // 0 new, 1 connecting, 2 open, 3 closed by peer, 4 failed
+int ran_ws_available(int s);          // received bytes not yet read
+int ran_ws_send(int s, const void* buf, int len);   // bytes sent, -1 = not open
+int ran_ws_recv(int s, void* buf, int len);         // bytes read (0 = nothing waiting)
+void ran_ws_close(int s);
+}
+namespace ran_compat {
+
+    class SocketWatcher {
+    public:
+        static SocketWatcher& Get()
+        {
+            static SocketWatcher w;
+            return w;
+        }
+        void Select(int fd, HANDLE ev, long mask)
+        {
+            if (!ev || mask == 0) { m_regs.erase(fd); return; }
+            Reg& r = m_regs[fd];
+            r.event = ev;
+            r.mask = mask;
+            r.pending = 0;
+            r.connectPosted = r.closed = false;
+            if (ran_ws_state(fd) == 2 && (mask & FD_WRITE)) Post(r, FD_WRITE_BIT, 0);
+            WaitPollHook() = &PollAll;
+        }
+        void Remove(int fd) { m_regs.erase(fd); }
+        bool Enum(int fd, HANDLE ev, WSANETWORKEVENTS* out)
+        {
+            Poll();
+            auto it = m_regs.find(fd);
+            std::memset(out, 0, sizeof(*out));
+            if (it != m_regs.end()) {
+                Reg& r = it->second;
+                out->lNetworkEvents = r.pending;
+                std::memcpy(out->iErrorCode, r.errors, sizeof(r.errors));
+                r.pending = 0;
+                std::memset(r.errors, 0, sizeof(r.errors));
+            }
+            if (ev)
+                if (auto* e = dynamic_cast<KEvent*>(Obj(ev))) e->signaled = false;
+            return it != m_regs.end();
+        }
+        static void PollAll() { Get().Poll(); }
+        void Poll()
+        {
+            for (auto& kv : m_regs) {
+                Reg& r = kv.second;
+                const int st = ran_ws_state(kv.first);
+                if (!r.connectPosted && (r.mask & FD_CONNECT) && st >= 2) {
+                    r.connectPosted = true;
+                    Post(r, FD_CONNECT_BIT, st == 2 ? 0 : WSAECONNREFUSED);
+                    if (st == 2 && (r.mask & FD_WRITE)) Post(r, FD_WRITE_BIT, 0);
+                    if (st != 2) r.closed = true;
+                    continue;
+                }
+                if (r.closed) continue;
+                if ((r.mask & FD_READ) && !(r.pending & FD_READ) && ran_ws_available(kv.first) > 0)
+                    Post(r, FD_READ_BIT, 0);
+                if (st >= 3 && ran_ws_available(kv.first) == 0) {
+                    r.closed = true;
+                    if (r.mask & FD_CLOSE) Post(r, FD_CLOSE_BIT, st == 3 ? 0 : WSAECONNRESET);
+                }
+            }
+        }
+    private:
+        struct Reg {
+            HANDLE event = nullptr;
+            long mask = 0;
+            long pending = 0;
+            int errors[FD_MAX_EVENTS] = {};
+            bool connectPosted = false;
+            bool closed = false;
+        };
+        void Post(Reg& r, int bit, int error)
+        {
+            r.pending |= (1L << bit);
+            r.errors[bit] = error;
+            if (auto* e = dynamic_cast<KEvent*>(Obj(r.event))) e->signaled = true;
+        }
+        std::map<int, Reg> m_regs;
+    };
+
+    inline int ws_socket(int af, int type, int)
+    {
+        if (af != AF_INET || type != SOCK_STREAM) { errno = EAFNOSUPPORT; return -1; }
+        return ran_ws_socket();
+    }
+    inline int ws_connect(int s, const sockaddr* addr, socklen_t)
+    {
+        const sockaddr_in* in = (const sockaddr_in*)addr;
+        if (!in || in->sin_family != AF_INET) { errno = EAFNOSUPPORT; return -1; }
+        if (ran_ws_connect(s, in->sin_addr.s_addr, ntohs(in->sin_port)) != 0) { errno = ECONNREFUSED; return -1; }
+        errno = EINPROGRESS;   // -> WSAEWOULDBLOCK, as for a non-blocking connect on Windows
+        return -1;
+    }
+    inline ssize_t ws_send(int s, const void* buf, size_t len, int)
+    {
+        const int st = ran_ws_state(s);
+        if (st < 2) { errno = EWOULDBLOCK; return -1; }
+        if (st > 2) { errno = ECONNRESET; return -1; }
+        return ran_ws_send(s, buf, (int)len);
+    }
+    inline ssize_t ws_recv(int s, void* buf, size_t len, int)
+    {
+        const int n = ran_ws_recv(s, buf, (int)len);
+        if (n > 0) return n;
+        const int st = ran_ws_state(s);
+        if (st == 3) return 0;                       // orderly close
+        if (st == 4) { errno = ECONNRESET; return -1; }
+        errno = EWOULDBLOCK;
+        return -1;
+    }
+    inline int ws_sockopt(int, int, int, const void*, socklen_t) { return 0; }
+    inline int ws_getsockopt(int, int, int, void* v, socklen_t* len) { if (v && len && *len >= sizeof(int)) *(int*)v = 0; return 0; }
+    inline int ws_shutdown(int, int) { return 0; }
+}
+#define socket(af, type, proto)          ran_compat::ws_socket(af, type, proto)
+#define connect(s, addr, len)            ran_compat::ws_connect(s, addr, len)
+#define send(s, buf, len, flags)         ran_compat::ws_send(s, buf, len, flags)
+#define recv(s, buf, len, flags)         ran_compat::ws_recv(s, buf, len, flags)
+#define setsockopt(s, l, n, v, len)      ran_compat::ws_sockopt(s, l, n, v, len)
+#define getsockopt(s, l, n, v, len)      ran_compat::ws_getsockopt(s, l, n, v, len)
+#define shutdown(s, how)                 ran_compat::ws_shutdown(s, how)
+namespace ran_compat {
+#else
     // Background watcher translating socket readiness into Winsock network events.
     class SocketWatcher {
     public:
@@ -372,6 +509,7 @@ namespace ran_compat {
         std::map<int, Reg> m_regs;
         int m_wake[2] = {-1, -1};
     };
+#endif
 }
 
 inline int WSAStartup(WORD version, LPWSADATA data)
@@ -390,6 +528,21 @@ inline int WSACleanup() { return 0; }
 inline int WSAGetLastError() { return ran_compat::ErrnoToWsa(errno); }
 inline void WSASetLastError(int e) { errno = e >= WSABASEERR ? e - WSABASEERR : e; }
 
+#ifdef __EMSCRIPTEN__
+inline int closesocket(SOCKET s)
+{
+    ran_compat::SocketWatcher::Get().Remove((int)s);
+    ran_ws_close((int)s);
+    return 0;
+}
+inline int ioctlsocket(SOCKET s, long cmd, u_long* arg)
+{
+    if (cmd == (long)FIONBIO) return 0;   // WebSocket sockets are always non-blocking
+    if (cmd == (long)FIONREAD) { if (arg) *arg = (u_long)ran_ws_available((int)s); return 0; }
+    errno = EINVAL;
+    return SOCKET_ERROR;
+}
+#else
 inline int closesocket(SOCKET s)
 {
     ran_compat::SocketWatcher::Get().Remove((int)s);
@@ -411,6 +564,7 @@ inline int ioctlsocket(SOCKET s, long cmd, u_long* arg)
     errno = EINVAL;
     return SOCKET_ERROR;
 }
+#endif
 // Windows u_long is the 4-byte ULONG; the game passes ULONG*. BSD u_long is 8 bytes.
 inline int ioctlsocket(SOCKET s, long cmd, ULONG* arg)
 {
@@ -431,10 +585,12 @@ inline DWORD WSAWaitForMultipleEvents(DWORD n, const WSAEVENT* evs, BOOL waitAll
 
 inline int WSAEventSelect(SOCKET s, WSAEVENT ev, long mask)
 {
+#ifndef __EMSCRIPTEN__
     // Like Windows, WSAEventSelect puts the socket into non-blocking mode.
     const int flags = ::fcntl((int)s, F_GETFL, 0);
     if (flags == -1) return SOCKET_ERROR;
     ::fcntl((int)s, F_SETFL, flags | O_NONBLOCK);
+#endif
     ran_compat::SocketWatcher::Get().Select((int)s, ev, mask);
     return 0;
 }

@@ -22,6 +22,11 @@
 #include <strings.h>
 #include <thread>
 #include <unistd.h>
+#ifdef __EMSCRIPTEN__
+// Browser build: one OS thread; game threads are cooperative green threads (ran_green.h) and
+// every blocking call below yields to them instead of blocking.
+#include "ran_green.h"
+#endif
 
 #ifndef INFINITE
 #define INFINITE 0xFFFFFFFFu
@@ -63,6 +68,19 @@ namespace ran_compat {
     inline std::mutex& KernelLock() { static std::mutex m; return m; }
     inline std::condition_variable& KernelCond() { static std::condition_variable c; return c; }
 
+#ifdef __EMSCRIPTEN__
+    typedef int ThreadKey;
+    inline ThreadKey CurrentThreadKey() { return ran_green::Current(); }
+    inline ThreadKey NoThreadKey() { return -1; }
+    // Called by every wait loop before it checks its handles again (the socket layer polls the
+    // WebSockets here and signals their events).
+    inline void (*&WaitPollHook())() { static void (*hook)() = nullptr; return hook; }
+#else
+    typedef std::thread::id ThreadKey;
+    inline ThreadKey CurrentThreadKey() { return std::this_thread::get_id(); }
+    inline ThreadKey NoThreadKey() { return std::thread::id(); }
+#endif
+
     // A waitable kernel object. All members are called with KernelLock() held.
     struct KObject {
         virtual ~KObject() = default;
@@ -83,13 +101,16 @@ namespace ran_compat {
     };
 
     struct KMutex : KObject {
-        std::thread::id owner;
+        ThreadKey owner = NoThreadKey();
         int count = 0;
-        bool IsSignaled() const override { return count == 0 || owner == std::this_thread::get_id(); }
-        void Acquire() override { owner = std::this_thread::get_id(); ++count; }
+        bool IsSignaled() const override { return count == 0 || owner == CurrentThreadKey(); }
+        void Acquire() override { owner = CurrentThreadKey(); ++count; }
     };
 
     struct KThread : KObject {
+#ifdef __EMSCRIPTEN__
+        int green = 0;
+#endif
         std::thread thread;
         bool finished = false;
         DWORD exitCode = STILL_ACTIVE;
@@ -97,8 +118,41 @@ namespace ran_compat {
         ~KThread() override { if (thread.joinable()) thread.detach(); }
     };
 
+#ifdef __EMSCRIPTEN__
+    inline void Signal() { ran_green::WakeAll(); }
+#else
     inline void Signal() { KernelCond().notify_all(); }
+#endif
 
+#ifdef __EMSCRIPTEN__
+    // No other thread can signal while this one runs, so a wait checks, blocks until something
+    // signals (or a WebSocket event arrives), checks again. The 50 ms cap re-polls the sockets
+    // (WaitPollHook) even if a wake was missed.
+    inline DWORD Wait(DWORD count, const HANDLE* handles, bool waitAll, DWORD ms)
+    {
+        const double deadline = ran_green::NowMs() + (double)ms;
+        for (;;) {
+            if (WaitPollHook()) WaitPollHook()();
+            if (waitAll) {
+                bool all = true;
+                for (DWORD i = 0; i < count; ++i) all = all && Obj(handles[i]) && Obj(handles[i])->IsSignaled();
+                if (all) {
+                    for (DWORD i = 0; i < count; ++i) Obj(handles[i])->Acquire();
+                    return WAIT_OBJECT_0;
+                }
+            } else {
+                for (DWORD i = 0; i < count; ++i) {
+                    KObject* o = Obj(handles[i]);
+                    if (o && o->IsSignaled()) { o->Acquire(); return WAIT_OBJECT_0 + i; }
+                }
+            }
+            if (ms == 0) return WAIT_TIMEOUT;
+            const double left = ms == INFINITE ? 50.0 : deadline - ran_green::NowMs();
+            if (left <= 0) return WAIT_TIMEOUT;
+            ran_green::Block(left < 50.0 ? left : 50.0);
+        }
+    }
+#else
     inline DWORD Wait(DWORD count, const HANDLE* handles, bool waitAll, DWORD ms)
     {
         std::unique_lock<std::mutex> lock(KernelLock());
@@ -125,6 +179,7 @@ namespace ran_compat {
             }
         }
     }
+#endif
 
     inline std::chrono::steady_clock::time_point ProcessStart()
     {
@@ -153,12 +208,36 @@ typedef struct _MEMORYSTATUSEX {   // MEMORYSTATUS itself comes from DXVK's wind
 } MEMORYSTATUSEX, *LPMEMORYSTATUSEX;
 
 // ---- Critical sections (recursive, like Windows) ----
+#ifdef __EMSCRIPTEN__
+// Green threads can suspend inside a section (any file read suspends), so a section is an
+// owner + count and entering a section owned by another thread yields until it is free. A
+// zeroed (never initialised) section works too: owner 0 with count 0 is "free".
+typedef struct RAN_CRITICAL_SECTION { int owner; int count; } CRITICAL_SECTION, *LPCRITICAL_SECTION;
+inline void InitializeCriticalSection(LPCRITICAL_SECTION cs) { cs->owner = 0; cs->count = 0; }
+inline BOOL InitializeCriticalSectionAndSpinCount(LPCRITICAL_SECTION cs, DWORD) { InitializeCriticalSection(cs); return TRUE; }
+inline void DeleteCriticalSection(LPCRITICAL_SECTION) {}
+inline BOOL TryEnterCriticalSection(LPCRITICAL_SECTION cs)
+{
+    const int me = ran_green::Current();
+    if (cs->count > 0 && cs->owner != me) return FALSE;
+    cs->owner = me;
+    ++cs->count;
+    return TRUE;
+}
+inline void EnterCriticalSection(LPCRITICAL_SECTION cs) { while (!TryEnterCriticalSection(cs)) ran_green::Block(50); }
+inline void LeaveCriticalSection(LPCRITICAL_SECTION cs)
+{
+    if (cs->count > 0 && --cs->count == 0) ran_green::WakeAll();   // threads waiting to enter
+}
+#else
 typedef struct RAN_CRITICAL_SECTION { std::recursive_mutex* m; } CRITICAL_SECTION, *LPCRITICAL_SECTION;
+#endif
 
 // The game enters sections after deleting them (DxStaticMesh::EndThread deletes the loader's
 // section while the loader thread may still be in its loop) and re-initialises live ones;
 // Windows tolerates both because the section's memory stays valid. So here a deleted section
 // keeps its mutex (never freed), and a never-initialised (zeroed) one uses a shared mutex.
+#ifndef __EMSCRIPTEN__
 namespace ran_compat {
 inline std::recursive_mutex& FallbackSectionMutex() { static std::recursive_mutex& m = *new std::recursive_mutex; return m; }
 inline std::recursive_mutex& SectionMutex(LPCRITICAL_SECTION cs) { return cs->m ? *cs->m : FallbackSectionMutex(); }
@@ -169,6 +248,7 @@ inline void DeleteCriticalSection(LPCRITICAL_SECTION) {}   // see above: the mut
 inline void EnterCriticalSection(LPCRITICAL_SECTION cs) { ran_compat::SectionMutex(cs).lock(); }
 inline void LeaveCriticalSection(LPCRITICAL_SECTION cs) { ran_compat::SectionMutex(cs).unlock(); }
 inline BOOL TryEnterCriticalSection(LPCRITICAL_SECTION cs) { return ran_compat::SectionMutex(cs).try_lock() ? TRUE : FALSE; }
+#endif
 
 // ---- Handles, events, mutexes, waits ----
 inline BOOL CloseHandle(HANDLE h)
@@ -219,8 +299,8 @@ inline BOOL ReleaseMutex(HANDLE h)
 {
     std::lock_guard<std::mutex> lock(ran_compat::KernelLock());
     auto* m = (ran_compat::KMutex*)ran_compat::Obj(h);
-    if (!m || m->count == 0 || m->owner != std::this_thread::get_id()) return FALSE;
-    if (--m->count == 0) m->owner = std::thread::id();
+    if (!m || m->count == 0 || m->owner != ran_compat::CurrentThreadKey()) return FALSE;
+    if (--m->count == 0) m->owner = ran_compat::NoThreadKey();
     ran_compat::Signal();
     return TRUE;
 }
@@ -229,6 +309,24 @@ inline DWORD WaitForSingleObject(HANDLE h, DWORD ms) { return ran_compat::Wait(1
 inline DWORD WaitForMultipleObjects(DWORD n, const HANDLE* hs, BOOL waitAll, DWORD ms) { return ran_compat::Wait(n, hs, waitAll != FALSE, ms); }
 
 // ---- Threads ----
+#ifdef __EMSCRIPTEN__
+inline HANDLE CreateThread(SECURITY_ATTRIBUTES*, SIZE_T stackSize, LPTHREAD_START_ROUTINE fn, LPVOID arg, DWORD, LPDWORD threadId)
+{
+    struct Start { LPTHREAD_START_ROUTINE fn; LPVOID arg; std::shared_ptr<ran_compat::KThread> t; };
+    auto t = std::make_shared<ran_compat::KThread>();
+    auto* start = new Start{fn, arg, t};   // the running thread keeps its object alive
+    t->green = ran_green::Spawn([](void* p) -> unsigned {
+        Start* s = (Start*)p;
+        const DWORD code = s->fn(s->arg);
+        s->t->exitCode = code;
+        s->t->finished = true;
+        delete s;
+        return code;
+    }, start, stackSize);
+    if (threadId) *threadId = (DWORD)t->green + 1;
+    return ran_compat::MakeHandle(t);
+}
+#else
 inline HANDLE CreateThread(SECURITY_ATTRIBUTES*, SIZE_T, LPTHREAD_START_ROUTINE fn, LPVOID arg, DWORD, LPDWORD threadId)
 {
     auto t = std::make_shared<ran_compat::KThread>();
@@ -243,6 +341,7 @@ inline HANDLE CreateThread(SECURITY_ATTRIBUTES*, SIZE_T, LPTHREAD_START_ROUTINE 
     if (threadId) *threadId = (DWORD)std::hash<std::thread::id>()(t->thread.get_id());
     return ran_compat::MakeHandle(t);
 }
+#endif
 
 inline uintptr_t _beginthreadex(void*, unsigned, unsigned (__stdcall *fn)(void*), void* arg, unsigned, unsigned* threadId)
 {
@@ -267,6 +366,10 @@ inline BOOL GetExitCodeThread(HANDLE h, LPDWORD code)
     return TRUE;
 }
 
+#ifdef __EMSCRIPTEN__
+inline DWORD GetCurrentThreadId() { return (DWORD)ran_green::Current() + 1; }
+inline void Sleep(DWORD ms) { ran_green::Sleep(ms); }
+#else
 inline DWORD GetCurrentThreadId() { return (DWORD)std::hash<std::thread::id>()(std::this_thread::get_id()); }
 // Sleep(0) yields the time slice, as on Windows. sleep_for(0ms) is a no-op, which turned the
 // game's `while (flag) Sleep(0);` spin-waits (e.g. DxStaticMeshColor_THREAD::DeleteList) into
@@ -276,6 +379,7 @@ inline void Sleep(DWORD ms)
     if (ms == 0) std::this_thread::yield();
     else std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
+#endif
 inline DWORD SleepEx(DWORD ms, BOOL) { Sleep(ms); return 0; }
 
 // ---- Timers ----

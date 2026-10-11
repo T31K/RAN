@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RanOdyssey</title>
+<link rel="preload" href="login-still.webp" as="image">
+<link rel="preload" href="ui-title.png" as="image">
+<style>
+  /* The loading screen is laid out like the game's Server Select screen: the scene (login-still.webp:
+     the login scene's first frame, captured at 2400 x 1000 with loader.js ?still=1 and F12; the
+     game's camera has a fixed vertical field of view, so the still is fitted to the height),
+     the dark bars top and bottom with the copyright lines, and the 200 x 415 window in the middle
+     built from the game's own frame (ui-title.png, ui-bottom.png: cut from the game at 2x). Its
+     window shows the loading steps; when the game is ready its real Server Select takes over. */
+  :root { --text: #e9e9e9; --muted: #b9bcc2; --ok: #9fd07a; --error: #ff8a7a; --bar: 10vh; }
+  html, body { margin: 0; height: 100%; background: #000; color: var(--text); overflow: hidden;
+               font: 12px/1.35 "Apple SD Gothic Neo", "AppleSDGothicNeo", Tahoma, "Malgun Gothic", sans-serif; }
+  #canvas { display: block; position: fixed; inset: 0; outline: none; }
+  #overlay { position: fixed; inset: 0; overflow: hidden; transition: opacity .35s;
+             background: url(login-still.webp) 50% 50% / auto 100% no-repeat, #1c2430; }
+  #overlay[hidden] { display: none; }
+  #overlay.leaving { opacity: 0; pointer-events: none; }
+  .topbar, .botbar { position: absolute; left: 0; right: 0; height: var(--bar); background: rgba(10, 13, 18, .82); }
+  .topbar { top: 0; border-bottom: 1px solid rgba(160, 165, 172, .55); }
+  .botbar { bottom: 0; border-top: 1px solid rgba(160, 165, 172, .55); display: flex; align-items: center;
+            justify-content: center; text-align: center; color: #e6e6e6; line-height: 16px; text-shadow: 0 1px 1px #000; }
+
+  /* the window: 200 x 415, centred, translucent like the game's */
+  .win { position: absolute; left: 50%; top: 50%; width: 200px; height: 415px; margin: -207px 0 0 -100px;
+         box-sizing: border-box; border-left: 1px solid #000; border-right: 1px solid #000;
+         background: linear-gradient(rgba(0, 0, 0, .9) 10px, rgba(18, 24, 34, .62) 70px, rgba(0, 0, 0, .5) 160px, rgba(0, 0, 0, .5)); }
+  .win .title { position: absolute; left: -1px; right: -1px; top: 0; height: 10.5px;
+                background: url(ui-title.png) 0 0 / 100% 100% no-repeat; }
+  .win .title span { position: absolute; left: 6px; top: 1px; font-size: 12px; line-height: 13px; color: #f4f4f4;
+                     text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000; }
+  .win .foot { position: absolute; left: -1px; right: -1px; bottom: 0; height: 9px;
+               background: url(ui-bottom.png) 0 0 / 100% 100% no-repeat; }
+  ol { list-style: none; margin: 0; padding: 0; position: absolute; left: 14px; right: 14px; top: 34px; }
+  ol li { display: flex; justify-content: space-between; gap: 6px; padding: 3px 0; color: var(--muted); }
+  ol li .detail { color: #8f939a; white-space: nowrap; }
+  ol li[data-state="active"] { color: #fff; }
+  ol li[data-state="active"] .detail { color: #dfe3ea; }
+  ol li[data-state="done"] .detail { color: var(--ok); }
+  #now { position: absolute; left: 10px; right: 10px; top: 182px; text-align: center; min-height: 32px; }
+  #now.error { color: var(--error); }
+  /* the progress bar sits where the window's Exit button is, in that button's look */
+  .btn { position: absolute; left: 108px; top: 374px; width: 83px; height: 17px; box-sizing: border-box;
+         border: 1px solid #111; border-radius: 3px; overflow: hidden;
+         background: linear-gradient(#6c6e72, #3e4044 50%, #2f3135 51%, #44464b); }
+  #fill { height: 100%; width: 0; background: linear-gradient(#e7e9ec, #b5b8bd 50%, #9da0a5 51%, #c7cacf); transition: width .2s; }
+  #bgload { position: fixed; left: 10px; bottom: 8px; font-size: 11px; color: #e9e9e9; opacity: .75;
+            text-shadow: 0 0 2px #000, 1px 1px 0 #000; pointer-events: none; }
+  #bgload[hidden] { display: none; }
+</style>
+</head>
+<body>
+<canvas id="canvas" tabindex="0"></canvas>
+<div id="overlay">
+  <div class="topbar"></div>
+  <div class="win" role="status" aria-live="polite">
+    <div class="title"><span>Loading</span></div>
+    <ol>
+      <li id="step-check"><span>Updates</span><span class="detail"></span></li>
+      <li id="step-ui"><span>Interface</span><span class="detail"></span></li>
+      <li id="step-start"><span>Game</span><span class="detail"></span></li>
+      <li id="step-connect"><span>Server</span><span class="detail"></span></li>
+    </ol>
+    <div id="now">Loading…</div>
+    <div class="btn"><div id="fill"></div></div>
+    <div class="foot"></div>
+  </div>
+  <div class="botbar"><div>Copyright 2005~2007 IPVG Corp.<br>Copyright 2005~2010 IPVG Corp.<br>Copyright 2002~2010 Min Communication co., Ltd. All Rights Reserved.</div></div>
+</div>
+<div id="bgload" hidden></div>
+<script src="loader.js"></script>
+</body>
+</html>

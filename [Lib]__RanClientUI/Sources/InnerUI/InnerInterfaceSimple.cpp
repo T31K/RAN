@@ -1209,26 +1209,10 @@ void	CInnerInterface::SetItemBankInfo ()
 	}
 }
 
+//	The B window is the item browser now (CItemBankWindow): it lists the game's own item data,
+//	so there is nothing to ask the server for (the cash-shop bank it replaced did).
 void	CInnerInterface::SetItemBankWindowOpen ()
 {
-
-	if( m_fItemBankDelay >= 5.0f )
-	{
-		m_fItemBankDelay = 0.0f;
-	}else{
-		PrintMsgText ( NS_UITEXTCOLOR::NEGATIVE, ID2GAMEINTEXT("ITEM_BANK_DELAY") );
-		return;
-	}
-
-	ClearItemBank ();
-
-	// 여기서 서버에 유료아이템 정보 요청
-	GLCharacter* pCharacter = GLGaeaClient::GetInstance().GetCharacter ();
-	if ( pCharacter )
-	{
-		pCharacter->ReqItemBankInfo ();
-	}
-
 	SetItemBankInfo ();
 }
 
@@ -2609,12 +2593,12 @@ HRESULT CInnerInterface::InitDeviceObjects ( LPDIRECT3DDEVICEQ pd3dDevice )
 		HideGroup ( ACADEMY_CONFT_DISPLAY );
 	}
 
-	{	//	유료아이템 수령
-		m_pItemBankWindow = new CItemBankWindow;		
+	{	//	유료아이템 수령 -> the item browser (B), laid out in data/gui/itembrowser.xml
+		m_pItemBankWindow = new CItemBankWindow;
 		m_pItemBankWindow->Create ( ITEMBANK_WINDOW, "BASIC_WINDOW", UI_FLAG_XSIZE | UI_FLAG_YSIZE );
-		m_pItemBankWindow->CreateBaseWindowLightGray ( "ITEMBANK_WINDOW", (char*)ID2GAMEWORD("ITEMBANK_NAME_STATIC") );
+		m_pItemBankWindow->CreateBaseWindowBlack ( (char*)"ITEMBROWSER_WINDOW", (char*)"All Items" );
 		m_pItemBankWindow->CreateSubControl ();
-		m_pItemBankWindow->SetAlignFlag ( UI_FLAG_CENTER_Y | UI_FLAG_RIGHT );
+		m_pItemBankWindow->SetAlignFlag ( UI_FLAG_CENTER_X | UI_FLAG_CENTER_Y );
 		RegisterControl ( m_pItemBankWindow, true );
 		ShowGroupFocus ( ITEMBANK_WINDOW );
 	}

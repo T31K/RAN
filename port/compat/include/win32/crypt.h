@@ -7,7 +7,7 @@
 // key + 11-byte zero salt. TODO(port): confirm against a Windows-generated vector.
 #pragma once
 #include "win32/kernel.h"
-#include <CommonCrypto/CommonDigest.h>
+#include "win32/md5.h"
 #include <vector>
 
 typedef ULONG_PTR HCRYPTPROV;
@@ -81,11 +81,8 @@ inline BOOL CryptDeriveKey(HCRYPTPROV, ALG_ID alg, HCRYPTHASH hash, DWORD flags,
 {
     if (alg != CALG_RC4 || !hash || !key) return FALSE;
     auto* h = (ran_compat::CryptHash*)hash;
-    BYTE digest[CC_MD5_DIGEST_LENGTH];
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    CC_MD5(h->data.data(), (CC_LONG)h->data.size(), digest);   // MD5 is what the game asked for
-#pragma clang diagnostic pop
+    BYTE digest[16];
+    ran_compat::Md5(h->data.data(), h->data.size(), digest);   // MD5 is what the game asked for
     int bits = (int)(flags >> 16);
     if (bits == 0) bits = ran_compat::CryptRc4KeyBits();
     BYTE material[16] = {};

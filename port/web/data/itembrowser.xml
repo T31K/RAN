@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- The item browser (B window, CItemBankWindow): laid out like the Help window (H). Loaded after
+     the game's own ui*cfg.xml files (DxGlobalStage.cpp). -->
+<INTERFACE>
+	<CONTROL Local="Common" Id="ITEMBROWSER_WINDOW">
+		<WINDOW_POS X="100" Y="100" W="502" H="448" />
+	</CONTROL>
+
+	<CONTROL Local="Common" Id="ITEMBROWSER_CLASS_BUTTON0">
+		<WINDOW_POS X="8" Y="24" W="78" H="14" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_CLASS_BUTTON1">
+		<WINDOW_POS X="90" Y="24" W="78" H="14" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_CLASS_BUTTON2">
+		<WINDOW_POS X="172" Y="24" W="78" H="14" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_CLASS_BUTTON3">
+		<WINDOW_POS X="254" Y="24" W="78" H="14" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_CLASS_BUTTON4">
+		<WINDOW_POS X="336" Y="24" W="78" H="14" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_CLASS_BUTTON5">
+		<WINDOW_POS X="418" Y="24" W="78" H="14" />
+	</CONTROL>
+
+	<CONTROL Local="Common" Id="ITEMBROWSER_TREE">
+		<WINDOW_POS X="5" Y="48" W="205" H="388" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_TREE_SCROLLBAR">
+		<WINDOW_POS X="214" Y="44" W="9" H="397" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_TREE_SCROLLBAR_BACK">
+		<WINDOW_POS X="213" Y="43" W="11" H="399" />
+		<TEXTURE SizeX="512" SizeY="512">Interface_Main.dds</TEXTURE>
+		<TEXTURE_POS X="2" Y="19" W="10" H="10" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_MIDDLE_LINE">
+		<WINDOW_POS X="224" Y="43" W="2" H="399" />
+		<TEXTURE SizeX="512" SizeY="512">Interface_Main.dds</TEXTURE>
+		<TEXTURE_POS X="0" Y="304" W="1" H="1" />
+	</CONTROL>
+
+	<CONTROL Local="Common" Id="ITEMBROWSER_SEARCH_BACK">
+		<WINDOW_POS X="230" Y="45" W="268" H="16" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_SEARCH">
+		<WINDOW_POS X="235" Y="48" W="258" H="11" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_CARRAT">
+		<WINDOW_POS X="1" Y="0" W="2" H="11" />
+	</CONTROL>
+
+	<CONTROL Local="Common" Id="ITEMBROWSER_ITEM_SLOT0">
+		<WINDOW_POS X="231" Y="66" W="251" H="35" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_ITEM_SLOT1">
+		<WINDOW_POS X="231" Y="102" W="251" H="35" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_ITEM_SLOT2">
+		<WINDOW_POS X="231" Y="138" W="251" H="35" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_ITEM_SLOT3">
+		<WINDOW_POS X="231" Y="174" W="251" H="35" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_ITEM_SLOT4">
+		<WINDOW_POS X="231" Y="210" W="251" H="35" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_ITEM_SLOT5">
+		<WINDOW_POS X="231" Y="246" W="251" H="35" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_ITEM_SLOT6">
+		<WINDOW_POS X="231" Y="282" W="251" H="35" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_ITEM_SLOT7">
+		<WINDOW_POS X="231" Y="318" W="251" H="35" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_ITEM_SLOT8">
+		<WINDOW_POS X="231" Y="354" W="251" H="35" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_GRID_SCROLLBAR">
+		<WINDOW_POS X="489" Y="66" W="9" H="323" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_GRID_SCROLLBAR_BACK">
+		<WINDOW_POS X="488" Y="65" W="11" H="325" />
+		<TEXTURE SizeX="512" SizeY="512">Interface_Main.dds</TEXTURE>
+		<TEXTURE_POS X="2" Y="19" W="10" H="10" />
+	</CONTROL>
+
+	<CONTROL Local="Common" Id="ITEMBROWSER_AMOUNT_TEXT">
+		<WINDOW_POS X="231" Y="399" W="44" H="14" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_AMOUNT_BACK">
+		<WINDOW_POS X="276" Y="396" W="44" H="16" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_AMOUNT">
+		<WINDOW_POS X="281" Y="399" W="36" H="11" />
+	</CONTROL>
+	<CONTROL Local="Common" Id="ITEMBROWSER_INFO_TEXT">
+		<WINDOW_POS X="231" Y="420" W="266" H="14" />
+	</CONTROL>
+</INTERFACE>

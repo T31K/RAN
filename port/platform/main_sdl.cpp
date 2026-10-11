@@ -12,18 +12,26 @@
 #include "input_map.h"
 #include "input_queue.h"
 #include "text_input.h"
-#include "game_sync.h"
 #include "ran_telemetry.h"
 #include "updater.h"
 #include <SDL3/SDL.h>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
-#include <execinfo.h>
-#include <copyfile.h>
 #include <sys/stat.h>
 #include <ctime>
+#ifdef __EMSCRIPTEN__
+// Browser build: the page's canvas is the window, the game data is mounted at /game
+// (port/web/runtime/gamefs.cpp) and the frame loop yields to the browser (ran_green.h).
+#include "ran_green.h"
+#include <emscripten.h>
+extern "C" int ran_web_mount_game(const char* mountPoint);   // gamefs.cpp
+#else
+#include "game_sync.h"
+#include <execinfo.h>
+#include <copyfile.h>
 extern "C" int _NSGetExecutablePath(char* buf, uint32_t* bufsize);   // <mach-o/dyld.h> redefines FALSE
+#endif
 #include <algorithm>
 #include <string>
 #include <unistd.h>
@@ -38,8 +46,16 @@ SDL_Window* g_window = nullptr;
 HWND CreateMainWindow(const char* title, int, int, int w, int h, DWORD)
 {
     if (w < 640 || h < 480) { w = 1024; h = 768; }
+#ifdef __EMSCRIPTEN__
+    // The canvas fills the page: the game's windowed back buffer takes the page size (CSS
+    // pixels), and the page sends WM_SIZE when it changes.
+    w = EM_ASM_INT({ return Math.max(800, Math.floor(window.innerWidth)); });
+    h = EM_ASM_INT({ return Math.max(600, Math.floor(window.innerHeight)); });
+    g_window = SDL_CreateWindow(title && *title ? title : "Ran Online", w, h, SDL_WINDOW_RESIZABLE);
+#else
     g_window = SDL_CreateWindow(title && *title ? title : "Ran Online", w, h,
                                 SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+#endif
     if (!g_window) std::fprintf(stderr, "[platform] SDL_CreateWindow failed: %s\n", SDL_GetError());
     else SDL_StartTextInput(g_window);   // text + input-method composition events (text_input.h)
     return (HWND)g_window;
@@ -214,7 +230,13 @@ BOOL PumpMessages(MSG* msg, BOOL wait, BOOL remove)
         if (g_window) SDL_ClearComposition(g_window);
     }
     SDL_Event e;
+#ifdef __EMSCRIPTEN__
+    // Events arrive while the game is suspended (browser event loop); waiting = sleeping.
+    bool got = SDL_PollEvent(&e);
+    if (!got && wait) { ran_green::Sleep(16); got = SDL_PollEvent(&e); }
+#else
     bool got = wait ? SDL_WaitEventTimeout(&e, 50) : SDL_PollEvent(&e);
+#endif
     while (got) {
         if (Dispatch(e)) {
             if (msg) msg->message = WM_QUIT;
@@ -257,6 +279,15 @@ bool IsDir(const std::string& p)
 // folder - RAN_GAME_DIR if set; else, for a bundle that carries the game, this user's copy of
 // it in "RanOdyssey Native/game"; else the classic RanOdyssey app's per-user copy. The working
 // directory becomes the game folder, like launching Game.exe.
+#ifdef __EMSCRIPTEN__
+void ConfigureFromBundle()
+{
+    // The page unpacked the game into the browser's storage; gamefs.cpp mounts it.
+    if (ran_web_mount_game("/game") != 0) std::fprintf(stderr, "[platform] game data not found\n");
+    setenv("RAN_GAME_DIR", "/game", 1);
+    if (::chdir("/game") != 0) std::fprintf(stderr, "[platform] cannot enter /game\n");
+}
+#else
 void ConfigureFromBundle()
 {
     char exe[4096];
@@ -322,11 +353,14 @@ void OnFatalSignal(int sig)
     signal(sig, SIG_DFL);
     raise(sig);
 }
+#endif
 
 int main(int argc, char** argv)
 {
+#ifndef __EMSCRIPTEN__
     for (int sig : { SIGSEGV, SIGBUS, SIGILL, SIGTRAP, SIGABRT, SIGFPE }) signal(sig, OnFatalSignal);
     signal(SIGTERM, [](int) { _exit(0); });   // kill/quit from outside: no static teardown either
+#endif
     ConfigureFromBundle();
     setenv("DXVK_WSI_DRIVER", "SDL3", 0);
     // The game runs at 30 FPS by default (its Frame Limit option); with DXVK's default queue of
@@ -352,8 +386,25 @@ int main(int argc, char** argv)
     app->m_lpCmdLine = const_cast<char*>(cmdLine.c_str());
 
     int rc = 1;
+#ifdef __EMSCRIPTEN__
+    // Out of memory: say where (the wasm32 heap tops out at 4 GB, browsers often below).
+    std::set_new_handler([] {
+        emscripten_log(EM_LOG_CONSOLE | EM_LOG_ERROR | EM_LOG_C_STACK, "[platform] out of memory (wasm memory %u MB)",
+                       (unsigned)(__builtin_wasm_memory_size(0) / 16));
+        std::set_new_handler(nullptr);
+        throw std::bad_alloc();
+    });
+    try {
+#endif
     if (app->InitInstance()) rc = app->Run();
     else std::fprintf(stderr, "[platform] InitInstance failed (is RAN_GAME_DIR set to the client folder?)\n");
+#ifdef __EMSCRIPTEN__
+    } catch (const std::exception& e) {
+        std::fprintf(stderr, "[platform] uncaught exception: %s (wasm memory %u MB)\n", e.what(),
+                     (unsigned)(__builtin_wasm_memory_size(0) / 16));
+        throw;
+    }
+#endif
     if (g_window) SDL_DestroyWindow(g_window);
     SDL_Quit();
     // The game has saved and shut down in ExitInstance (inside Run). Static destructors across

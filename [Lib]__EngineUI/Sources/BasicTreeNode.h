@@ -28,6 +28,7 @@ public:
 public:
 	BOOL IsBranchVisible ()								{ return m_bBranchVisible; }
 	void SetBranchVisible ( BOOL bBranchVisible );
+	void ToggleBranch ();		//	open/close, the expand button following
 
 	void CreateButton ( char* szKeyword, char* szFlipKeyword );
 	void CreateLabel ( char* szKeyword );
@@ -47,6 +48,7 @@ public:
 
 public:
 	void SetLabel ( CString strLabelName )				{ m_pLabel->SetText ( strLabelName ); }
+	void SetLabel ( CString strLabelName, D3DCOLOR dwColor )	{ m_pLabel->SetText ( strLabelName, dwColor ); }
 	void SetLabelOverColor ( D3DCOLOR dwColor )			{ m_pLabel->SetOverColor ( 0, dwColor ); }
 	void SetLabelUseOverColor( BOOL bUseOverColor )		{ m_pLabel->SetUseOverColor( bUseOverColor ); }
 

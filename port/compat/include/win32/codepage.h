@@ -91,6 +91,65 @@ namespace ran_compat {
         out.resize(out.size() - dstLeft);
         return true;
     }
+
+#ifdef __EMSCRIPTEN__
+    // musl's iconv (the browser build) decodes the DBCS code pages but cannot encode to them.
+    // The encoder is a reverse table built once by decoding every one- and two-byte code:
+    // entry = 0 (unmapped), 0x10000 | byte, or 0x20000 | lead << 8 | trail.
+    inline const std::vector<uint32_t>* DbcsTable(const char* name)
+    {
+        static std::vector<std::pair<std::string, std::vector<uint32_t>>> tables;
+        for (auto& t : tables)
+            if (t.first == name) return t.second.empty() ? nullptr : &t.second;
+        tables.push_back({ name, {} });
+        iconv_t cd = ::iconv_open("UTF-16LE", name);
+        if (cd == (iconv_t)-1) return nullptr;
+        std::vector<uint32_t>& t = tables.back().second;
+        t.assign(65536, 0);
+        auto decode = [&](const unsigned char* in, size_t n) -> int {
+            char16_t u[4];
+            char* src = (char*)in;
+            char* dst = (char*)u;
+            size_t srcLeft = n, dstLeft = sizeof(u);
+            ::iconv(cd, nullptr, nullptr, nullptr, nullptr);
+            if (::iconv(cd, &src, &srcLeft, &dst, &dstLeft) == (size_t)-1 || srcLeft || dstLeft != sizeof(u) - 2) return -1;
+            return u[0] == 0xFFFD ? -1 : (int)u[0];
+        };
+        for (unsigned b = 0; b < 0x100; ++b) {
+            const unsigned char in[1] = { (unsigned char)b };
+            const int u = decode(in, 1);
+            if (u >= 0 && !t[u]) t[u] = 0x10000u | b;
+        }
+        for (unsigned lead = 0x81; lead <= 0xFE; ++lead)
+            for (unsigned trail = 0x40; trail <= 0xFE; ++trail) {
+                const unsigned char in[2] = { (unsigned char)lead, (unsigned char)trail };
+                const int u = decode(in, 2);
+                if (u >= 0 && !t[u]) t[u] = 0x20000u | (lead << 8) | trail;
+            }
+        ::iconv_close(cd);
+        return &t;
+    }
+
+    // UTF-16 -> a DBCS code page with the table; false if the code page has none.
+    inline bool EncodeDbcs(const char* name, const char16_t* src, size_t units, std::vector<char>& out, BOOL* usedDefault)
+    {
+        const std::vector<uint32_t>* t = DbcsTable(name);
+        if (!t) return false;
+        out.clear();
+        for (size_t i = 0; i < units; ++i) {
+            const uint32_t e = (*t)[src[i]];
+            if (src[i] == 0) out.push_back(0);
+            else if (e >> 16 == 1) out.push_back((char)(e & 0xFF));
+            else if (e >> 16 == 2) { out.push_back((char)((e >> 8) & 0xFF)); out.push_back((char)(e & 0xFF)); }
+            else {
+                out.push_back('?');
+                if (usedDefault) *usedDefault = TRUE;
+                if (src[i] >= 0xD800 && src[i] <= 0xDBFF && i + 1 < units) ++i;   // surrogate pair
+            }
+        }
+        return true;
+    }
+#endif
 }
 #ifndef ERROR_NO_UNICODE_TRANSLATION
 #define ERROR_NO_UNICODE_TRANSLATION 1113u
@@ -123,6 +182,13 @@ inline int WideCharToMultiByte(UINT cp, DWORD, const WCHAR* src, int srcLen, cha
     size_t units = 0;
     if (withNul) { while (src[units]) ++units; } else units = (size_t)srcLen;
     std::vector<char> out;
+#ifdef __EMSCRIPTEN__
+    const char* name = ran_compat::IconvName(cp);
+    const bool dbcs = std::strcmp(name, "UTF-8") != 0 && std::strcmp(name, "CP1252") != 0 && std::strcmp(name, "CP1258") != 0;
+    if (dbcs && ran_compat::EncodeDbcs(name, (const char16_t*)src, units, out, usedDefault)) {
+        // encoded with the reverse table
+    } else
+#endif
     if (!ran_compat::Iconv("UTF-16LE", ran_compat::IconvName(cp), (const char*)src, units * 2, out, true, false, usedDefault)) return 0;
     const int bytes = (int)out.size() + (withNul ? 1 : 0);
     if (dstLen == 0) return bytes;

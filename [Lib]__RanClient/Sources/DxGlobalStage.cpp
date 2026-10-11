@@ -345,6 +345,7 @@ HRESULT DxGlobalStage::OneTimeSceneInit ( const char* szAppPath, HWND hWnd, BOOL
 	CInterfaceCfg::GetInstance().LoadText(RANPARAM::strUIInnerCfg02.GetString());
 	CInterfaceCfg::GetInstance().LoadText(RANPARAM::strUIInnerCfg03.GetString());
 	CInterfaceCfg::GetInstance().LoadText(RANPARAM::strUIExtCfg.GetString());
+	CInterfaceCfg::GetInstance().LoadText(_T("itembrowser.xml"));	// the item browser (B window)
 
 	if( !CRanFilter::GetInstance().Init(GLOGIC::bGLOGIC_ZIPFILE,
 										GLOGIC::bGLOGIC_PACKFILE,
@@ -1123,6 +1124,7 @@ void DxGlobalStage::MsgProcessFrame ( NET_MSG_GENERIC *nmg )
 	case NET_MSG_GCTRL_FIRECRACKER_FB:
 	case NET_MSG_GCTRL_FIRECRACKER_BRD:
 	case NET_MSG_GCTRL_CHARGED_ITEM_GET_FB:
+	case NET_MSG_GCTRL_ITEMBROWSER_GET_FB:
 	case NET_MSG_GCTRL_CHARGED_ITEM_DEL:
 	case NET_MSG_GCTRL_REVIVE_FB:
 	case NET_MSG_GCTRL_GETEXP_RECOVERY_FB:

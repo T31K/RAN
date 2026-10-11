@@ -33,8 +33,7 @@ BOOL DxBgmSound::LoadOggFile ()
 	
 	if ( m_OggFile.m_hFile )
 	{
-		ov_clear ( &m_OggFile.m_vf );
-		fclose ( m_OggFile.m_hFile );
+		ov_clear ( &m_OggFile.m_vf );	// closes m_hFile (ov_open's fclose callback)
 		m_OggFile.m_hFile = NULL;
 		return FALSE;
 	}
@@ -56,8 +55,7 @@ BOOL DxBgmSound::LoadOggFile ()
 
 	if ( ov_streams ( &m_OggFile.m_vf ) != 1 )
 	{
-		ov_clear ( &m_OggFile.m_vf );
-		fclose ( m_OggFile.m_hFile );
+		ov_clear ( &m_OggFile.m_vf );	// closes m_hFile (ov_open's fclose callback)
 		m_OggFile.m_hFile = NULL;
 		return FALSE;
 	}
@@ -67,16 +65,14 @@ BOOL DxBgmSound::LoadOggFile ()
 
 	if ( pInfo == NULL )
 	{		
-		ov_clear ( &m_OggFile.m_vf );
-		fclose ( m_OggFile.m_hFile );
+		ov_clear ( &m_OggFile.m_vf );	// closes m_hFile (ov_open's fclose callback)
 		m_OggFile.m_hFile = NULL;
 		return FALSE;
 	}
 
 	if ( pInfo->channels > 2 )
 	{		
-		ov_clear ( &m_OggFile.m_vf );
-		fclose ( m_OggFile.m_hFile );
+		ov_clear ( &m_OggFile.m_vf );	// closes m_hFile (ov_open's fclose callback)
 		m_OggFile.m_hFile = NULL;
 		return FALSE;
 	}
@@ -97,8 +93,7 @@ BOOL DxBgmSound::UnLoadOggFile ()
 		return FALSE;
 	}
 
-	ov_clear(&m_OggFile.m_vf);
-	fclose ( m_OggFile.m_hFile );
+	ov_clear(&m_OggFile.m_vf);	// closes m_hFile too: a second fclose would free it twice
     m_OggFile.m_hFile = NULL;
 
 	return TRUE;
