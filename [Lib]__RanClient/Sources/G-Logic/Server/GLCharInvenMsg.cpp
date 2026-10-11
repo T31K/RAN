@@ -2520,11 +2520,8 @@ HRESULT GLChar::MsgReqHoldToField ( NET_MSG_GENERIC* nmg )
 		if ( pMyPet && pMyPet->IsValid () && sITEMCUSTOM.dwPetID == pMyPet->m_dwPetID ) return FALSE;
 	}
 	
-	//	거래옵션
-	if ( !pITEM->sBasicOp.IsTHROW() )						return FALSE;
-
-	// GMCharEdit 로 넣은 아이템은 버리기 불가능하다.
-	if ( sITEMCUSTOM.IsGM_GENITEM() )						return FALSE;
+	// DEV MOD: every item can be thrown on the floor, including items without the THROW flag
+	// and GM-made ones (getitem gives EMGEN_GMEDIT items).
 
 	//	Item Drop 시도.
 	BOOL bDrop = m_pLandMan->DropItem ( vCollisionPos, const_cast<SITEMCUSTOM*> ( &sITEMCUSTOM ) );
