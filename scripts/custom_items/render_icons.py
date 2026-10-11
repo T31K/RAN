@@ -1,6 +1,7 @@
 """Inventory icons for the custom weapons, rendered from their own models.
 
-  render_icons.py        (after make_samehada.py; needs numpy + Pillow + ImageMagick)
+  render_icons.py        (after make_samehada.py, make_gauntlet.py and make_odyssey.py;
+                          needs numpy + Pillow + ImageMagick)
 
 Writes port/build/custom_items/custom_items.dds: a 512x256 icon sheet like the game's
 (textures/gui/*.dds, 35 px cells, uncompressed RGB) with one cell per weapon in ICONS order.
@@ -20,6 +21,12 @@ ICONS = [                   # (variant index in make_samehada.VARIANTS or 'gaunt
     (0, 0, 0, 'icon_samehada.png'),              # Samehada
     (1, 1, 0, 'icon_samehada_unleashed.png'),    # Samehada Unleashed
     ('gauntlet', 2, 0, 'icon_infinity_gauntlet.png'),   # Infinity Gauntlet
+    ('odyssey:achilles', 3, 0, 'icon_achilles.png'),    # Odyssey weapons (make_odyssey.py)
+    ('odyssey:sparta', 4, 0, 'icon_sparta.png'),
+    ('odyssey:trident', 5, 0, 'icon_trident.png'),
+    ('odyssey:odysseus', 6, 0, 'icon_odysseus.png'),
+    ('odyssey:heracles', 7, 0, 'icon_heracles.png'),
+    ('odyssey:circe', 8, 0, 'icon_circe.png'),
 ]
 # Painted art (assets/custom-items, made with nano-banana from the 3D renders + RAN's own sword
 # icons as the style reference) wins over the 3D render when present.
@@ -131,6 +138,9 @@ def gauntlet_geometry():
 def icon(variant):
     if variant == 'gauntlet':
         v, n, uv, idx, tex = gauntlet_geometry()
+    elif str(variant).startswith('odyssey:'):
+        import make_odyssey
+        v, n, uv, idx, tex = make_odyssey.icon_geometry(variant.split(':')[1])
     else:
         glb, scale, frame, tag, tex, px = M.VARIANTS[variant]
         M.MODEL, M.SCALE, M.NEW_FRAME = os.path.expanduser(glb), scale, frame
@@ -157,7 +167,7 @@ def main():
         cell = painted_icon(painted) if os.path.exists(painted) else icon(variant)
         sheet[cy * CELL:(cy + 1) * CELL, cx * CELL:(cx + 1) * CELL] = cell
         Image.fromarray(sheet[cy * CELL:(cy + 1) * CELL, cx * CELL:(cx + 1) * CELL]).resize((140, 140), Image.NEAREST) \
-            .save(f'{M.OUT}/icon_{variant}.png')
+            .save(f'{M.OUT}/icon_{str(variant).replace(":", "_")}.png')
     png = f'{M.OUT}/{SHEET}.png'
     Image.fromarray(sheet).save(png)
     # same layout as the stock sheets: uncompressed, no alpha, no mipmaps

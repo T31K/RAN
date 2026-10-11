@@ -1,0 +1,67 @@
+{
+  "_doc": "make_mob.py / build_mobs.py config. glb: under assets/custom-mobs (or $RAN_MOB_MODELS). tag: file prefix (unique, [a-z0-9_]). id: [main, sub] crow id. crow: npc|mob. template: crow cloned for stats/AI/drops. height: model height in game units before chf_scale (a player is ~20). chf_scale: DxSkinCharData m_fScale (render scale). clips: role -> glTF animation name (idle/walk/run/attack/shock/die; missing roles fall back to the idle anim in game). in_place: roles whose root drift is removed. strikes: hit times as fractions of the attack clip. yaw: extra turn in degrees if the model does not face glTF +Z.",
+
+  "trojan_horse": {
+    "glb": "trojan_horse.glb", "tag": "cm_trojan",
+    "id": [66, 0], "name": "Trojan Horse",
+    "desc": "A wooden horse as tall as a temple. The hatch in its belly is open.",
+    "crow": "npc", "template": [81, 3], "talk": "",
+    "height": 50, "chf_scale": 3.0, "world_obj": true, "body_radius": 60, "yaw": 180
+  },
+
+  "rift_zombie": {
+    "glb": "zombie.glb", "tag": "cm_zombie",
+    "id": [66, 1], "name": "Rift Zombie",
+    "desc": "A drowned sailor the Rift would not let rest.",
+    "crow": "mob", "template": [44, 11],
+    "height": 20, "chf_scale": 1.0, "body_radius": 4, "attack_range": 10,
+    "clips": {"idle": "Idle", "walk": "Walk_InPlace", "run": "Run_InPlace", "attack": "Attack",
+              "die": "FallingBack"},
+    "strikes": [0.45]
+  },
+
+  "rift_ghoul": {
+    "glb": "ghoul.glb", "tag": "cm_ghoul",
+    "id": [66, 2], "name": "Rift Ghoul",
+    "desc": "A goblin ghoul that crawled out of the Underworld through the Rift.",
+    "crow": "mob", "template": [44, 11],
+    "height": 16, "chf_scale": 1.0, "body_radius": 4, "attack_range": 10,
+    "clips": {"idle": "Idle", "walk": "Walk", "run": "Walk", "attack": "Attack Combo", "die": "Death"},
+    "in_place": ["walk", "run"],
+    "strikes": [0.3, 0.55, 0.8]
+  },
+
+  "rift_skeleton": {
+    "glb": "skeleton_warrior.glb", "tag": "cm_skelwar",
+    "id": [66, 3], "name": "Skeleton Warrior",
+    "desc": "A fallen hoplite of Troy, still guarding a city that is long gone.",
+    "crow": "mob", "template": [44, 11],
+    "height": 21, "chf_scale": 1.0, "body_radius": 4, "attack_range": 12,
+    "clips": {"idle": "rig|Idel", "walk": "rig|Walck", "run": "rig|Run", "attack": "rig|Attack_1",
+              "die": "rig|Dead"},
+    "in_place": ["walk", "run"],
+    "strikes": [0.5]
+  },
+
+  "rift_dragon": {
+    "glb": "bone_dragon.glb", "tag": "cm_bonedrgn",
+    "id": [66, 4], "name": "Bone Dragon",
+    "desc": "The skeleton of a dragon, held together by the Rift's will.",
+    "crow": "mob", "template": [44, 11],
+    "height": 30, "chf_scale": 1.5, "body_radius": 12, "attack_range": 30,
+    "clips": {"idle": "travelidle", "walk": "travelmove", "run": "travelrun", "attack": "attack_2",
+              "shock": "hurtsmall", "die": "dead"},
+    "in_place": ["walk", "run"],
+    "strikes": [0.45]
+  },
+
+  "colossal_titan": {
+    "glb": "colossal_titan.glb", "tag": "cm_titan",
+    "id": [66, 5], "name": "Colossal Titan",
+    "desc": "It screams, and the sky over the Rift cracks.",
+    "crow": "mob", "template": [44, 11],
+    "height": 20, "chf_scale": 2.0, "body_radius": 12, "attack_range": 25,
+    "clips": {"idle": "mixamo.com", "attack": "mixamo.com"},
+    "strikes": [0.5]
+  }
+}

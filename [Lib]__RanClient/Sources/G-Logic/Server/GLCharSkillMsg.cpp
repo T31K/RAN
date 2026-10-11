@@ -4,6 +4,7 @@
 #include "./GLGaeaServer.h"
 #include "./GLSchoolFreePK.h"
 #include "GLClubDeathMatch.h"
+#include "./GLOdysseyRift.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -182,6 +183,7 @@ HRESULT GLChar::MsgReqSkill ( NET_MSG_GENERIC* nmg )
 	//	스킬 정보 가져옴.
 	const PGLSKILL pSkill = GLSkillMan::GetInstance().GetData ( skill_id.wMainID, skill_id.wSubID );
 	if ( !pSkill )	return E_FAIL;
+	if ( !GLOdysseyRift::GetInstance().CanUseSkill ( this, pSkill ) )	return E_FAIL;	// sealed in the rift
 	const SKILL::SEXT_DATA &sEXT_DATA = pSkill->m_sEXT_DATA;
 	bool benermy = ( SIDE_ENERMY==pSkill->m_sBASIC.emIMPACT_SIDE );
 

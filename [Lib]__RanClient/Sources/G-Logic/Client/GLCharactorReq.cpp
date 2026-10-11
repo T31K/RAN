@@ -2495,8 +2495,7 @@ HRESULT GLCharacter::ReqHoldToField ( const D3DXVECTOR3 &vPos )
 	SITEM* pItem = GLItemMan::GetInstance().GetItem ( sHoldItem.sNativeID );
 	if ( !pItem )				return E_FAIL;
 
-	//	거래옵션
-	if ( !pItem->sBasicOp.IsTHROW() )	return E_FAIL;
+	// DEV MOD: every item can be thrown on the floor (the server allows it too).
 
 	// 팻카드일경우
 	if ( pItem->sBasicOp.emItemType == ITEM_PET_CARD )

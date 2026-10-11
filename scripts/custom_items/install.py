@@ -7,7 +7,7 @@
   data/skin/                     += s_{m,w}_<tag>.X
   textures/item/                 += <tex>.dds, <tex>_s.dds
   textures/gui/                  += custom_items.dds (inventory icons)
-Run make_samehada.py, make_gauntlet.py and render_icons.py first (assets in port/build/custom_items). The server needs only the
+Run make_samehada.py, make_gauntlet.py, make_odyssey.py and render_icons.py first (assets in port/build/custom_items). The server needs only the
 glogic.rcc part: add_items.py /opt/ran/game-client/data/glogic/glogic.rcc, then restart it.
 """
 import os
@@ -16,13 +16,15 @@ import sys
 import zipfile
 import add_items
 import make_gauntlet
+import make_odyssey
 import make_samehada
 from make_samehada import OUT
 from rcc import rewrite_zip
 
 # (frame, mesh tag, texture stem) of every custom model
 PIECES = [(frame, tag, tex) for _, _, frame, tag, tex, _ in make_samehada.VARIANTS] + \
-         [(frame, tag, tex) for _, _, frame, tag, tex, _, _ in make_gauntlet.VARIANTS]
+         [(frame, tag, tex) for _, _, frame, tag, tex, _, _ in make_gauntlet.VARIANTS] + \
+         make_odyssey.pieces()
 
 
 def main():

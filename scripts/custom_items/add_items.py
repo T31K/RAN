@@ -1,11 +1,12 @@
-"""Add Samehada (0_22) and Samehada Unleashed (0_23), cloned from ChuWang Sword (0_17), and the
-Infinity Gauntlet (0_24), cloned from Dynamic White Tiger Gauntlets (97_88), to a glogic.rcc, and
+"""Add Samehada (0_22) and Samehada Unleashed (0_23), cloned from ChuWang Sword (0_17), the
+Infinity Gauntlet (0_24), cloned from Dynamic White Tiger Gauntlets (97_88), and the six Odyssey
+weapons (0_25 .. 0_30, each cloned from a stock weapon of its type, see NEW) to a glogic.rcc, and
 apply the server's item rules (every item droppable).
 
   add_items.py <glogic.rcc> [<output glogic.rcc>]      (in place when no output is given)
 
 Only item.isf and ItemStrTable.txt change; every other archive entry is copied as is.
-Idempotent: existing 0_22 / 0_23 / 0_24 records and string entries are replaced. The same file goes to
+Idempotent: existing 0_22 .. 0_30 records and string entries are replaced. The same file goes to
 the client (data/glogic/glogic.rcc) and the server (/opt/ran/game-client/data/glogic/glogic.rcc).
 """
 import copy
@@ -21,6 +22,10 @@ TEMPLATE = (0, 17)       # ChuWang Sword: last permanent MID-0 sword that has we
 NAMES_AFTER = (0, 21)    # string table entries go after the last MID-0 entry
 ICON_SHEET = 'custom_items.dds'   # textures/gui, built by render_icons.py
 GAUNTLET_TEMPLATE = (97, 88)   # Dynamic White Tiger Gauntlets: brawler (+extreme), needs DEX
+HEAVY_GAUNTLET_TEMPLATE = (102, 88)   # Dynamic Heavy Gold Gauntlets: brawler (+extreme), needs POW
+SPEAR_TEMPLATE = (75, 37)      # Medium Spear: shaman (+extreme) two-handed spear, needs POW
+WAND_TEMPLATE = (75, 40)       # Tyrant Wand: shaman (+extreme) one-handed wand, level 203
+BOW_TEMPLATE = (100, 179)      # Dynamic Rit Bow: archer (+extreme), needs POW, range 85
 NEW = [
     # nid, name, description, piece prefix, damage low/high, hit, avoid, icon cell on ICON_SHEET,
     # template item
@@ -34,6 +39,31 @@ NEW = [
      'Thanos\'s golden gauntlet, set with all six Infinity Stones. Power, Space, Reality, Soul, Time '
      'and Mind answer every punch.',
      'NLN9040', 520, 610, 40, 10, (2, 0), GAUNTLET_TEMPLATE),
+    # Odyssey weapons (make_odyssey.py): a little above the best permanent stock weapon of each
+    # type (swords 202-213, spears 189-201, bows 229-303, Heavy gauntlets 144-232, wands 81-84).
+    ((0, 25), "Achilles' Sword",
+     'The blade of Achilles, forged in the fire of Hephaestus beside his great shield. It cut down '
+     'Hector before the walls of Troy.',
+     'SDN9026', 245, 268, 24, -5, (3, 0), TEMPLATE),
+    ((0, 26), 'Spear of Sparta',
+     'A hoplite spear carried at Thermopylae. Bronze leaf blade, iron butt-spike, and three hundred '
+     'shields beside it.',
+     'SRN9041', 215, 232, 18, -6, (4, 0), SPEAR_TEMPLATE),
+    ((0, 27), "Poseidon's Trident",
+     'The Earth-Shaker\'s three-pronged spear. Its storms kept Odysseus from Ithaca for ten long years.',
+     'SRN9043', 205, 245, 16, -4, (5, 0), SPEAR_TEMPLATE),
+    ((0, 28), 'Bow of Odysseus',
+     'The great bow only its master could string. In Ithaca it sent one arrow through twelve axe heads, '
+     'then turned on the suitors.',
+     'BDN9050', 255, 330, 17, -5, (6, 0), BOW_TEMPLATE),
+    ((0, 29), 'Fists of Heracles',
+     'Gauntlets of the strongest of the heroes, who strangled the Nemean lion with his bare hands and '
+     'finished all twelve labours.',
+     'NLN9041', 175, 275, 14, -2, (7, 0), HEAVY_GAUNTLET_TEMPLATE),
+    ((0, 30), "Circe's Moon Staff",
+     'The crescent staff of Circe, the witch of Aeaea. One touch of it turned the crew of Odysseus '
+     'into swine.',
+     'SRN9042', 88, 100, 0, 12, (8, 0), WAND_TEMPLATE),
 ]
 
 

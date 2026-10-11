@@ -37,6 +37,24 @@ void GLCrow::GenerateReward()
 	// GenerateReward_200502();
 }
 
+//! Odyssey Rift mobs: the killer (or the summoner of the killing summon) gets the kill EXP,
+//! nothing drops on the floor - the rift pays gold straight into the wallet instead.
+void GLCrow::GenerateRiftReward()
+{
+	STARGETID mytarid(GETCROW(),m_dwGlobID);
+
+	if ( m_sAssault.emCrow == CROW_PC && m_sAssault.dwID != GAEAID_NULL )
+	{
+		PGLCHAR pChar = GLGaeaServer::GetInstance().GetChar ( m_sAssault.dwID );
+		if ( pChar ) pChar->ReceiveKillExp ( mytarid );
+	}
+	else if ( m_sAssault.emCrow == CROW_SUMMON && m_sAssault.dwID != GAEAID_NULL )
+	{
+		PGLSUMMONFIELD pSummon = GLGaeaServer::GetInstance().GetSummon ( m_sAssault.dwID );
+		if ( pSummon && pSummon->m_pOwner ) pSummon->m_pOwner->ReceiveKillExp ( mytarid, false, true );
+	}
+}
+
 //! 몹이 죽었을때 보상을 발생시킨다 (아이템, 게임머니, ?박스 등등...)
 //! 2006-04-17 Jgkim 불필요한 vector 제거
 void GLCrow::GenerateReward_20060417()
