@@ -619,6 +619,7 @@ public:
 
 	//	Note : 구입한 물품 꺼내오기.
 	HRESULT ReqChargedItemTo ( WORD wPosX, WORD wPosY );
+	HRESULT ReqItemBrowserGet ( SNATIVEID nidITEM, WORD wCount );
 
 	//	Note : 구입한 이이템 정보 가져오기
 	HRESULT ReqItemBankInfo ();

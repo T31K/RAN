@@ -1908,6 +1908,14 @@ void GLCharacter::MsgProcess ( NET_MSG_GENERIC* nmg )
 		}
 		break;
 
+	case NET_MSG_GCTRL_ITEMBROWSER_GET_FB:
+		{
+			GLMSG::SNET_ITEMBROWSER_GET_FB *pNetMsg = (GLMSG::SNET_ITEMBROWSER_GET_FB *)nmg;
+			pNetMsg->szText[GLMSG::SNET_ITEMBROWSER_GET_FB::MAX_TEXT-1] = '\0';
+			CInnerInterface::GetInstance().PrintMsgText ( pNetMsg->bOK ? NS_UITEXTCOLOR::PALEGREEN : NS_UITEXTCOLOR::NEGATIVE, "%s", pNetMsg->szText );
+		}
+		break;
+
 	case NET_MSG_GCTRL_CHARGED_ITEM_GET_FB:
 		{
 			GLMSG::SNET_CHARGED_ITEM_GET_FB *pNetNsg = (GLMSG::SNET_CHARGED_ITEM_GET_FB *)nmg;

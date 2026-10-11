@@ -30,7 +30,11 @@ DxCharPart::DxCharPart () :
 	m_pHandHeld(NULL),
 	m_pSlotHeld(NULL),
 
-	m_nGrindLevel(0)
+	m_nGrindLevel(0),
+
+	//	Was left uninitialized: a character whose hair colour is never set (the login screen's
+	//	man) got a random one each launch. The default male hair colour of character creation.
+	m_dwHairColor(0xffb4625a)
 {
 	memset( m_szFileName, 0, sizeof(char)*FILE_LENGTH );
 	D3DXMatrixIdentity( &m_matCombine );

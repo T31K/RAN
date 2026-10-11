@@ -4,10 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RanOdyssey</title>
-<link rel="preload" href="login-bg.jpg" as="image">
+<link rel="preload" href="login-still.webp" as="image">
 <link rel="preload" href="ui-title.png" as="image">
 <style>
-  /* The loading screen is laid out like the game's Server Select screen: the scene (login-bg.jpg),
+  /* The loading screen is laid out like the game's Server Select screen: the scene (login-still.webp:
+     the login scene's first frame, captured at 2400 x 1000 with loader.js ?still=1 and F12; the
+     game's camera has a fixed vertical field of view, so the still is fitted to the height),
      the dark bars top and bottom with the copyright lines, and the 200 x 415 window in the middle
      built from the game's own frame (ui-title.png, ui-bottom.png: cut from the game at 2x). Its
      window shows the loading steps; when the game is ready its real Server Select takes over. */
@@ -16,7 +18,7 @@
                font: 12px/1.35 "Apple SD Gothic Neo", "AppleSDGothicNeo", Tahoma, "Malgun Gothic", sans-serif; }
   #canvas { display: block; position: fixed; inset: 0; outline: none; }
   #overlay { position: fixed; inset: 0; overflow: hidden; transition: opacity .35s;
-             background: url(login-bg.jpg) 55% 50% / cover no-repeat, #1c2430; }
+             background: url(login-still.webp) 50% 50% / auto 100% no-repeat, #1c2430; }
   #overlay[hidden] { display: none; }
   #overlay.leaving { opacity: 0; pointer-events: none; }
   .topbar, .botbar { position: absolute; left: 0; right: 0; height: var(--bar); background: rgba(10, 13, 18, .82); }

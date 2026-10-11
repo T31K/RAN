@@ -1691,6 +1691,44 @@ namespace GLMSG
 		}
 	};
 
+	//	Item browser (B window): spawn wCount of an item into the inventory - a stack of that
+	//	size for stackable items, that many copies (up to 60) of the others.
+	struct SNET_ITEMBROWSER_GET
+	{
+		NET_MSG_GENERIC			nmg;
+
+		SNATIVEID				nidITEM;
+		WORD					wCount;
+
+		SNET_ITEMBROWSER_GET ()
+			: nidITEM(false)
+			, wCount(1)
+		{
+			nmg.dwSize = sizeof(SNET_ITEMBROWSER_GET);
+			nmg.nType = NET_MSG_GCTRL_ITEMBROWSER_GET;
+			GASSERT(nmg.dwSize<=NET_DATA_BUFSIZE);
+		}
+	};
+
+	struct SNET_ITEMBROWSER_GET_FB
+	{
+		enum { MAX_TEXT = 128 };
+
+		NET_MSG_GENERIC			nmg;
+
+		BOOL					bOK;
+		char					szText[MAX_TEXT];
+
+		SNET_ITEMBROWSER_GET_FB ()
+			: bOK(FALSE)
+		{
+			nmg.dwSize = sizeof(SNET_ITEMBROWSER_GET_FB);
+			nmg.nType = NET_MSG_GCTRL_ITEMBROWSER_GET_FB;
+			GASSERT(nmg.dwSize<=NET_DATA_BUFSIZE);
+			memset(szText, 0, sizeof(szText));
+		}
+	};
+
 	struct SNET_CHARGED_ITEM_DEL
 	{
 		NET_MSG_GENERIC			nmg;

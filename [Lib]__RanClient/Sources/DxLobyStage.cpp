@@ -30,6 +30,12 @@
 
 #include "../[Lib]__EngineSound/Sources/DxSound/BgmSound.h"
 
+//	The scene clock (sky, weather, map, camera). It is the frame clock, except in the browser,
+//	where the login scene holds its first frame while the page shows a still of it
+//	(CBasicWnd::FrameMove sets these each frame).
+float g_fRanSceneTime = 0.0f;
+float g_fRanSceneElapsed = 0.0f;
+
 
 //#include "../[Lib]__EngineUI/Sources/UIRenderQueue.h"
 
@@ -903,7 +909,7 @@ HRESULT DxLobyStage::FrameMove ( float fTime, float fElapsedTime )
 				(float)m_d3dsdBackBuffer.Height, 5.0f, 3000.0f );
 
 			GLPeriod::GetInstance().SetPeriod ( 2003, 180, 1, 0 );
-			m_LandLogin.FrameMove ( fTime, fElapsedTime );
+			m_LandLogin.FrameMove ( g_fRanSceneTime, g_fRanSceneElapsed );
 		}
 		break;
 

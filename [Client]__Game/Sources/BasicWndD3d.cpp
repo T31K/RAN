@@ -42,6 +42,13 @@
 #include "../[Lib]__EngineSound/Sources/DxSound/BgmSound.h"
 #include ".\basicwnd.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
+extern float g_fRanSceneTime;		// DxLobyStage.cpp
+extern float g_fRanSceneElapsed;
+
 #ifndef _WIN32
 #include "ran_telemetry.h"
 
@@ -484,6 +491,21 @@ HRESULT CBasicWnd::FrameMove()
 
 	FixFullSizeWindow ( CWnd::GetSafeHwnd () );
 
+	//	The scene clock. In the browser the page shows a still of the login scene's first frame
+	//	while the game loads and sets Module.ranSceneHeld until that still has faded out; the scene
+	//	stays on its first frame meanwhile, then plays on from there (the held time is skipped).
+	g_fRanSceneTime = m_fTime;
+	g_fRanSceneElapsed = m_fElapsedTime;
+#ifdef __EMSCRIPTEN__
+	static float s_fSceneHeld = 0.0f;
+	if ( EM_ASM_INT({ return Module.ranSceneHeld ? 1 : 0; }) )
+	{
+		s_fSceneHeld += m_fElapsedTime;
+		g_fRanSceneElapsed = 0.0f;
+	}
+	g_fRanSceneTime = m_fTime - s_fSceneHeld;
+#endif
+
 	//if ( g_BLOCK_PROG.IsDETECT() )
 	//{
 	//	if ( DxGlobalStage::GetInstance().GetActiveStage() == DxGlobalStage::GetInstance().GetGameStage() )
@@ -517,11 +539,11 @@ HRESULT CBasicWnd::FrameMove()
 
 	//	Note : 각종 장치들.
 	//
-	DxResponseMan::GetInstance().FrameMove ( m_fTime, m_fElapsedTime, m_bDefWin, TRUE );
+	DxResponseMan::GetInstance().FrameMove ( g_fRanSceneTime, g_fRanSceneElapsed, m_bDefWin, TRUE );
 
 	//	Note : 뷰포트
 	//
-	DxViewPort::GetInstance().FrameMove ( m_fTime, m_fElapsedTime );
+	DxViewPort::GetInstance().FrameMove ( g_fRanSceneTime, g_fRanSceneElapsed );
 
 	PROFILE_END("FrameMove");
 

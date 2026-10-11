@@ -313,7 +313,11 @@ function startGame(index, devBase) {
   ui.step('start', 'active');
   ui.now('Starting the game…');
   // The overlay stays until the game shows its own Server Select window (the login server's
-  // connection opens then - ws.js raises the event), so the switch is seamless.
+  // connection opens then - ws.js raises the event). Its background is a still of the login
+  // scene's first frame, and the game holds the scene on that frame (Module.ranSceneHeld) until
+  // the overlay has faded out, so the switch is seamless; then the scene plays.
+  // ?still=1 keeps the scene held with no overlay: for capturing that still.
+  const still = params.get('still') === '1';
   loginReady = new Promise((resolve) => {
     window.addEventListener('ran-login-ready', resolve, { once: true });
     setTimeout(resolve, 90000);   // never keep the player behind the overlay
@@ -321,12 +325,16 @@ function startGame(index, devBase) {
   loginReady.then(() => {
     ui.step('connect', 'done', 'online');
     $('overlay').classList.add('leaving');
-    setTimeout(() => { $('overlay').hidden = true; }, 400);
+    setTimeout(() => {
+      $('overlay').hidden = true;
+      if (!still) Module.ranSceneHeld = false;
+    }, still ? 0 : 400);
     canvas.focus();
     if (!devBase) Data.background();
   });
   window.Module = {
     canvas,
+    ranSceneHeld: true,
     ranGameIndex: index,
     ranDevData: devBase || '',
     ranRelay: cfg.relay,
