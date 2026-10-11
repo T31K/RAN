@@ -15,6 +15,204 @@ extern std::set<DWORD> g_setMaxUpgradeChar;
 #define new DEBUG_NEW
 #endif
 
+// --------------------------------------------------------------------------- item browser access
+
+namespace
+{
+	struct SBROWSER_ACCESS
+	{
+		bool									bDefault;
+		std::vector< std::pair<std::string,bool> >	vecEntries;	//	account or character name, on/off
+
+		SBROWSER_ACCESS () : bDefault(true) {}
+	};
+
+	void BrowserIniPath ( char* szPath )
+	{
+		szPath[0] = 0;
+		::GetModuleFileNameA ( NULL, szPath, MAX_PATH );
+		char* pSlash = strrchr ( szPath, '\\' );
+		if ( !pSlash ) pSlash = strrchr ( szPath, '/' );
+		if ( pSlash ) *(pSlash+1) = 0; else szPath[0] = 0;
+		StringCchCatA ( szPath, MAX_PATH, "itembrowser.ini" );
+	}
+
+	//	No file = everyone may use it. Read on every use, so editing the file takes effect at once.
+	SBROWSER_ACCESS LoadBrowserAccess ()
+	{
+		SBROWSER_ACCESS sAccess;
+		char szPath[MAX_PATH];
+		BrowserIniPath ( szPath );
+		FILE* fp = fopen ( szPath, "rt" );
+		if ( !fp )	return sAccess;
+
+		char szLine[256];
+		while ( fgets ( szLine, sizeof(szLine), fp ) )
+		{
+			char* pHash = strchr ( szLine, '#' );
+			if ( pHash ) *pHash = 0;
+			char szName[64] = "", szValue[16] = "";
+			if ( sscanf ( szLine, " %63[^= \t] = %15s", szName, szValue ) != 2 )	continue;
+			const bool bOn = 0 == _stricmp ( szValue, "on" ) || 0 == strcmp ( szValue, "1" );
+			if ( 0 == _stricmp ( szName, "default" ) )	sAccess.bDefault = bOn;
+			else										sAccess.vecEntries.push_back ( std::make_pair ( std::string(szName), bOn ) );
+		}
+		fclose ( fp );
+		return sAccess;
+	}
+
+	bool SaveBrowserAccess ( const SBROWSER_ACCESS& sAccess )
+	{
+		char szPath[MAX_PATH];
+		BrowserIniPath ( szPath );
+		FILE* fp = fopen ( szPath, "wt" );
+		if ( !fp )	return false;
+		fprintf ( fp, "# Item browser (B window) access. \"default\" is for everyone not listed;\n" );
+		fprintf ( fp, "# then one line per account or character name. GM chat: itembrowser on|off <name|default>\n" );
+		fprintf ( fp, "default = %s\n", sAccess.bDefault ? "on" : "off" );
+		for ( size_t i = 0; i < sAccess.vecEntries.size(); ++i )
+			fprintf ( fp, "%s = %s\n", sAccess.vecEntries[i].first.c_str(), sAccess.vecEntries[i].second ? "on" : "off" );
+		fclose ( fp );
+		return true;
+	}
+}
+
+namespace ITEMBROWSER
+{
+	bool IsAllowed ( const char* szAccount, const char* szCharName )
+	{
+		const SBROWSER_ACCESS sAccess = LoadBrowserAccess ();
+		for ( size_t i = 0; i < sAccess.vecEntries.size(); ++i )
+		{
+			const char* szName = sAccess.vecEntries[i].first.c_str();
+			if ( (szCharName && 0 == _stricmp ( szName, szCharName )) )	return sAccess.vecEntries[i].second;
+		}
+		for ( size_t i = 0; i < sAccess.vecEntries.size(); ++i )
+		{
+			const char* szName = sAccess.vecEntries[i].first.c_str();
+			if ( (szAccount && 0 == _stricmp ( szName, szAccount )) )	return sAccess.vecEntries[i].second;
+		}
+		return sAccess.bDefault;
+	}
+
+	bool SetAccess ( const char* szName, bool bOn )
+	{
+		SBROWSER_ACCESS sAccess = LoadBrowserAccess ();
+		if ( 0 == _stricmp ( szName, "default" ) )
+		{
+			sAccess.bDefault = bOn;
+		}
+		else
+		{
+			bool bFound = false;
+			for ( size_t i = 0; i < sAccess.vecEntries.size(); ++i )
+			{
+				if ( 0 == _stricmp ( sAccess.vecEntries[i].first.c_str(), szName ) )
+				{
+					sAccess.vecEntries[i].second = bOn;
+					bFound = true;
+				}
+			}
+			if ( !bFound )	sAccess.vecEntries.push_back ( std::make_pair ( std::string(szName), bOn ) );
+		}
+		return SaveBrowserAccess ( sAccess );
+	}
+
+	void Describe ( std::string& strOut )
+	{
+		const SBROWSER_ACCESS sAccess = LoadBrowserAccess ();
+		strOut = "item browser: default ";
+		strOut += sAccess.bDefault ? "on" : "off";
+		for ( size_t i = 0; i < sAccess.vecEntries.size(); ++i )
+		{
+			strOut += ", ";
+			strOut += sAccess.vecEntries[i].first;
+			strOut += sAccess.vecEntries[i].second ? " on" : " off";
+		}
+	}
+};
+
+//	Item browser (B window): spawn an item into the inventory - a stack of wCount for stackable
+//	items, wCount copies (up to 60, as many as fit) of the others. Normal items (EMGEN_SHOP):
+//	they can be traded and sold, unlike getitem's GM-made ones.
+HRESULT GLChar::MsgReqItemBrowserGet ( NET_MSG_GENERIC* nmg )
+{
+	GLMSG::SNET_ITEMBROWSER_GET* pNetMsg = (GLMSG::SNET_ITEMBROWSER_GET*) nmg;
+	GLMSG::SNET_ITEMBROWSER_GET_FB NetMsgFB;
+
+	if ( !ITEMBROWSER::IsAllowed ( m_szUID, m_szName ) )
+	{
+		StringCchCopy ( NetMsgFB.szText, NetMsgFB.MAX_TEXT, "The item browser is turned off for you." );
+		GLGaeaServer::GetInstance().SENDTOCLIENT ( m_dwClientID, &NetMsgFB );
+		return S_OK;
+	}
+
+	SITEM* pItem = GLItemMan::GetInstance().GetItem ( pNetMsg->nidITEM );
+	if ( !pItem )
+	{
+		StringCchCopy ( NetMsgFB.szText, NetMsgFB.MAX_TEXT, "That item does not exist." );
+		GLGaeaServer::GetInstance().SENDTOCLIENT ( m_dwClientID, &NetMsgFB );
+		return S_OK;
+	}
+
+	int nCount = pNetMsg->wCount;
+	if ( nCount < 1 )	nCount = 1;
+	if ( nCount > 999 )	nCount = 999;
+	const int nCopies = pItem->ISPILE() ? 1 : ( nCount > 60 ? 60 : nCount );
+
+	int nDone = 0;
+	for ( int nCopy = 0; nCopy < nCopies; ++nCopy )
+	{
+		WORD wPosX(0), wPosY(0);
+		if ( !m_cInventory.FindInsrtable ( pItem->sBasicOp.wInvenSizeX, pItem->sBasicOp.wInvenSizeY, wPosX, wPosY ) )	break;
+
+		SITEMCUSTOM sNEW;
+		CTime cTIME = CTime::GetCurrentTime();
+		sNEW.sNativeID = pNetMsg->nidITEM;
+		sNEW.tBORNTIME = cTIME.GetTime();
+		sNEW.wTurnNum = ( pItem->ISPILE() && nCount > 1 ) ? (WORD)nCount : pItem->GETAPPLYNUM();
+		sNEW.cDAMAGE = (BYTE)pItem->sBasicOp.wGradeAttack;
+		sNEW.cDEFENSE = (BYTE)pItem->sBasicOp.wGradeDefense;
+		sNEW.cGenType = EMGEN_SHOP;
+		sNEW.cChnID = (BYTE)GLGaeaServer::GetInstance().GetServerChannel();
+		sNEW.cFieldID = (BYTE)GLGaeaServer::GetInstance().GetFieldSvrID();
+		sNEW.lnGenNum = GLITEMLMT::GetInstance().RegItemGen ( sNEW.sNativeID, EMGEN_SHOP );
+
+		m_cInventory.InsertItem ( sNEW, wPosX, wPosY );
+		SINVENITEM* pInvenItem = m_cInventory.GetItem ( wPosX, wPosY );
+		if ( !pInvenItem )	break;
+
+		GLMSG::SNETPC_INVEN_INSERT NetMsgInven;
+		NetMsgInven.Data = *pInvenItem;
+		GLGaeaServer::GetInstance().SENDTOCLIENT ( m_dwClientID, &NetMsgInven );
+
+		GLITEMLMT::GetInstance().ReqItemRoute ( sNEW, ID_CHAR, 0, ID_CHAR, m_dwCharID, EMITEM_ROUTE_CHAR, sNEW.wTurnNum );
+		++nDone;
+	}
+
+	CDebugSet::ToLogFile ( "[ITEMBROWSER] %s (%s) item %d/%d x%d: %d given",
+		m_szName, m_szUID, pNetMsg->nidITEM.wMainID, pNetMsg->nidITEM.wSubID, nCount, nDone );
+
+	if ( nDone == 0 )
+	{
+		StringCchCopy ( NetMsgFB.szText, NetMsgFB.MAX_TEXT, "No room in your inventory." );
+	}
+	else
+	{
+		NetMsgFB.bOK = TRUE;
+		if ( pItem->ISPILE() && nCount > 1 )
+			StringCchPrintf ( NetMsgFB.szText, NetMsgFB.MAX_TEXT, "Got %s x%d.", pItem->GetName(), nCount );
+		else if ( nDone > 1 )
+			StringCchPrintf ( NetMsgFB.szText, NetMsgFB.MAX_TEXT, "Got %d x %s.", nDone, pItem->GetName() );
+		else
+			StringCchPrintf ( NetMsgFB.szText, NetMsgFB.MAX_TEXT, "Got %s.", pItem->GetName() );
+		if ( nDone < nCopies )
+			StringCchCat ( NetMsgFB.szText, NetMsgFB.MAX_TEXT, " (Inventory full.)" );
+	}
+	GLGaeaServer::GetInstance().SENDTOCLIENT ( m_dwClientID, &NetMsgFB );
+	return S_OK;
+}
+
 //	Note : 인벤아이템을 소모시킴.
 //		2. 소모를 클라이언트에 알림.
 //		3. b2AGENT 변수는 클라이언트에 알릴때 필드와의 연결성이 불확실 할 경우를 대비하여

@@ -26,6 +26,16 @@ typedef SFIELDCROW* PSFIELDCROW;
 class GLQUEST;
 class GLGaeaServer;
 
+//	Who may use the item browser (B window): itembrowser.ini next to the exe -
+//	"default = on|off" and "<account or character name> = on|off" lines (GLCharInvenMsg.cpp).
+namespace ITEMBROWSER
+{
+	bool	IsAllowed ( const char* szAccount, const char* szCharName );
+	//	szName "default" sets the default. Returns false if the file could not be written.
+	bool	SetAccess ( const char* szName, bool bOn );
+	void	Describe ( std::string& strOut );
+};
+
 
 //	Note : Ä³¸¯ÅÍ.
 //
@@ -581,6 +591,7 @@ protected:
 	HRESULT MsgReqInvenCleanser ( NET_MSG_GENERIC* nmg );
 	
 	HRESULT MsgReqInvenChargedItem ( NET_MSG_GENERIC* nmg );
+	HRESULT MsgReqItemBrowserGet ( NET_MSG_GENERIC* nmg );
 
 	HRESULT MsgReqSkill ( NET_MSG_GENERIC* nmg );
 	HRESULT MsgReqSkillCancel ( NET_MSG_GENERIC* nmg );

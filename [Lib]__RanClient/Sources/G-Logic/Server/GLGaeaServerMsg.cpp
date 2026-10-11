@@ -174,6 +174,37 @@ BOOL GLGaeaServer::ChatMsgProc ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD d
 				return TRUE;
 			}
 
+			//	[ITEMBROWSER] GM: "itembrowser" shows who may use the item browser (B window);
+			//	"itembrowser on|off <account, character or default>" changes it (itembrowser.ini).
+			if ( 0 == strncmp ( pNetMsg->szChatMsg, "itembrowser", 11 ) && pChar->m_dwUserLvl >= USER_GM3 )
+			{
+				char szOnOff[8] = "", szName[64] = "";
+				const int nRead = sscanf ( pNetMsg->szChatMsg + 11, "%7s %63s", szOnOff, szName );
+
+				GLMSG::SNET_ITEMBROWSER_GET_FB NetMsgFB;
+				NetMsgFB.bOK = TRUE;
+				const bool bOn = 0 == _stricmp ( szOnOff, "on" );
+				if ( nRead == 2 && (bOn || 0 == _stricmp ( szOnOff, "off" )) )
+				{
+					if ( ITEMBROWSER::SetAccess ( szName, bOn ) )
+						StringCchPrintf ( NetMsgFB.szText, NetMsgFB.MAX_TEXT, "item browser %s for %s", bOn ? "on" : "off", szName );
+					else
+					{
+						NetMsgFB.bOK = FALSE;
+						StringCchCopy ( NetMsgFB.szText, NetMsgFB.MAX_TEXT, "item browser: could not write itembrowser.ini" );
+					}
+				}
+				else
+				{
+					std::string strState;
+					ITEMBROWSER::Describe ( strState );
+					StringCchCopy ( NetMsgFB.szText, NetMsgFB.MAX_TEXT, strState.c_str() );
+				}
+				SENDTOCLIENT ( pChar->m_dwClientID, &NetMsgFB );
+				CDebugSet::ToLogFile ( "[ITEMBROWSER] %s: %s", pChar->m_szName, NetMsgFB.szText );
+				return TRUE;
+			}
+
 			//	[ALLSKILLS] GM cheat: "/allskills [rank]" maxes every skill the player's class can learn.
 			if ( 0 == strncmp ( pNetMsg->szChatMsg, "maxskills", 9 ) )
 			{
@@ -6152,6 +6183,7 @@ HRESULT GLGaeaServer::MsgProcess ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD
 	case NET_MSG_GCTRL_INVEN_CLEANSER:
 
 	case NET_MSG_GCTRL_CHARGED_ITEM_GET:
+	case NET_MSG_GCTRL_ITEMBROWSER_GET:
 	case NET_MSG_GCTRL_GET_CHARGEDITEM_FROMDB:
 	
 	case NET_MSG_GCTRL_REQ_LEARNSKILL:

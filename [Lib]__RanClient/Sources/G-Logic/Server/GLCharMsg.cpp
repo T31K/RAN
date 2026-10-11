@@ -3457,6 +3457,7 @@ HRESULT GLChar::MsgProcess ( NET_MSG_GENERIC* nmg )
 	case NET_MSG_GCTRL_INVEN_DISGUISE:		MsgReqInvenDisguise(nmg);		break;
 	case NET_MSG_GCTRL_INVEN_CLEANSER:		MsgReqInvenCleanser(nmg);		break;
 	case NET_MSG_GCTRL_CHARGED_ITEM_GET:	MsgReqInvenChargedItem(nmg);	break;
+	case NET_MSG_GCTRL_ITEMBROWSER_GET:		MsgReqItemBrowserGet(nmg);		break;
 	case NET_MSG_GCTRL_INVEN_RANDOMBOXOPEN:	MsgReqInvenRandomBoxOpen(nmg);	break;
 	case NET_MSG_GCTRL_INVEN_DISJUNCTION:	MsgReqInvenDisJunction(nmg);	break;
 

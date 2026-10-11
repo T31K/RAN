@@ -2042,6 +2042,9 @@ enum EMNET_MSG
 	NET_MSG_GCTRL_CLUB_DEATHMATCH_MYRANK_UPDATE		= (NET_MSG_GCTRL + 1593),	//<	클럽데스매치 Kill/Death 상황 ( 자기만 )
 	NET_MSG_GCTRL_CLUB_DEATHMATCH_RANKING_UPDATE	= (NET_MSG_GCTRL + 1594),	//<	클럽데스매치 랭킹 상황
 	NET_MSG_GCTRL_CLUB_DEATHMATCH_RANKING_REQ		= (NET_MSG_GCTRL + 1595),	//<	클럽데스매치 상황 요청
+
+	NET_MSG_GCTRL_ITEMBROWSER_GET				= (NET_MSG_GCTRL + 1596),	//<	Item browser (B): spawn an item into the inventory.
+	NET_MSG_GCTRL_ITEMBROWSER_GET_FB			= (NET_MSG_GCTRL + 1597),	//<	Item browser (B): result, as a line for the chat box.
 };
 
 
