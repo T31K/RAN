@@ -1365,11 +1365,15 @@ void	CInnerInterface::REFRESH_VNGAINSYSTEM ()
 
 void	CInnerInterface::SetInventorySlotViewSize ( const int& nSLOT_VIEW_SIZE )
 {
+	//	Default size is already the full grid, so premium lines would ask for more
+	//	rows than exist and the inventory pages stop redrawing past row 4.
+	const int nVIEW_SIZE = nSLOT_VIEW_SIZE > EM_INVENSIZE_Y ? EM_INVENSIZE_Y : nSLOT_VIEW_SIZE;
+
 	if ( m_pInventoryWindow )
 	{
-		m_pInventoryWindow->SetOneViewSlot ( nSLOT_VIEW_SIZE );
-		m_pTradeInventoryWindow->SetOneViewSlot ( nSLOT_VIEW_SIZE );
-		m_pRebuildInventoryWindow->SetOneViewSlot ( nSLOT_VIEW_SIZE );	// ITEMREBUILD_MARK
+		m_pInventoryWindow->SetOneViewSlot ( nVIEW_SIZE );
+		m_pTradeInventoryWindow->SetOneViewSlot ( nVIEW_SIZE );
+		m_pRebuildInventoryWindow->SetOneViewSlot ( nVIEW_SIZE );	// ITEMREBUILD_MARK
 	}
 }
 
